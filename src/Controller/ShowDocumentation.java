@@ -1,6 +1,6 @@
 package Controller;
 
-public class showDocumentation {
+public class ShowDocumentation {
 
     public void display() {
 
