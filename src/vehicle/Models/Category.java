@@ -1,6 +1,6 @@
-package Models;
+package vehicle.Models;
 
-public enum VehicleCategory {
+public enum Category {
     SUV,
     SEDAN,
     HATCHBACK,

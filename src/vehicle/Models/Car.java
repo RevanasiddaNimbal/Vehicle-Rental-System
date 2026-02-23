@@ -1,18 +1,13 @@
-package Models;
+package vehicle.Models;
 
 public class Car extends Vehicle {
-
     private FuelType fuel;
     private int seatingCapacity;
 
-    public Car(String id, String brand, VehicleCategory category, double pricePerDay, int seatingCapacity, FuelType fuel) {
+    public Car(String id, String brand, Category category, double pricePerDay, int seatingCapacity, FuelType fuel) {
         super(id, brand, category, pricePerDay);
         this.fuel = fuel;
         this.seatingCapacity = seatingCapacity;
-    }
-
-    public Car() {
-        super();
     }
 
     public void setFuel(FuelType fuel) {
@@ -24,12 +19,13 @@ public class Car extends Vehicle {
     }
 
     @Override
-    public void setStatus(VehicleStatus status) {
-        super.setStatus(status);
+    public FuelType getFuelType() {
+        return fuel;
     }
 
     @Override
-    public String getVehicleType() {
-        return "Car";
+    public Integer getSeatingCapacity() {
+        return seatingCapacity;
     }
+
 }

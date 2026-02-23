@@ -1,8 +1,8 @@
-package Controller;
+package UI;
 
-public class ShowDocumentation {
+public class ShowDocumentation implements Menu {
 
-    public void display() {
+    public void show() {
 
         System.out.println("\n====================================================");
         System.out.println("      VEHICLE RENTAL SYSTEM -DOCUMENTATION    ");

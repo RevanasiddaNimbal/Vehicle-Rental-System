@@ -1,6 +1,6 @@
-package Models;
+package vehicle.Models;
 
-public enum VehicleStatus {
+public enum Status {
     AVAILABLE,
     RENTED,
     MAINTENANCE

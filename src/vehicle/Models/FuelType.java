@@ -1,4 +1,4 @@
-package Models;
+package vehicle.Models;
 
 public enum FuelType {
     PETROL,
