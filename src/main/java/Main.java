@@ -6,8 +6,14 @@ import java.util.Scanner;
 public class Main {
 
     public static void main(String[] args) {
-        Scanner input = new Scanner(System.in);
-        Application app = AppConfig.createApplication(input);
-        app.start();
+        try (Scanner input = new Scanner(System.in)) {
+            Application app = AppConfig.createApplication(input);
+            app.start();
+
+        } catch (Exception e) {
+            System.err.println("Application failed to start: "
+                    + e.getMessage());
+            System.exit(1);
+        }
     }
 }

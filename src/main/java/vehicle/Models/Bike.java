@@ -8,6 +8,7 @@ public class Bike extends Vehicle {
         super(id, brand, category, pricePerDay);
         this.enginCapacity = enginCapacity;
         this.fuel = fuel;
+        vehicle_type = "Bike";
     }
 
     public void setEnginCapacity(int enginCapacity) {

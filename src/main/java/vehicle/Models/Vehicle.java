@@ -2,10 +2,12 @@ package vehicle.Models;
 
 public abstract class Vehicle {
     private String id;
+    protected String vehicle_type;
     protected String brand;
     protected Category category;
     protected double pricePerDay;
     protected Status status;
+
 
     public Vehicle(String id, String brand, Category category, double pricePerDay) {
         this.id = id;
@@ -64,4 +66,7 @@ public abstract class Vehicle {
         return null;
     }
 
+    public String getVehicle_type() {
+        return vehicle_type;
+    }
 }

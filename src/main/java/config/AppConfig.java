@@ -2,6 +2,7 @@ package config;
 
 import UI.*;
 import application.Application;
+import database.PostgresConnection;
 import vehicle.Controller.VehicleController;
 import vehicle.Creator.AutoCreator;
 import vehicle.Creator.BikeCreator;
@@ -16,7 +17,7 @@ import vehicle.Updater.AutoUpdater;
 import vehicle.Updater.BikeUpdater;
 import vehicle.Updater.CarUpdater;
 import vehicle.Updater.VehicleUpdater;
-import vehicle.repository.MemoryVehicleRepo;
+import vehicle.repository.PostgresVehicleRepo;
 import vehicle.repository.VehicleRepo;
 
 import java.util.HashMap;
@@ -40,8 +41,11 @@ public class AppConfig {
         updaters.put(Car.class, new CarUpdater());
         updaters.put(Auto.class, new AutoUpdater());
 
-        VehicleRepo repository = new MemoryVehicleRepo();
-        VehicleService vehicleService = new VehicleService(repository);
+        DbConfig dbConfig = new DbConfig();
+        PostgresConnection connection = new PostgresConnection(dbConfig);
+        VehicleRepo postRepository = new PostgresVehicleRepo(connection);
+        VehicleService vehicleService = new VehicleService(postRepository);
+//        VehicleRepo MemoRepository = new MemoryVehicleRepo();
         VehicleController vehicleController = new VehicleController(vehicleService, creators, updaters);
         Menu vehicleMenu = new VehicleMenu(vehicleController, input);
 

@@ -6,6 +6,8 @@ out/
 .kotlin
 out
 .idea
+src/main/resources/config.properties
+src/main/java/notes
 
 =======
 target/
