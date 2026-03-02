@@ -5,5 +5,5 @@ import vehicle.Models.Vehicle;
 import java.util.Scanner;
 
 public interface VehicleUpdater {
-    public boolean updateVehicle(Vehicle vehicle, Scanner input);
+    public void updateVehicle(Vehicle vehicle, Scanner input);
 }

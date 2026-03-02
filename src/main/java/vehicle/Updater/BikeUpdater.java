@@ -17,23 +17,23 @@ public class BikeUpdater extends BaseUpdater {
     }
 
     @Override
-    public boolean handleSpecificMenu(Vehicle vehicle, Scanner input) {
+    public void handleSpecificMenu(Vehicle vehicle, Scanner input) {
         Bike bike = (Bike) vehicle;
         int choice = InputUtil.readPositiveInt(input, "Enter your choice");
-        if (choice < 5) return handleCommonMenu(vehicle, input, choice);
+        if (choice < 5) handleCommonMenu(vehicle, input, choice);
         else {
             switch (choice) {
                 case 5:
                     int capacity = InputUtil.readPositiveInt(input, "Enter new engine capacity");
                     bike.setEnginCapacity(capacity);
-                    return true;
+                    break;
                 case 6:
                     FuelType fuel = EnumUtil.selectEnum(input, FuelType.class, "Select new fuel type");
                     bike.setFuel(fuel);
-                    return true;
+                    break;
                 default:
                     System.out.println("Invalid choice.Please try again");
-                    return false;
+
             }
         }
     }

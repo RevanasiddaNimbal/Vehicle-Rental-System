@@ -13,11 +13,10 @@ public class VehicleService {
     }
 
     public boolean addVehicle(Vehicle vehicle) {
-        if (repository.findById(vehicle.getId()) != null) {
+        if (repository.save(vehicle))
+            return true;
+        else
             return false;
-        }
-        repository.save(vehicle);
-        return true;
     }
 
     public boolean updateVehicle(Vehicle vehicle) {

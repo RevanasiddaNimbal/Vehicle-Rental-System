@@ -86,7 +86,8 @@ public class VehicleController {
             System.out.println("Failed to Update Vehicle.");
             return;
         }
-        boolean update = updater.updateVehicle(vehicle, input);
+        updater.updateVehicle(vehicle, input);
+        boolean update = service.updateVehicle(vehicle);
         if (update)
             System.out.println("Vehicle updated successfully.");
         else System.out.println("Failed to Update Vehicle.");
