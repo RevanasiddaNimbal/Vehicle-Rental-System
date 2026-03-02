@@ -59,7 +59,7 @@ public class VehicleController {
 
         for (Vehicle v : service.getVehicles()) {
             System.out.printf(
-                    "%-10s %-15s %-12s ₹%-9.2f %-12s %-11s %-8s %-12s%n",
+                    "%-10s %-15s %-12s ₹%-9.2f %-12s %-11s %-11s %-12s%n",
                     v.getId(),
                     v.getBrand(),
                     v.getCategory(),

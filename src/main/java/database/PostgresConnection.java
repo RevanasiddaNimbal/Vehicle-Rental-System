@@ -1,27 +1,43 @@
 package database;
 
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import config.DbConfig;
 import exception.DataAccessException;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class PostgresConnection implements DatabaseConnection {
-    private final DbConfig config;
+    private final HikariDataSource ds;
 
     public PostgresConnection(DbConfig config) {
-        this.config = config;
+        this.ds = createDataSource(config);
+    }
+
+    private HikariDataSource createDataSource(DbConfig config) {
+        try {
+            HikariConfig hikariConfig = new HikariConfig();
+            hikariConfig.setPoolName("VehicleRentalPool");
+            hikariConfig.setJdbcUrl(config.get("db.url"));
+            hikariConfig.setUsername(config.get("db.username"));
+            hikariConfig.setPassword(config.get("db.password"));
+            hikariConfig.setMaximumPoolSize(10);
+            hikariConfig.setMinimumIdle(2);
+            hikariConfig.setIdleTimeout(30000);
+            hikariConfig.setConnectionTimeout(30000);
+            hikariConfig.setMaxLifetime(1800000);
+
+            return new HikariDataSource(hikariConfig);
+        } catch (Exception e) {
+            throw new DataAccessException("Failed to create datasource", e);
+        }
     }
 
     @Override
     public Connection getConnection() {
         try {
-            String url = config.get("db.url");
-            String username = config.get("db.username");
-            String password = config.get("db.password");
-
-            return DriverManager.getConnection(url, username, password);
+            return ds.getConnection();
         } catch (SQLException e) {
 //            e.printStackTrace();
             throw new DataAccessException("Failed to create database connection", e);

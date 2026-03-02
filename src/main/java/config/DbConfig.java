@@ -21,6 +21,7 @@ public class DbConfig {
             properties.load(input);
 
         } catch (Exception e) {
+
             throw new RuntimeException("Failed to load config.properties", e);
         }
     }

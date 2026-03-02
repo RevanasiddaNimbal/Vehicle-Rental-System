@@ -11,6 +11,7 @@ public class Main {
             app.start();
 
         } catch (Exception e) {
+            e.printStackTrace();
             System.err.println("Application failed to start: "
                     + e.getMessage());
             System.exit(1);

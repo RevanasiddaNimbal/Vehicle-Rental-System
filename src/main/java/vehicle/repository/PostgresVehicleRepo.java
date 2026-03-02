@@ -22,7 +22,7 @@ public class PostgresVehicleRepo implements VehicleRepo {
                 " engine_capacity, seating_capacity, fuel_type)" +
                 "VALUES ( ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection connection = databaseConnection.getConnection();
-             PreparedStatement ps = connection.prepareStatement(query)) {
+             PreparedStatement ps = connection.prepareStatement(query, new String[]{"id"})) {
             ps.setString(1, vehicle.getVehicle_type());
             ps.setString(2, vehicle.getBrand());
             ps.setString(3, vehicle.getCategory().name());
@@ -43,9 +43,16 @@ public class PostgresVehicleRepo implements VehicleRepo {
             else
                 ps.setNull(8, Types.VARCHAR);
 
-            return ps.executeUpdate() > 0;
+            int rows = ps.executeUpdate();
+            if (rows > 0) {
+                ResultSet id = ps.getGeneratedKeys();
+                if (id.next()) {
+                    vehicle.setId(id.getString("id"));
+                }
+            }
+            return rows > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
+//            e.printStackTrace();
             throw new DataAccessException("Failed to save vehicle", e);
         }
     }
@@ -61,13 +68,16 @@ public class PostgresVehicleRepo implements VehicleRepo {
                 String id = rs.getString("id");
                 String vehicleType = rs.getString("vehicle_type");
                 String brand = rs.getString("brand");
-                Category category = Category.valueOf(rs.getString("category"));
+                String categorystr = rs.getString("category");
+                Category category = (categorystr != null ? Category.valueOf(rs.getString("category")) : null);
                 double pricePerDay = rs.getDouble("price_per_day");
-                Status status = Status.valueOf(rs.getString("status"));
+                String statusStr = rs.getString("status");
+                Status status = (statusStr != null) ? Status.valueOf(rs.getString("status")) : null;
 
                 Integer engineCapacity = (Integer) rs.getObject("engine_capacity");
                 Integer seatingCapacity = (Integer) rs.getObject("seating_capacity");
-                FuelType fuelType = FuelType.valueOf(rs.getString("fuel_type"));
+                String fuel = rs.getString("fuel_type");
+                FuelType fuelType = fuel != null ? FuelType.valueOf(rs.getString("fuel_type")) : null;
 
                 Vehicle vehicle = null;
                 switch (vehicleType.toUpperCase()) {
@@ -78,7 +88,8 @@ public class PostgresVehicleRepo implements VehicleRepo {
                                 category,
                                 pricePerDay,
                                 fuelType,
-                                engineCapacity
+                                engineCapacity,
+                                status
                         );
                         break;
                     case "CAR":
@@ -88,7 +99,8 @@ public class PostgresVehicleRepo implements VehicleRepo {
                                 category,
                                 pricePerDay,
                                 seatingCapacity,
-                                fuelType
+                                fuelType,
+                                status
                         );
                         break;
 
@@ -98,7 +110,8 @@ public class PostgresVehicleRepo implements VehicleRepo {
                                 brand,
                                 category,
                                 pricePerDay,
-                                seatingCapacity
+                                seatingCapacity,
+                                status
                         );
                         break;
 

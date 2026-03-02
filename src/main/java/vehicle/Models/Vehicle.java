@@ -9,13 +9,17 @@ public abstract class Vehicle {
     protected Status status;
 
 
-    public Vehicle(String id, String brand, Category category, double pricePerDay) {
+    public Vehicle(String id, String brand, Category category, double pricePerDay, Status status) {
         this.id = id;
         this.brand = brand;
         this.category = category;
         this.pricePerDay = pricePerDay;
-        this.status = Status.AVAILABLE;
+        this.status = status;
 
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     public String getId() {

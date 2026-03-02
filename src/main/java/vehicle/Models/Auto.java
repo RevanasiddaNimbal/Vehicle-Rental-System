@@ -3,8 +3,8 @@ package vehicle.Models;
 public class Auto extends Vehicle {
     private int seatingCapacity;
 
-    public Auto(String id, String brand, Category category, double pricePerDay, int seatingCapacity) {
-        super(id, brand, category, pricePerDay);
+    public Auto(String id, String brand, Category category, double pricePerDay, int seatingCapacity, Status status) {
+        super(id, brand, category, pricePerDay, status);
         this.seatingCapacity = seatingCapacity;
         vehicle_type = "Auto";
     }
