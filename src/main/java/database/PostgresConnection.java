@@ -20,8 +20,6 @@ public class PostgresConnection implements DatabaseConnection {
             HikariConfig hikariConfig = new HikariConfig();
             hikariConfig.setPoolName("VehicleRentalPool");
             hikariConfig.setJdbcUrl(config.get("db.url"));
-            hikariConfig.setUsername(config.get("db.username"));
-            hikariConfig.setPassword(config.get("db.password"));
             hikariConfig.setMaximumPoolSize(10);
             hikariConfig.setMinimumIdle(2);
             hikariConfig.setIdleTimeout(30000);

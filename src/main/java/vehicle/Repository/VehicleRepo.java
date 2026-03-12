@@ -1,4 +1,4 @@
-package vehicle.repository;
+package vehicle.Repository;
 
 import vehicle.Models.Vehicle;
 

@@ -1,8 +1,13 @@
 package config;
 
-import UI.*;
+import UI.AuthMenu;
+import UI.Documentation;
+import UI.Menu;
 import application.Application;
-import database.PostgresConnection;
+import authentication.controller.AuthController;
+import authentication.factory.AuthStrategyFactory;
+import authentication.factory.MenuFactory;
+import authentication.service.AuthService;
 import vehicle.Controller.VehicleController;
 import vehicle.Creator.AutoCreator;
 import vehicle.Creator.BikeCreator;
@@ -12,13 +17,17 @@ import vehicle.Models.Auto;
 import vehicle.Models.Bike;
 import vehicle.Models.Car;
 import vehicle.Models.Vehicle;
+import vehicle.Repository.MemoryVehicleRepo;
+import vehicle.Repository.VehicleRepo;
 import vehicle.Service.VehicleService;
 import vehicle.Updater.AutoUpdater;
 import vehicle.Updater.BikeUpdater;
 import vehicle.Updater.CarUpdater;
 import vehicle.Updater.VehicleUpdater;
-import vehicle.repository.PostgresVehicleRepo;
-import vehicle.repository.VehicleRepo;
+import vehicleowner.Controller.VehicleOwnerController;
+import vehicleowner.Repository.MemoryVehicleOwnerRepo;
+import vehicleowner.Repository.VehicleOwnerRepo;
+import vehicleowner.Service.VehicleOwnerService;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -26,11 +35,10 @@ import java.util.Scanner;
 
 public class AppConfig {
     public static Application createApplication(Scanner input) {
+        // documentation layer.
+        Menu documentation = new Documentation();
 
-        // Documentation Layer
-        Menu documentation = new ShowDocumentation();
-
-        // Vehicle layer
+        // Vehicle layer.
         Map<Integer, VehicleCreator> creators = new HashMap<>();
         creators.put(1, new BikeCreator());
         creators.put(2, new CarCreator());
@@ -41,27 +49,22 @@ public class AppConfig {
         updaters.put(Car.class, new CarUpdater());
         updaters.put(Auto.class, new AutoUpdater());
 
-        DbConfig dbConfig = new DbConfig();
-        PostgresConnection connection = new PostgresConnection(dbConfig);
-        VehicleRepo postRepository = new PostgresVehicleRepo(connection);
-        VehicleService vehicleService = new VehicleService(postRepository);
-//        VehicleRepo MemoRepository = new MemoryVehicleRepo();
+        VehicleRepo vehicleRepo = new MemoryVehicleRepo();
+        VehicleService vehicleService = new VehicleService(vehicleRepo);
         VehicleController vehicleController = new VehicleController(vehicleService, creators, updaters);
-        Menu vehicleMenu = new VehicleMenu(vehicleController, input);
 
-        //Customer layer
-        Menu customerMenu = new CustomerMenu(input);
+        // Vehicle-Owner layer.
+        VehicleOwnerRepo ownerRepo = new MemoryVehicleOwnerRepo();
+        VehicleOwnerService ownerService = new VehicleOwnerService(ownerRepo);
+        VehicleOwnerController ownerController = new VehicleOwnerController(ownerService);
 
-        // Rental layer
-        Menu rentalMenu = new RentalMenu(input);
+        // AuthMenu layer.
+        AuthStrategyFactory authStrategyFactory = new AuthStrategyFactory(input, ownerService);
+        MenuFactory menuFactory = new MenuFactory(input, ownerController, vehicleController);
+        AuthService authService = new AuthService(authStrategyFactory);
+        AuthController authController = new AuthController(input, authService, menuFactory);
+        Menu authMenu = new AuthMenu(input, authController);
 
-        // Storing in HashMap
-        Map<Integer, Menu> manus = new HashMap<>();
-        manus.put(1, documentation);
-        manus.put(2, vehicleMenu);
-        manus.put(3, customerMenu);
-        manus.put(4, rentalMenu);
-
-        return new Application(input, manus);
+        return new Application(input, documentation, authMenu);
     }
 }

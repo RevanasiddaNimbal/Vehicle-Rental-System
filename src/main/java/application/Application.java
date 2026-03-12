@@ -1,18 +1,20 @@
 package application;
 
 import UI.Menu;
+import authentication.model.UserRole;
 import util.InputUtil;
 
-import java.util.Map;
 import java.util.Scanner;
 
 public class Application {
     private final Scanner input;
-    private final Map<Integer, Menu> menu;
+    private final Menu documentation;
+    private final Menu authMenu;
 
-    public Application(Scanner input, Map<Integer, Menu> menu) {
+    public Application(Scanner input, Menu documentation, Menu authMenu) {
         this.input = input;
-        this.menu = menu;
+        this.documentation = documentation;
+        this.authMenu = authMenu;
     }
 
     public void start() {
@@ -23,11 +25,24 @@ public class Application {
         while (true) {
             showMainMenu();
             int choice = InputUtil.readPositiveInt(input, "Enter your choice");
-
-            if (choice == 0) return;
-            Menu selected = menu.get(choice);
-            if (selected != null) selected.show();
-            else System.out.println("Invalid choice.Please try again.");
+            switch (choice) {
+                case 1:
+                    documentation.show(null);
+                    break;
+                case 2:
+                    authMenu.show(UserRole.ADMIN);
+                    break;
+                case 3:
+                    authMenu.show(UserRole.OWNER);
+                    break;
+                case 4:
+                    authMenu.show(UserRole.CUSTOMER);
+                    break;
+                case 0:
+                    System.exit(0);
+                default:
+                    System.out.println("Invalid choice. Try again");
+            }
         }
     }
 
@@ -36,9 +51,9 @@ public class Application {
         System.out.println("-------------------------");
 
         System.out.println("1. DOCUMENTATION SECTION.");
-        System.out.println("2. VEHICLE MANAGEMENT SECTION.");
-        System.out.println("3. CUSTOMER MANAGEMENT SECTION.");
-        System.out.println("4. RENTAL MANAGEMENT SECTION.");
+        System.out.println("2. ADMIN PANEL.");
+        System.out.println("3. VEHICLE-OWNER PANEL.");
+        System.out.println("4. CUSTOMER PANEL.");
         System.out.println("0. EXIT");
 
     }

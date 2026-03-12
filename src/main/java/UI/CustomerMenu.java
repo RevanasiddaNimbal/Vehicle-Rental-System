@@ -1,6 +1,7 @@
 package UI;
 
 
+import authentication.model.UserRole;
 import util.InputUtil;
 
 import java.util.Scanner;
@@ -13,17 +14,16 @@ public class CustomerMenu implements Menu {
     }
 
     @Override
-    public void show() {
+    public void show(UserRole role) {
         int choice;
         while (true) {
-
-            System.out.println("\n----- CUSTOMER MANAGEMENT -----");
-            System.out.println("1. Register New Customer");
-            System.out.println("2. View All Customers");
-            System.out.println("3. Search Customer");
-            System.out.println("4. Update Customer");
-            System.out.println("5. Delete Customer");
-            System.out.println("0. Back");
+            System.out.println("\n========= CUSTOMER PANEL ==============");
+            System.out.println("1. View Available Vehicles");
+            System.out.println("2. Rent a Vehicle");
+            System.out.println("3. Return a Vehicle");
+            System.out.println("4. My Active Rental");
+            System.out.println("5. My Rental History");
+            System.out.println("0. Logout");
 
             choice = InputUtil.readPositiveInt(input, "Enter your choice");
 
@@ -39,6 +39,7 @@ public class CustomerMenu implements Menu {
                 case 5:
                     break;
                 case 0:
+                    System.out.println("Logged out from Customer panel.");
                     return;
                 default:
                     System.out.println("Invalid choice. Try again.");

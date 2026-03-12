@@ -1,8 +1,10 @@
 package UI;
 
-public class ShowDocumentation implements Menu {
+import authentication.model.UserRole;
 
-    public void show() {
+public class Documentation implements Menu {
+
+    public void show(UserRole role) {
 
         System.out.println("\n====================================================");
         System.out.println("      VEHICLE RENTAL SYSTEM -DOCUMENTATION    ");

@@ -1,7 +1,7 @@
 package vehicle.Service;
 
 import vehicle.Models.Vehicle;
-import vehicle.repository.VehicleRepo;
+import vehicle.Repository.VehicleRepo;
 
 import java.util.List;
 
@@ -30,8 +30,7 @@ public class VehicleService {
         if (repository.findById(vehicle.getId()) == null) {
             return false;
         }
-        repository.deleteById(vehicle.getId());
-        return true;
+        return repository.deleteById(vehicle.getId());
     }
 
     public List<Vehicle> getVehicles() {

@@ -1,12 +1,12 @@
-package vehicle.repository;
+package vehicle.Repository;
 
 import database.DatabaseConnection;
 import exception.DataAccessException;
+import vehicle.Factory.VehicleFactory;
 import vehicle.Models.Category;
 import vehicle.Models.FuelType;
 import vehicle.Models.Status;
 import vehicle.Models.Vehicle;
-import vehicle.factory.VehicleFactory;
 
 import java.sql.*;
 import java.util.ArrayList;

@@ -1,4 +1,4 @@
-package vehicle.factory;
+package vehicle.Factory;
 
 import vehicle.Models.*;
 
