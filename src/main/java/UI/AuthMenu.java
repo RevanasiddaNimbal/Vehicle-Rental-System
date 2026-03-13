@@ -17,24 +17,29 @@ public class AuthMenu implements Menu {
     }
 
     public void show(UserRole role) {
-        System.out.println("----- Authentication -----");
-        System.out.println("1. Login");
-        if (!role.name().equals("ADMIN"))
-            System.out.println("2. Register");
-        System.out.println("0. back");
-        int choice = InputUtil.readPositiveInt(input, "Enter you choice");
-
-        switch (choice) {
-            case 1:
-                controller.login(role);
-                break;
-            case 2:
-                controller.register(role);
-                break;
-            case 0:
-                return;
-            default:
-                System.out.println("Invalid choice");
+        while (true) {
+            System.out.println("----- Authentication -----");
+            System.out.println("1. Login");
+            if (!role.name().equals("ADMIN"))
+                System.out.println("2. Register");
+            System.out.println("0. back");
+            int choice = InputUtil.readPositiveInt(input, "Enter you choice");
+            if (role.name().equals("ADMIN") && choice == 2) {
+                System.out.println("Invalid choice.");
+                continue;
+            }
+            switch (choice) {
+                case 1:
+                    controller.login(role);
+                    break;
+                case 2:
+                    controller.register(role);
+                    break;
+                case 0:
+                    return;
+                default:
+                    System.out.println("Invalid choice");
+            }
         }
     }
 }

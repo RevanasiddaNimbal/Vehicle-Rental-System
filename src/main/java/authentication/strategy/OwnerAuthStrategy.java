@@ -9,7 +9,7 @@ import vehicleowner.Service.VehicleOwnerService;
 
 import java.util.Scanner;
 
-public class OwnerAuthStrategy implements AuthStrategy {
+public class OwnerAuthStrategy implements AuthLoginStretegy, AuthRegisterStretegy {
     private final VehicleOwnerService service;
     private final Scanner input;
 
@@ -50,8 +50,11 @@ public class OwnerAuthStrategy implements AuthStrategy {
 
             System.out.println("Login Successful.");
             return owner;
+        } else if (owner == null) {
+            System.out.println("Vehicle owner not found.Please register.");
+            return null;
         } else {
-            System.out.println("Invalid credentials.");
+            System.out.println("Invalid email and password.");
             return null;
         }
     }

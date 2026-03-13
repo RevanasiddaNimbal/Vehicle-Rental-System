@@ -2,6 +2,6 @@ package authentication.strategy;
 
 import authentication.model.AuthUser;
 
-public interface AuthStrategy extends AuthLoginStretegy {
+public interface AuthRegisterStretegy {
     AuthUser register();
 }

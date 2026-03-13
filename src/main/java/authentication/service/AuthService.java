@@ -3,7 +3,8 @@ package authentication.service;
 import authentication.factory.AuthStrategyFactory;
 import authentication.model.AuthUser;
 import authentication.model.UserRole;
-import authentication.strategy.AuthStrategy;
+import authentication.strategy.AuthLoginStretegy;
+import authentication.strategy.AuthRegisterStretegy;
 
 public class AuthService {
     private AuthStrategyFactory factory;
@@ -14,14 +15,14 @@ public class AuthService {
 
     public AuthUser register(UserRole role) {
 
-        AuthStrategy strategy = factory.getStrategy(role);
+        AuthRegisterStretegy strategy = factory.getRegisterStrategy(role);
 
         return strategy.register();
     }
 
     public AuthUser login(UserRole role) {
 
-        AuthStrategy strategy = factory.getStrategy(role);
+        AuthLoginStretegy strategy = factory.getLoginStrategy(role);
 
         return strategy.login();
     }
