@@ -7,7 +7,7 @@ import vehicleowner.Controller.VehicleOwnerController;
 
 import java.util.Scanner;
 
-public class VehicleOwnerMenu implements Menu {
+public class VehicleOwnerMenu implements UsersMenu {
     private final Scanner input;
     private final VehicleController vehicleController;
     private final VehicleOwnerController ownerController;
@@ -19,7 +19,7 @@ public class VehicleOwnerMenu implements Menu {
     }
 
     @Override
-    public void show(UserRole role) {
+    public void show(UserRole role, String userId) {
         int choice;
         while (true) {
             System.out.println("\n========= VEHICLE OWNER PANEL =============");
@@ -36,7 +36,7 @@ public class VehicleOwnerMenu implements Menu {
 
             switch (choice) {
                 case 1:
-                    vehicleController.addVehicle(input);
+                    vehicleController.addVehicle(input, userId);
                     break;
                 case 2:
                     break;
@@ -51,7 +51,7 @@ public class VehicleOwnerMenu implements Menu {
                 case 6:
                     break;
                 case 7:
-                    ownerController.updateVehicleOwner(input);
+                    ownerController.updateVehicleOwner(input, userId);
                     break;
                 case 0:
                     System.out.println("Logged out from Owner panel.");

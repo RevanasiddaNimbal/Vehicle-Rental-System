@@ -1,0 +1,138 @@
+package customer.controller;
+
+import customer.model.Customer;
+import customer.service.CustomerService;
+import util.InputUtil;
+
+import java.util.Scanner;
+
+public class CustomerController {
+
+    private final CustomerService service;
+
+    public CustomerController(CustomerService service) {
+        this.service = service;
+    }
+
+    public void deactivateCustomer(Scanner input) {
+        String id = InputUtil.readString(input, "Enter Customer ID");
+
+        if (service.getCustomerById(id) == null) {
+            System.out.println("Customer ID Not Found");
+            return;
+        }
+
+        if (service.deactivateCustomerById(id)) {
+            System.out.println("Blocked Customer Successfully.");
+        } else {
+            System.out.println("Failed to block Customer.");
+        }
+    }
+
+    public void activateCustomer(Scanner input) {
+        String id = InputUtil.readString(input, "Enter Customer ID");
+
+        if (service.getCustomerById(id) == null) {
+            System.out.println("Customer ID Not Found");
+            return;
+        }
+
+        if (service.activateCustomerById(id)) {
+            System.out.println("Activated Customer Successfully.");
+        } else {
+            System.out.println("Failed to activate Customer.");
+        }
+    }
+
+    public void updateCustomer(Scanner input, String Id) {
+        Customer customer = service.getCustomerById(Id);
+
+        if (customer == null) {
+            System.out.println("Customer ID Not Found");
+            return;
+        }
+
+        System.out.println("----Update Customer----");
+        System.out.println("1. Name");
+        System.out.println("2. Email address");
+        System.out.println("3. Phone number");
+        System.out.println("4. Address");
+        System.out.println("5. Driving License Number");
+        System.out.println("6. Password");
+        System.out.println("0. Back");
+
+        int choice = InputUtil.readPositiveInt(input, "Enter choice");
+
+        switch (choice) {
+            case 1:
+                String name = InputUtil.readString(input, "Enter new full name");
+                customer.setName(name);
+                break;
+
+            case 2:
+                String email = InputUtil.readString(input, "Enter new email address");
+                customer.setEmail(email);
+                break;
+
+            case 3:
+                String phone = InputUtil.readString(input, "Enter new phone number");
+                customer.setPhone(phone);
+                break;
+
+            case 4:
+                String address = InputUtil.readString(input, "Enter new address");
+                customer.setAddress(address);
+                break;
+
+            case 5:
+                String license = InputUtil.readString(input, "Enter new Driving License Number");
+                customer.setDrivingLicenseNumber(license);
+                break;
+            case 6:
+                String password = InputUtil.readValidPassword(input, "Enter new password");
+                customer.setPassword(password);
+                break;
+            case 0:
+                return;
+
+            default:
+                System.out.println("Invalid choice");
+                return;
+        }
+
+        if (service.updateCustomer(customer)) {
+            System.out.println("Customer Updated Successfully");
+        } else {
+            System.out.println("Failed to update Customer.");
+        }
+    }
+
+    public void viewCustomers() {
+        if (service.getCustomers().isEmpty()) {
+            System.out.println("There are no customers available.");
+            return;
+        }
+
+        System.out.println("---------------------------------------------------------------------------------------------------------------------");
+        System.out.printf(
+                "%-12s %-15s %-25s %-15s %-20s %-20s %-8s%n",
+                "ID", "Name", "Email", "Phone", "Address", "License No", "Active"
+        );
+        System.out.println("---------------------------------------------------------------------------------------------------------------------");
+
+        for (Customer customer : service.getCustomers()) {
+            System.out.printf(
+                    "%-12s %-15s %-25s %-15s %-20s %-20s %-8s%n",
+                    customer.getId(),
+                    customer.getName(),
+                    customer.getEmail(),
+                    customer.getPhone(),
+                    customer.getAddress(),
+                    customer.getDrivingLicenseNumber(),
+                    customer.isActive() ? "Yes" : "No"
+            );
+        }
+
+        System.out.println("---------------------------------------------------------------------------------------------------------------------");
+    }
+}

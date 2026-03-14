@@ -13,11 +13,9 @@ public class AuthService {
         this.factory = factory;
     }
 
-    public AuthUser register(UserRole role) {
-
+    public void register(UserRole role) {
         AuthRegisterStretegy strategy = factory.getRegisterStrategy(role);
-
-        return strategy.register();
+        strategy.register();
     }
 
     public AuthUser login(UserRole role) {
@@ -25,6 +23,11 @@ public class AuthService {
         AuthLoginStretegy strategy = factory.getLoginStrategy(role);
 
         return strategy.login();
+    }
+
+    public void resetPassword(UserRole role) {
+        AuthLoginStretegy strategy = factory.getLoginStrategy(role);
+        strategy.resetPassword();
     }
 }
 

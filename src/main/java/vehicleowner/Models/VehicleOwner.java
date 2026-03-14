@@ -11,14 +11,14 @@ public class VehicleOwner implements AuthUser {
     private String password;
     private boolean active;
 
-    public VehicleOwner(String id, String name, String email, String phone, String password, String address) {
+    public VehicleOwner(String id, String name, String email, String phone, String password, String address, boolean active) {
         this.id = id;
         this.name = name;
         this.email = email;
         this.phone = phone;
         this.password = password;
         this.address = address;
-        this.active = true;
+        this.active = active;
     }
 
     public void activate() {
@@ -27,6 +27,10 @@ public class VehicleOwner implements AuthUser {
 
     public void deactivate() {
         this.active = false;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     public String getId() {

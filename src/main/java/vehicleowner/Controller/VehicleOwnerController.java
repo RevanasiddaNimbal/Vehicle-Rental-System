@@ -20,7 +20,7 @@ public class VehicleOwnerController {
             return;
         }
 
-        if (service.deactivateVehicleOwner(id)) {
+        if (service.deactivateOwnerById(id)) {
             System.out.println("Blocked Vehicle Owner Successfully.");
         } else {
             System.out.println("Failed to block vehicle Owner.");
@@ -33,16 +33,15 @@ public class VehicleOwnerController {
             System.out.println("Vehicle Owner ID Not Found");
             return;
         }
-        if (service.activateVehicleOwner(id)) {
+        if (service.activateOwnerById(id)) {
             System.out.println("activated Vehicle Owner Successfully.");
         } else {
             System.out.println("Failed to activate vehicle Owner.");
         }
     }
 
-    public void updateVehicleOwner(Scanner input) {
-        String id = InputUtil.readString(input, "Enter Vehicle Owner ID");
-        VehicleOwner vehicleOwner = service.getVehicleOwnerById(id);
+    public void updateVehicleOwner(Scanner input, String ownerId) {
+        VehicleOwner vehicleOwner = service.getVehicleOwnerById(ownerId);
         if (vehicleOwner == null) {
             System.out.println("Vehicle Owner ID Not Found");
             return;
@@ -53,6 +52,7 @@ public class VehicleOwnerController {
         System.out.println("2. Email address");
         System.out.println("3. Phone number");
         System.out.println("4. Address");
+        System.out.println("5. Password");
         System.out.println("0. back");
         int choice = InputUtil.readPositiveInt(input, "Enter choice");
         switch (choice) {
@@ -61,16 +61,20 @@ public class VehicleOwnerController {
                 vehicleOwner.setName(name);
                 break;
             case 2:
-                String email = InputUtil.readString(input, "Enter new email address");
+                String email = InputUtil.readValidEmail(input, "Enter new email address");
                 vehicleOwner.setEmail(email);
                 break;
             case 3:
-                String phone = InputUtil.readString(input, "Enter new phone number");
+                String phone = InputUtil.readValidPhone(input, "Enter new phone number");
                 vehicleOwner.setPhone(phone);
                 break;
             case 4:
                 String Address = InputUtil.readString(input, "Enter new address");
                 vehicleOwner.setAddress(Address);
+                break;
+            case 5:
+                String password = InputUtil.readValidPassword(input, "Enter new password");
+                vehicleOwner.setPassword(password);
                 break;
             case 0:
                 return;
@@ -92,16 +96,16 @@ public class VehicleOwnerController {
             return;
         }
 
-        System.out.println("---------------------------------------------------------------");
+        System.out.println("---------------------------------------------------------------------------------------------------------------");
         System.out.printf(
-                "%-12s %-15s %-25s %-15s %-20s %-8s%n",
+                "%-12s %-15s %-25s %-15s %-26s %-8s%n",
                 "ID", "Name", "Email", "Phone", "Address", "Active"
         );
-        System.out.println("---------------------------------------------------------------");
+        System.out.println("---------------------------------------------------------------------------------------------------------------");
 
         for (VehicleOwner owner : service.getVehicleOwners()) {
             System.out.printf(
-                    "%-12s %-15s %-25s %-15s %-20s %-8s%n",
+                    "%-12s %-15s %-25s %-15s %-26s %-8s%n",
                     owner.getId(),
                     owner.getName(),
                     owner.getEmail(),
@@ -111,7 +115,7 @@ public class VehicleOwnerController {
             );
         }
 
-        System.out.println("---------------------------------------------------------------");
+        System.out.println("---------------------------------------------------------------------------------------------------------------");
     }
 
 }

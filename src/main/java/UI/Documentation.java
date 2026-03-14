@@ -2,8 +2,7 @@ package UI;
 
 import authentication.model.UserRole;
 
-public class Documentation implements Menu {
-
+public class Documentation implements UserRoleMenu {
     public void show(UserRole role) {
 
         System.out.println("\n====================================================");

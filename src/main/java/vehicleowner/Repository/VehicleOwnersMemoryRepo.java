@@ -7,7 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class MemoryVehicleOwnerRepo implements VehicleOwnerRepo {
+public class VehicleOwnersMemoryRepo implements VehicleOwnerRepo {
     private final Map<String, VehicleOwner> Storage = new HashMap<>();
 
     @Override
@@ -18,6 +18,9 @@ public class MemoryVehicleOwnerRepo implements VehicleOwnerRepo {
 
     @Override
     public boolean update(VehicleOwner Owner) {
+        if (Storage.get(Owner.getId()) == null) {
+            return false;
+        }
         Storage.put(Owner.getId(), Owner);
         return true;
     }

@@ -14,6 +14,11 @@ public class AdminMemoryRepo implements AdminRepo {
     }
 
     @Override
+    public Admin findById(String id) {
+        return Storage.get(id);
+    }
+
+    @Override
     public Admin findByEmail(String email) {
         for (Admin admin : Storage.values()) {
             if (admin.getEmail().equals(email)) {
@@ -21,5 +26,14 @@ public class AdminMemoryRepo implements AdminRepo {
             }
         }
         return null;
+    }
+
+    @Override
+    public boolean update(Admin admin) {
+        if (Storage.get(admin.getId()) == null) {
+            return false;
+        }
+        Storage.put(admin.getId(), admin);
+        return true;
     }
 }

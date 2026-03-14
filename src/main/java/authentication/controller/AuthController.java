@@ -25,8 +25,12 @@ public class AuthController {
     public void login(UserRole role) {
         AuthUser user = service.login(role);
         if (user != null) {
-            menuFactory.showMenu(role);
+            menuFactory.showMenu(role, user.getId());
         }
+    }
+
+    public void resetPassword(UserRole role) {
+        service.resetPassword(role);
     }
 
 }

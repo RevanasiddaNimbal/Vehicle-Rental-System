@@ -7,15 +7,15 @@ public abstract class Vehicle {
     protected Category category;
     protected double pricePerDay;
     protected Status status;
+    protected String ownerId;
 
-
-    public Vehicle(String id, String brand, Category category, double pricePerDay, Status status) {
+    public Vehicle(String id, String brand, Category category, double pricePerDay, Status status, String ownerId) {
         this.id = id;
         this.brand = brand;
         this.category = category;
         this.pricePerDay = pricePerDay;
         this.status = status;
-
+        this.ownerId = ownerId;
     }
 
     public void setId(String id) {
@@ -72,5 +72,9 @@ public abstract class Vehicle {
 
     public String getVehicle_type() {
         return vehicle_type;
+    }
+
+    public String getOwnerId() {
+        return ownerId;
     }
 }

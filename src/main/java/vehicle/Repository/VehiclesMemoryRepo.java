@@ -7,7 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class MemoryVehicleRepo implements VehicleRepo {
+public class VehiclesMemoryRepo implements VehicleRepo {
     Map<String, Vehicle> Storage = new HashMap<String, Vehicle>();
 
     @Override

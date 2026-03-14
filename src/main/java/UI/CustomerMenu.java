@@ -2,19 +2,22 @@ package UI;
 
 
 import authentication.model.UserRole;
+import customer.controller.CustomerController;
 import util.InputUtil;
 
 import java.util.Scanner;
 
-public class CustomerMenu implements Menu {
+public class CustomerMenu implements UsersMenu {
     private final Scanner input;
+    private final CustomerController customerController;
 
-    public CustomerMenu(Scanner input) {
+    public CustomerMenu(Scanner input, CustomerController customerController) {
         this.input = input;
+        this.customerController = customerController;
     }
 
     @Override
-    public void show(UserRole role) {
+    public void show(UserRole role, String customerId) {
         int choice;
         while (true) {
             System.out.println("\n========= CUSTOMER PANEL ==============");
@@ -23,6 +26,7 @@ public class CustomerMenu implements Menu {
             System.out.println("3. Return a Vehicle");
             System.out.println("4. My Active Rental");
             System.out.println("5. My Rental History");
+            System.out.println("6. Update My Account");
             System.out.println("0. Logout");
 
             choice = InputUtil.readPositiveInt(input, "Enter your choice");
@@ -37,6 +41,9 @@ public class CustomerMenu implements Menu {
                 case 4:
                     break;
                 case 5:
+                    break;
+                case 6:
+                    customerController.updateCustomer(input, customerId);
                     break;
                 case 0:
                     System.out.println("Logged out from Customer panel.");

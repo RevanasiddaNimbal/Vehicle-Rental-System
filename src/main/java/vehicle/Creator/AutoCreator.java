@@ -10,8 +10,8 @@ import java.util.Scanner;
 
 public class AutoCreator extends BaseCreator {
     @Override
-    public Vehicle createSpecificVehicle(String id, String brand, Category category, Double price, Status status, Scanner input) {
+    public Vehicle createSpecificVehicle(String id, String brand, Category category, Double price, Status status, Scanner input, String ownerId) {
         int capacity = InputUtil.readPositiveInt(input, "Enter Seating Capacity");
-        return new Auto(id, brand, category, price, capacity, status);
+        return new Auto(id, brand, category, price, capacity, status, ownerId);
     }
 }

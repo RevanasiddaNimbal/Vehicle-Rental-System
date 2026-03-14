@@ -10,6 +10,18 @@ public class AdminService {
         this.repository = repository;
     }
 
+    public boolean updateAdmin(Admin admin) {
+        if (repository.findById(admin.getId()) == null) {
+            return false;
+        }
+        return repository.update(admin);
+
+    }
+
+    public Admin getAdminById(String id) {
+        return repository.findById(id);
+    }
+
     public Admin getAdminByEmail(String email) {
         return repository.findByEmail(email);
     }

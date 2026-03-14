@@ -27,14 +27,14 @@ public class VehicleOwnerService {
         return repository.update(vehicleOwner);
     }
 
-    public boolean deactivateVehicleOwner(String id) {
+    public boolean deactivateOwnerById(String id) {
         if (repository.findById(id) == null) {
             return false;
         }
         return repository.deactivateById(id);
     }
 
-    public boolean activateVehicleOwner(String id) {
+    public boolean activateOwnerById(String id) {
         if (repository.findById(id) == null) {
             return false;
         }

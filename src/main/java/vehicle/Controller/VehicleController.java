@@ -23,7 +23,7 @@ public class VehicleController {
         this.updaters = updaters;
     }
 
-    public void addVehicle(Scanner input) {
+    public void addVehicle(Scanner input, String ownerId) {
         System.out.println("\n-----Select Vehicle Type-----");
         System.out.println("1. Bike");
         System.out.println("2. Car");
@@ -35,7 +35,7 @@ public class VehicleController {
             return;
         }
         String id = IdGenerator.generateVehicleId();
-        Vehicle vehicle = creator.createVehicle(id, input);
+        Vehicle vehicle = creator.createVehicle(id, input, ownerId);
         if (service.addVehicle(vehicle)) {
             System.out.println("Vehicle added successfully.");
             System.out.println("Vehicle ID: " + vehicle.getId());

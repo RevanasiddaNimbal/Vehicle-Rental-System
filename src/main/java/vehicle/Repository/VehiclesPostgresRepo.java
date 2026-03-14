@@ -12,10 +12,10 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PostgresVehicleRepo implements VehicleRepo {
+public class VehiclesPostgresRepo implements VehicleRepo {
     private final DatabaseConnection databaseConnection;
 
-    public PostgresVehicleRepo(DatabaseConnection databaseConnection) {
+    public VehiclesPostgresRepo(DatabaseConnection databaseConnection) {
         this.databaseConnection = databaseConnection;
     }
 
@@ -23,11 +23,11 @@ public class PostgresVehicleRepo implements VehicleRepo {
     public boolean save(Vehicle vehicle) {
         String query = "INSERT INTO vehicles" +
                 "(vehicle_type, brand, category, price_per_day, status," +
-                " engine_capacity, seating_capacity, fuel_type)" +
-                "VALUES ( ?, ?, ?, ?, ?, ?, ?, ?)";
+                " engine_capacity, seating_capacity, fuel_type,owner_temp_id)" +
+                "VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection connection = databaseConnection.getConnection();
              PreparedStatement ps = connection.prepareStatement(query, new String[]{"id"})) {
-            setDbData(vehicle, ps);
+            setDataForSave(vehicle, ps);
             int rows = ps.executeUpdate();
             if (rows > 0) {
                 ResultSet id = ps.getGeneratedKeys();
@@ -127,8 +127,9 @@ public class PostgresVehicleRepo implements VehicleRepo {
 
             String fuel = rs.getString("fuel_type");
             FuelType fuelType = fuel != null ? FuelType.valueOf(fuel) : null;
+            String ownerId = rs.getString("owner_temp_id");
 
-            return VehicleFactory.createVehicle(vehicleType, vehicleId, brand, category, pricePerDay, status, engineCapacity, seatingCapacity, fuelType);
+            return VehicleFactory.createVehicle(vehicleType, vehicleId, brand, category, pricePerDay, status, engineCapacity, seatingCapacity, fuelType, ownerId);
 
 
         } catch (SQLException e) {
@@ -142,6 +143,16 @@ public class PostgresVehicleRepo implements VehicleRepo {
             ps.setString(9, vehicle.getId());
         } catch (SQLException e) {
             throw new DataAccessException("Failed to update vehicle", e);
+        }
+    }
+
+    private void setDataForSave(Vehicle vehicle, PreparedStatement ps) {
+        try {
+            setDbData(vehicle, ps);
+            ps.setString(9, vehicle.getOwnerId());
+
+        } catch (SQLException e) {
+            throw new DataAccessException("Failed to save vehicle", e);
         }
     }
 

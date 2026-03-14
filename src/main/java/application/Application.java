@@ -1,6 +1,6 @@
 package application;
 
-import UI.Menu;
+import UI.UserRoleMenu;
 import authentication.model.UserRole;
 import util.InputUtil;
 
@@ -8,10 +8,10 @@ import java.util.Scanner;
 
 public class Application {
     private final Scanner input;
-    private final Menu documentation;
-    private final Menu authMenu;
+    private final UserRoleMenu documentation;
+    private final UserRoleMenu authMenu;
 
-    public Application(Scanner input, Menu documentation, Menu authMenu) {
+    public Application(Scanner input, UserRoleMenu documentation, UserRoleMenu authMenu) {
         this.input = input;
         this.documentation = documentation;
         this.authMenu = authMenu;
