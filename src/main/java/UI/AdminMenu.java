@@ -4,8 +4,8 @@ import admin.controller.AdminController;
 import authentication.model.UserRole;
 import customer.controller.CustomerController;
 import util.InputUtil;
-import vehicle.Controller.VehicleController;
-import vehicleowner.Controller.VehicleOwnerController;
+import vehicle.controller.VehicleController;
+import vehicleowner.controller.VehicleOwnerController;
 
 import java.util.Scanner;
 

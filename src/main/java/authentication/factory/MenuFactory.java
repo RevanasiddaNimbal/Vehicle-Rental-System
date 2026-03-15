@@ -7,8 +7,8 @@ import UI.VehicleOwnerMenu;
 import admin.controller.AdminController;
 import authentication.model.UserRole;
 import customer.controller.CustomerController;
-import vehicle.Controller.VehicleController;
-import vehicleowner.Controller.VehicleOwnerController;
+import vehicle.controller.VehicleController;
+import vehicleowner.controller.VehicleOwnerController;
 
 import java.util.Scanner;
 

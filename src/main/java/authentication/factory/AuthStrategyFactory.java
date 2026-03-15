@@ -5,7 +5,7 @@ import authentication.model.UserRole;
 import authentication.service.OtpService;
 import authentication.strategy.*;
 import customer.service.CustomerService;
-import vehicleowner.Service.VehicleOwnerService;
+import vehicleowner.service.VehicleOwnerService;
 
 import java.util.Scanner;
 

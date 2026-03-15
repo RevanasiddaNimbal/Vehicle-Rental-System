@@ -6,8 +6,8 @@ import util.IdGenerator;
 import util.InputUtil;
 import util.OtpUtil;
 import util.PasswordUtil;
-import vehicleowner.Models.VehicleOwner;
-import vehicleowner.Service.VehicleOwnerService;
+import vehicleowner.models.VehicleOwner;
+import vehicleowner.service.VehicleOwnerService;
 
 import java.util.Scanner;
 
