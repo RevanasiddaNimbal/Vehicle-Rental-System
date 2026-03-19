@@ -23,7 +23,7 @@ public class VehiclesPostgresRepo implements VehicleRepo {
     public boolean save(Vehicle vehicle) {
         String query = "INSERT INTO vehicles" +
                 "(vehicle_type, brand, category, price_per_day, status," +
-                " engine_capacity, seating_capacity, fuel_type,owner_temp_id)" +
+                " engine_capacity, seating_capacity, fuel_type,owner_id)" +
                 "VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection connection = databaseConnection.getConnection();
              PreparedStatement ps = connection.prepareStatement(query, new String[]{"id"})) {
@@ -80,6 +80,52 @@ public class VehiclesPostgresRepo implements VehicleRepo {
     }
 
     @Override
+    public List<Vehicle> findByOwnerId(String ownerId) {
+
+        String query = "SELECT * FROM vehicles WHERE owner_id = ?";
+        List<Vehicle> vehicles = new ArrayList<>();
+
+        try (Connection connection = databaseConnection.getConnection();
+             PreparedStatement ps = connection.prepareStatement(query)) {
+
+            ps.setString(1, ownerId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    vehicles.add(readDbResult(rs));
+                }
+            }
+
+        } catch (SQLException e) {
+            throw new DataAccessException("Failed to find vehicles by owner", e);
+        }
+
+        return vehicles;
+    }
+
+    @Override
+    public List<Vehicle> findByStatus(Status status) {
+        String query = "SELECT * FROM vehicles WHERE status = ?";
+        List<Vehicle> vehicles = new ArrayList<>();
+
+        try (Connection connection = databaseConnection.getConnection();
+             PreparedStatement ps = connection.prepareStatement(query)) {
+
+            ps.setString(1, status.name());
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    vehicles.add(readDbResult(rs));
+                }
+            }
+
+        } catch (SQLException e) {
+            throw new DataAccessException("Failed to find vehicles by status", e);
+        }
+
+        return vehicles;
+    }
+
+    @Override
     public boolean deleteById(String id) {
         String query = "DELETE FROM vehicles WHERE id = ?";
         try (Connection connection = databaseConnection.getConnection();
@@ -108,6 +154,7 @@ public class VehiclesPostgresRepo implements VehicleRepo {
 
     }
 
+
     private Vehicle readDbResult(ResultSet rs) {
         try {
             String vehicleId = rs.getString("id");
@@ -127,7 +174,7 @@ public class VehiclesPostgresRepo implements VehicleRepo {
 
             String fuel = rs.getString("fuel_type");
             FuelType fuelType = fuel != null ? FuelType.valueOf(fuel) : null;
-            String ownerId = rs.getString("owner_temp_id");
+            String ownerId = rs.getString("owner_id");
 
             return VehicleFactory.createVehicle(vehicleType, vehicleId, brand, category, pricePerDay, status, engineCapacity, seatingCapacity, fuelType, ownerId);
 

@@ -1,16 +1,20 @@
 package vehicleowner.controller;
 
+import UI.UserPrinter;
 import util.InputUtil;
 import vehicleowner.models.VehicleOwner;
 import vehicleowner.service.VehicleOwnerService;
 
+import java.util.List;
 import java.util.Scanner;
 
 public class VehicleOwnerController {
     private final VehicleOwnerService service;
+    private final UserPrinter<VehicleOwner> printer;
 
-    public VehicleOwnerController(VehicleOwnerService service) {
+    public VehicleOwnerController(VehicleOwnerService service, UserPrinter<VehicleOwner> printer) {
         this.service = service;
+        this.printer = printer;
     }
 
     public void deactivateVehicleOwner(Scanner input) {
@@ -91,31 +95,11 @@ public class VehicleOwnerController {
     }
 
     public void viewOwners() {
-        if (service.getVehicleOwners().isEmpty()) {
+        List<VehicleOwner> owners = service.getVehicleOwners();
+        if (owners.isEmpty()) {
             System.out.println("There are no owners available.");
             return;
         }
-
-        System.out.println("---------------------------------------------------------------------------------------------------------------");
-        System.out.printf(
-                "%-12s %-15s %-25s %-15s %-26s %-8s%n",
-                "ID", "Name", "Email", "Phone", "Address", "Active"
-        );
-        System.out.println("---------------------------------------------------------------------------------------------------------------");
-
-        for (VehicleOwner owner : service.getVehicleOwners()) {
-            System.out.printf(
-                    "%-12s %-15s %-25s %-15s %-26s %-8s%n",
-                    owner.getId(),
-                    owner.getName(),
-                    owner.getEmail(),
-                    owner.getPhone(),
-                    owner.getAddress(),
-                    owner.isActive() ? "Yes" : "No"
-            );
-        }
-
-        System.out.println("---------------------------------------------------------------------------------------------------------------");
+        printer.print(owners);
     }
-
 }

@@ -1,17 +1,21 @@
 package customer.controller;
 
+import UI.UserPrinter;
 import customer.model.Customer;
 import customer.service.CustomerService;
 import util.InputUtil;
 
+import java.util.List;
 import java.util.Scanner;
 
 public class CustomerController {
 
     private final CustomerService service;
+    private final UserPrinter<Customer> printer;
 
-    public CustomerController(CustomerService service) {
+    public CustomerController(CustomerService service, UserPrinter<Customer> printer) {
         this.service = service;
+        this.printer = printer;
     }
 
     public void deactivateCustomer(Scanner input) {
@@ -108,31 +112,11 @@ public class CustomerController {
     }
 
     public void viewCustomers() {
-        if (service.getCustomers().isEmpty()) {
-            System.out.println("There are no customers available.");
+        List<Customer> customers = service.getCustomers();
+        if (customers.isEmpty()) {
+            System.out.println("No customers found");
             return;
         }
-
-        System.out.println("---------------------------------------------------------------------------------------------------------------------");
-        System.out.printf(
-                "%-12s %-15s %-25s %-15s %-20s %-20s %-8s%n",
-                "ID", "Name", "Email", "Phone", "Address", "License No", "Active"
-        );
-        System.out.println("---------------------------------------------------------------------------------------------------------------------");
-
-        for (Customer customer : service.getCustomers()) {
-            System.out.printf(
-                    "%-12s %-15s %-25s %-15s %-20s %-20s %-8s%n",
-                    customer.getId(),
-                    customer.getName(),
-                    customer.getEmail(),
-                    customer.getPhone(),
-                    customer.getAddress(),
-                    customer.getDrivingLicenseNumber(),
-                    customer.isActive() ? "Yes" : "No"
-            );
-        }
-
-        System.out.println("---------------------------------------------------------------------------------------------------------------------");
+        printer.print(customers);
     }
 }

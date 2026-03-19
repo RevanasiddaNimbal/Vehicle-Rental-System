@@ -7,6 +7,7 @@ import UI.VehicleOwnerMenu;
 import admin.controller.AdminController;
 import authentication.model.UserRole;
 import customer.controller.CustomerController;
+import rental.controller.RentalController;
 import vehicle.controller.VehicleController;
 import vehicleowner.controller.VehicleOwnerController;
 
@@ -18,22 +19,25 @@ public class MenuFactory {
     private final VehicleController vehicleController;
     private final CustomerController customerController;
     private final AdminController adminController;
+    private final RentalController rentalController;
 
-    public MenuFactory(Scanner input, VehicleOwnerController ownerController, VehicleController vehicleController, CustomerController customerController, AdminController adminController) {
+    public MenuFactory(Scanner input, VehicleOwnerController ownerController, VehicleController vehicleController, CustomerController customerController, AdminController adminController, RentalController rentalController) {
         this.input = input;
         this.ownerController = ownerController;
         this.vehicleController = vehicleController;
         this.customerController = customerController;
         this.adminController = adminController;
+        this.rentalController = rentalController;
     }
 
-    public void showMenu(UserRole role, String ownerId) {
+    public void showMenu(UserRole role, String userId) {
         UsersMenu menu = switch (role) {
-            case ADMIN -> new AdminMenu(input, ownerController, vehicleController, customerController, adminController);
-            case OWNER -> new VehicleOwnerMenu(input, vehicleController, ownerController);
-            case CUSTOMER -> new CustomerMenu(input, customerController);
+            case ADMIN ->
+                    new AdminMenu(input, ownerController, vehicleController, customerController, adminController, rentalController);
+            case OWNER -> new VehicleOwnerMenu(input, vehicleController, ownerController, rentalController);
+            case CUSTOMER -> new CustomerMenu(input, customerController, rentalController, vehicleController);
         };
 
-        menu.show(role, ownerId);
+        menu.show(role, userId);
     }
 }

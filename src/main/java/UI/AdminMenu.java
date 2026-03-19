@@ -3,6 +3,7 @@ package UI;
 import admin.controller.AdminController;
 import authentication.model.UserRole;
 import customer.controller.CustomerController;
+import rental.controller.RentalController;
 import util.InputUtil;
 import vehicle.controller.VehicleController;
 import vehicleowner.controller.VehicleOwnerController;
@@ -15,17 +16,19 @@ public class AdminMenu implements UsersMenu {
     private final VehicleController vehicleController;
     private final CustomerController customerController;
     private final AdminController adminController;
+    private final RentalController rentalController;
 
-    public AdminMenu(Scanner input, VehicleOwnerController ownerController, VehicleController vehicleController, CustomerController customerController, AdminController adminController) {
+    public AdminMenu(Scanner input, VehicleOwnerController ownerController, VehicleController vehicleController, CustomerController customerController, AdminController adminController, RentalController rentalController) {
         this.input = input;
         this.ownerController = ownerController;
         this.vehicleController = vehicleController;
         this.customerController = customerController;
         this.adminController = adminController;
+        this.rentalController = rentalController;
     }
 
     @Override
-    public void show(UserRole role, String userId) {
+    public void show(UserRole role, String adminId) {
         int choice;
         while (true) {
             System.out.println("\n========= ADMIN PANEL =========");
@@ -71,11 +74,13 @@ public class AdminMenu implements UsersMenu {
                     vehicleController.viewVehicles();
                     break;
                 case 8:
+                    rentalController.viewActiveRentals();
                     break;
                 case 9:
+                    rentalController.viewAllRentals();
                     break;
                 case 10:
-                    adminController.updateAdmin(input, userId);
+                    adminController.updateAdmin(input, adminId);
                     break;
                 case 0:
                     System.out.println("Logged out from Admin.");

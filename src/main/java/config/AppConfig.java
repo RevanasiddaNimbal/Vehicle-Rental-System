@@ -1,8 +1,6 @@
 package config;
 
-import UI.AuthMenu;
-import UI.Documentation;
-import UI.UserRoleMenu;
+import UI.*;
 import admin.controller.AdminController;
 import admin.repository.AdminPostgresRepo;
 import admin.repository.AdminRepo;
@@ -15,13 +13,27 @@ import authentication.repository.OtpStorage;
 import authentication.service.AuthService;
 import authentication.service.OtpService;
 import customer.controller.CustomerController;
+import customer.model.Customer;
 import customer.repository.CustomerRepo;
 import customer.repository.CustomersPostgresRepo;
 import customer.service.CustomerService;
 import database.DatabaseConnection;
 import database.PostgresConnection;
+import invoice.renders.InvoiceConsoleRender;
+import invoice.renders.InvoiceRender;
+import invoice.service.InvoiceService;
 import notification.provider.BrevoEmailProvider;
 import notification.service.EmailService;
+import rental.billing.RentalPriceCalculator;
+import rental.controller.RentalController;
+import rental.model.Rental;
+import rental.repository.RentalRepo;
+import rental.repository.RentalsMemoryRepo;
+import rental.service.RentalService;
+import rental.stretegy.BasePriceStrategy;
+import rental.stretegy.DiscountStrategy;
+import rental.stretegy.PricingStrategy;
+import rental.stretegy.WeekendStrategy;
 import vehicle.controller.VehicleController;
 import vehicle.creator.AutoCreator;
 import vehicle.creator.BikeCreator;
@@ -39,6 +51,7 @@ import vehicle.updater.BikeUpdater;
 import vehicle.updater.CarUpdater;
 import vehicle.updater.VehicleUpdater;
 import vehicleowner.controller.VehicleOwnerController;
+import vehicleowner.models.VehicleOwner;
 import vehicleowner.repository.VehicleOwnerRepo;
 import vehicleowner.repository.VehicleOwnersPostgresRepo;
 import vehicleowner.service.VehicleOwnerService;
@@ -56,6 +69,12 @@ public class AppConfig {
         DbConfig dbConfig = new DbConfig();
         DatabaseConnection postgresConnection = new PostgresConnection(dbConfig);
 
+        //Printer layer
+        UserPrinter<Customer> customerPrinter = new CustomerPrinter();
+        UserPrinter<Vehicle> vehiclePrinter = new VehiclePrinter();
+        UserPrinter<VehicleOwner> ownerPrinter = new OwnersPrinter();
+        UserPrinter<Rental> rentalPrinter = new RentalPrinter();
+
         // Vehicle layer.
         Map<Integer, VehicleCreator> creators = new HashMap<>();
         creators.put(1, new BikeCreator());
@@ -69,7 +88,7 @@ public class AppConfig {
 
         VehicleRepo vehicleRepo = new VehiclesPostgresRepo(postgresConnection);
         VehicleService vehicleService = new VehicleService(vehicleRepo);
-        VehicleController vehicleController = new VehicleController(vehicleService, creators, updaters);
+        VehicleController vehicleController = new VehicleController(vehicleService, creators, updaters, vehiclePrinter);
 
         // Admin layer
         AdminRepo adminRepo = new AdminPostgresRepo(postgresConnection);
@@ -79,12 +98,27 @@ public class AppConfig {
         // Vehicle-Owner layer.
         VehicleOwnerRepo ownerRepo = new VehicleOwnersPostgresRepo(postgresConnection);
         VehicleOwnerService ownerService = new VehicleOwnerService(ownerRepo);
-        VehicleOwnerController ownerController = new VehicleOwnerController(ownerService);
+        VehicleOwnerController ownerController = new VehicleOwnerController(ownerService, ownerPrinter);
 
         //Customer Layer
         CustomerRepo customerRepo = new CustomersPostgresRepo(postgresConnection);
         CustomerService customerService = new CustomerService(customerRepo);
-        CustomerController customerController = new CustomerController(customerService);
+        CustomerController customerController = new CustomerController(customerService, customerPrinter);
+
+        // Invoice layer
+        InvoiceRender invoiceRender = new InvoiceConsoleRender();
+        InvoiceService invoiceService = new InvoiceService(invoiceRender);
+
+        //rental layer
+        Map<Integer, PricingStrategy> pricingStrategies = new HashMap<>();
+        pricingStrategies.put(1, new BasePriceStrategy());
+        pricingStrategies.put(2, new WeekendStrategy());
+        pricingStrategies.put(3, new DiscountStrategy());
+
+        RentalPriceCalculator rentalPriceCalculator = new RentalPriceCalculator(pricingStrategies);
+        RentalRepo rentalRepo = new RentalsMemoryRepo();
+        RentalService rentalService = new RentalService(rentalRepo, rentalPriceCalculator, vehicleService, ownerService, customerService);
+        RentalController rentalController = new RentalController(rentalService, vehicleService, invoiceService, customerService, rentalPrinter, customerPrinter, ownerPrinter);
 
         //Mailer Layer
         EmailServiceConfig mailConfig = new EmailServiceConfig();
@@ -96,7 +130,7 @@ public class AppConfig {
 
         // AuthMenu layer.
         AuthStrategyFactory authStrategyFactory = new AuthStrategyFactory(input, ownerService, adminService, customerService, otpService);
-        MenuFactory menuFactory = new MenuFactory(input, ownerController, vehicleController, customerController, adminController);
+        MenuFactory menuFactory = new MenuFactory(input, ownerController, vehicleController, customerController, adminController, rentalController);
         AuthService authService = new AuthService(authStrategyFactory);
         AuthController authController = new AuthController(input, authService, menuFactory);
         UserRoleMenu authMenu = new AuthMenu(input, authController);

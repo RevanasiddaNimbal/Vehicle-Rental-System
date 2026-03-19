@@ -4,7 +4,7 @@ import authentication.model.AuthUser;
 import authentication.service.OtpService;
 import customer.model.Customer;
 import customer.service.CustomerService;
-import util.IdGenerator;
+import util.IdGeneratorUtil;
 import util.InputUtil;
 import util.OtpUtil;
 import util.PasswordUtil;
@@ -26,7 +26,7 @@ public class CustomerAuthStretegy implements AuthLoginStretegy, AuthRegisterStre
     @Override
     public void register() {
 
-        String id = IdGenerator.generateCustomerId();
+        String id = IdGeneratorUtil.generateCustomerId();
         String name = InputUtil.readString(input, "Enter Full Name");
         String email = InputUtil.readValidEmail(input, "Enter Email Address");
         String phone = InputUtil.readValidPhone(input, "Enter Phone Number");
@@ -51,7 +51,7 @@ public class CustomerAuthStretegy implements AuthLoginStretegy, AuthRegisterStre
             }
         } else {
             System.out.println("Registration Failed.");
-           
+
         }
     }
 

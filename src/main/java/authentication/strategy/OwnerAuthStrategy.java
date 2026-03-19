@@ -2,7 +2,7 @@ package authentication.strategy;
 
 import authentication.model.AuthUser;
 import authentication.service.OtpService;
-import util.IdGenerator;
+import util.IdGeneratorUtil;
 import util.InputUtil;
 import util.OtpUtil;
 import util.PasswordUtil;
@@ -24,7 +24,7 @@ public class OwnerAuthStrategy implements AuthLoginStretegy, AuthRegisterStreteg
 
     @Override
     public void register() {
-        String id = IdGenerator.generateVehicleOwnerId();
+        String id = IdGeneratorUtil.generateVehicleOwnerId();
         String name = InputUtil.readString(input, "Enter Full Name");
         String email = InputUtil.readValidEmail(input, "Enter Email Address");
         String phone = InputUtil.readValidPhone(input, "Enter Phone Number");

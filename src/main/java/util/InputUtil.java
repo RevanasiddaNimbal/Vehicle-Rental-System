@@ -1,10 +1,14 @@
 package util;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Scanner;
 
 public class InputUtil {
-    private InputUtil() {
-    }
+    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    public static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm");
 
     public static double readDouble(Scanner input, String message) {
         while (true) {
@@ -15,7 +19,13 @@ public class InputUtil {
                 continue;
             }
             try {
-                return Double.parseDouble(value);
+
+                double doubleValue = Double.parseDouble(value);
+                if (doubleValue < 0) {
+                    System.out.println("Value cannot be negative. Try again.");
+                    continue;
+                }
+                return doubleValue;
             } catch (NumberFormatException e) {
                 System.out.println("Invalid Input!.Please try again");
             }
@@ -111,6 +121,50 @@ public class InputUtil {
                 continue;
             }
             return value;
+        }
+    }
+
+    public static LocalDate readValidDate(Scanner input, String message) {
+        while (true) {
+            System.out.print(message + ": ");
+            String value = input.nextLine().trim();
+
+            if (value.isEmpty()) {
+                System.out.println("Invalid input. Please try again.");
+                continue;
+            }
+
+            try {
+                LocalDate date = LocalDate.parse(value, DATE_FORMAT);
+                if (date.isBefore(LocalDate.now())) {
+                    System.out.println("Invalid date! Please try again.");
+                    continue;
+                }
+                return date;
+            } catch (DateTimeParseException e) {
+                System.out.println("Invalid date.Please try again.");
+            }
+        }
+    }
+
+    public static LocalTime readValidTime(Scanner input, String message) {
+        while (true) {
+            System.out.print(message + ": ");
+            String value = input.nextLine().trim();
+
+            // Empty check
+            if (value.isEmpty()) {
+                System.out.println("Invalid input. Please try again.");
+                continue;
+            }
+
+            try {
+                LocalTime time = LocalTime.parse(value, TIME_FORMAT);
+                return time;
+
+            } catch (DateTimeParseException e) {
+                System.out.println("Invalid time. Please try again.");
+            }
         }
     }
 }

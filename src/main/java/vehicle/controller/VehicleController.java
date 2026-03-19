@@ -1,26 +1,30 @@
 package vehicle.controller;
 
-import util.IdGenerator;
+import UI.UserPrinter;
+import util.IdGeneratorUtil;
 import util.InputUtil;
 import vehicle.creator.VehicleCreator;
+import vehicle.models.Status;
 import vehicle.models.Vehicle;
 import vehicle.service.VehicleService;
 import vehicle.updater.VehicleUpdater;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
-import static util.OutputUtil.valueOrDash;
-
 public class VehicleController {
     private final VehicleService service;
+    private final UserPrinter<Vehicle> printer;
     Map<Integer, VehicleCreator> creators;
     Map<Class<? extends Vehicle>, VehicleUpdater> updaters;
 
-    public VehicleController(VehicleService service, Map<Integer, VehicleCreator> creators, Map<Class<? extends Vehicle>, VehicleUpdater> updaters) {
+
+    public VehicleController(VehicleService service, Map<Integer, VehicleCreator> creators, Map<Class<? extends Vehicle>, VehicleUpdater> updaters, UserPrinter<Vehicle> printer) {
         this.service = service;
         this.creators = creators;
         this.updaters = updaters;
+        this.printer = printer;
     }
 
     public void addVehicle(Scanner input, String ownerId) {
@@ -34,7 +38,7 @@ public class VehicleController {
             System.out.println("Invalid choice!");
             return;
         }
-        String id = IdGenerator.generateVehicleId();
+        String id = IdGeneratorUtil.generateVehicleId();
         Vehicle vehicle = creator.createVehicle(id, input, ownerId);
         if (service.addVehicle(vehicle)) {
             System.out.println("Vehicle added successfully.");
@@ -44,34 +48,31 @@ public class VehicleController {
         }
     }
 
+    public void viewAvailableVehicles() {
+        List<Vehicle> vehicles = service.getVehiclesByStatus(Status.AVAILABLE);
+        if (vehicles.isEmpty()) {
+            System.out.println("No available vehicles found.");
+            return;
+        }
+        printer.print(vehicles);
+    }
+
     public void viewVehicles() {
-        if (service.getVehicles().isEmpty()) {
+        List<Vehicle> vehicles = service.getVehiclesByStatus(Status.AVAILABLE);
+        if (vehicles.isEmpty()) {
             System.out.println("There are no vehicles available.");
             return;
         }
-        System.out.println("-----------------------------------------------------------------------------------------------");
-        System.out.printf(
-                "%-10s %-15s %-12s %-10s %-12s %-10s %-8s %-12s%n",
-                "ID", "Brand", "Category", "Price", "Status",
-                "Engine CC", "Seats", "Fuel"
-        );
-        System.out.println("-----------------------------------------------------------------------------------------------");
+        printer.print(vehicles);
+    }
 
-        for (Vehicle v : service.getVehicles()) {
-            System.out.printf(
-                    "%-10s %-15s %-12s ₹%-9.2f %-12s %-11s %-8s %-12s%n",
-                    v.getId(),
-                    v.getBrand(),
-                    v.getCategory(),
-                    v.getPricePerDay(),
-                    v.getStatus(),
-                    valueOrDash(v.getEnginCapacity()),
-                    valueOrDash(v.getSeatingCapacity()),
-                    valueOrDash(v.getFuelType())
-            );
+    public void viewVehicleByOwnerId(String ownerId) {
+        List<Vehicle> vehicles = service.getVehiclesByOwnerId(ownerId);
+        if (vehicles.isEmpty()) {
+            System.out.println("Vehicles not found.");
+            return;
         }
-
-        System.out.println("-----------------------------------------------------------------------------------------------");
+        printer.print(vehicles);
     }
 
     public void updateVehicle(Scanner input) {
@@ -105,8 +106,6 @@ public class VehicleController {
         else
             System.out.println("Vehicle not deleted. Please try again.");
     }
-
-
 }
 
 
