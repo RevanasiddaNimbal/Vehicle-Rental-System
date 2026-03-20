@@ -75,13 +75,19 @@ public class VehicleController {
         printer.print(vehicles);
     }
 
-    public void updateVehicle(Scanner input) {
+    public void updateVehicle(Scanner input, String ownerId) {
         String id = InputUtil.readString(input, "Enter Vehicle ID");
         Vehicle vehicle = service.getVehiclesById(id);
         if (vehicle == null) {
             System.out.println("Vehicle ID not exists.");
             return;
         }
+
+        if (!vehicle.getOwnerId().equals(ownerId)) {
+            System.out.println("This vehicle not belongs to OwnerId: " + ownerId);
+            return;
+        }
+
         VehicleUpdater updater = updaters.get(vehicle.getClass());
         if (updater == null) {
             System.out.println("Failed to Update Vehicle.");
@@ -94,11 +100,15 @@ public class VehicleController {
         else System.out.println("Failed to Update Vehicle.");
     }
 
-    public void deleteVehicle(Scanner input) {
+    public void deleteVehicle(Scanner input, String ownerId) {
         String id = InputUtil.readString(input, "Please Enter Vehicle ID");
         Vehicle vehicle = service.getVehiclesById(id);
         if (vehicle == null) {
             System.out.println("Vehicle ID: " + id + " not found.");
+            return;
+        }
+        if (!vehicle.getOwnerId().equals(ownerId)) {
+            System.out.println("This vehicle is not belongs to  OwnerId: " + ownerId);
             return;
         }
         if (service.deleteVehicle(vehicle))

@@ -3,68 +3,53 @@ package rental.service;
 import customer.model.Customer;
 import customer.service.CustomerService;
 import rental.billing.RentalPriceCalculator;
+import rental.billing.RentalTimeCalculator;
 import rental.model.Rental;
 import rental.model.RentalStatus;
 import rental.repository.RentalRepo;
+import util.InputUtil;
 import vehicle.models.Vehicle;
 import vehicle.service.VehicleService;
 import vehicleowner.models.VehicleOwner;
 import vehicleowner.service.VehicleOwnerService;
 
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 
 public class RentalService {
     private final RentalRepo repository;
     private final VehicleService vehicleService;
     private final VehicleOwnerService vehicleOwnerService;
     private final CustomerService customerService;
-
     private final RentalPriceCalculator rentalPriceCalculator;
+    private final RentalTimeCalculator rentalTimeCalculator;
 
-    public RentalService(RentalRepo repository, RentalPriceCalculator rentalPriceCalculator, VehicleService vehicleService, VehicleOwnerService vehicleOwnerService, CustomerService customerService) {
+    public RentalService(RentalRepo repository, RentalPriceCalculator rentalPriceCalculator, VehicleService vehicleService, VehicleOwnerService vehicleOwnerService, CustomerService customerService, RentalTimeCalculator rentalTimeCalculator) {
         this.repository = repository;
         this.rentalPriceCalculator = rentalPriceCalculator;
         this.vehicleService = vehicleService;
         this.vehicleOwnerService = vehicleOwnerService;
         this.customerService = customerService;
+        this.rentalTimeCalculator = rentalTimeCalculator;
     }
 
     public boolean addRental(Rental rental) {
         if (rental == null) return false;
-        List<Rental> activeRentals = repository.findAllByVehicleId(rental.getVehicleId());
 
+        List<Rental> activeRentals = repository.findAllByVehicleId(rental.getVehicleId());
         for (Rental r : activeRentals) {
-            if (r.getStatus() == RentalStatus.BOOKED) {
-                System.out.println("Vehicle is already rented.");
-                return false;
-            }
+            if (r.getStatus() == RentalStatus.BOOKED) return false;
         }
         return repository.save(rental);
     }
 
-    public boolean updateRental(Rental rental) {
-        if (rental == null) return false;
-
-        if (repository.findById(rental.getId()) == null) {
-            System.out.println("Rental not found.");
-            return false;
-        }
-        return repository.update(rental);
-    }
-
-
-    public boolean updateRentalStatus(int rentalId, RentalStatus status) {
+    public void updateRentalStatus(int rentalId, RentalStatus status) {
         Rental rental = repository.findById(rentalId);
-        if (rental == null) {
-            System.out.println("Rental not found.");
-            return false;
-        }
+        if (rental == null) return;
         rental.setStatus(status);
-        return repository.update(rental);
+        repository.update(rental);
     }
-
 
     public Rental getRentalById(int id) {
         return repository.findById(id);
@@ -78,9 +63,7 @@ public class RentalService {
         List<Rental> result = new ArrayList<>();
         List<Rental> rentals = repository.findAll();
         for (Rental rental : rentals) {
-            if (rental.getStatus().equals(RentalStatus.BOOKED)) {
-                result.add(rental);
-            }
+            if (rental.getStatus() == RentalStatus.BOOKED) result.add(rental);
         }
         return result;
     }
@@ -93,9 +76,7 @@ public class RentalService {
         List<Rental> result = new ArrayList<>();
         List<Rental> rentals = repository.findAllByCustomerId(customerId);
         for (Rental rental : rentals) {
-            if (rental.getStatus().equals(RentalStatus.BOOKED)) {
-                result.add(rental);
-            }
+            if (rental.getStatus() == RentalStatus.BOOKED) result.add(rental);
         }
         return result;
     }
@@ -105,8 +86,7 @@ public class RentalService {
         List<Vehicle> vehicles = vehicleService.getVehiclesByOwnerId(ownerId);
         for (Vehicle vehicle : vehicles) {
             List<Rental> rentals = repository.findAllByVehicleId(vehicle.getId());
-            if (rentals != null)
-                result.addAll(rentals);
+            if (rentals != null) result.addAll(rentals);
         }
         return result;
     }
@@ -114,14 +94,11 @@ public class RentalService {
     public List<Rental> getActiveRentalsByOwnerId(String ownerId) {
         List<Rental> result = new ArrayList<>();
         List<Vehicle> vehicles = vehicleService.getVehiclesByOwnerId(ownerId);
-
         for (Vehicle vehicle : vehicles) {
             List<Rental> rentals = repository.findAllByVehicleId(vehicle.getId());
             if (rentals != null) {
                 for (Rental rental : rentals) {
-                    if (rental.getStatus().equals(RentalStatus.BOOKED)) {
-                        result.add(rental);
-                    }
+                    if (rental.getStatus() == RentalStatus.BOOKED) result.add(rental);
                 }
             }
         }
@@ -143,40 +120,39 @@ public class RentalService {
         List<Rental> activeRentals = getActiveRentalsByOwnerId(ownerId);
         for (Rental rental : activeRentals) {
             Customer customer = customerService.getCustomerById(rental.getCustomerId());
-
-            if (customer != null && !customers.contains(customer)) {
-                customers.add(customer);
-            }
+            if (customer != null && !customers.contains(customer)) customers.add(customer);
         }
         return customers;
     }
 
     public List<Customer> getAllCustomersByOwnerId(String ownerId) {
         List<Customer> customers = new ArrayList<>();
-        List<Rental> activeRentals = getRentalsByOwnerId(ownerId);
-        for (Rental rental : activeRentals) {
+        List<Rental> rentals = getRentalsByOwnerId(ownerId);
+        for (Rental rental : rentals) {
             Customer customer = customerService.getCustomerById(rental.getCustomerId());
-            if (customer != null && !customers.contains(customer)) {
-                customers.add(customer);
-            }
+            if (customer != null && !customers.contains(customer)) customers.add(customer);
         }
         return customers;
     }
 
-    public int getDays(LocalDate startDate, LocalDate endDate) {
-        if (startDate == null || endDate == null || endDate.isBefore(startDate)) {
-            System.out.println("Invalid date.");
-            return 0;
+    public List<Vehicle> getActiveVehiclesByCustomerId(String customerId) {
+        List<Vehicle> vehicles = new ArrayList<>();
+        List<Rental> rentals = getActiveRentalsByCustomerId(customerId);
+        for (Rental rental : rentals) {
+            Vehicle vehicle = vehicleService.getVehiclesById(rental.getVehicleId());
+            if (vehicle != null && !vehicles.contains(vehicle)) vehicles.add(vehicle);
         }
-        if (startDate.equals(endDate)) {
-            return 1;
-        }
-        return (int) rentalPriceCalculator.getDays(startDate, endDate);
+        return vehicles;
     }
 
-    public void calculateTotalRent(Rental rental) {
-        if (rental == null) return;
-        rentalPriceCalculator.calculateTotalRent(rental);
+    public List<Vehicle> getVehiclesByCustomerId(String customerId) {
+        List<Vehicle> vehicles = new ArrayList<>();
+        List<Rental> rentals = getRentalsByCustomerId(customerId);
+        for (Rental rental : rentals) {
+            Vehicle vehicle = vehicleService.getVehiclesById(rental.getVehicleId());
+            if (vehicle != null && !vehicles.contains(vehicle)) vehicles.add(vehicle);
+        }
+        return vehicles;
     }
 
     private List<VehicleOwner> getVehicleOwners(List<Rental> rentals) {
@@ -185,10 +161,41 @@ public class RentalService {
             Vehicle vehicle = vehicleService.getVehiclesById(rental.getVehicleId());
             if (vehicle == null) continue;
             VehicleOwner owner = vehicleOwnerService.getVehicleOwnerById(vehicle.getOwnerId());
-            if (owner != null && !owners.contains(owner)) {
-                owners.add(owner);
-            }
+            if (owner != null && !owners.contains(owner)) owners.add(owner);
         }
         return owners;
+    }
+
+    public List<Rental> collectRentalsForReturn(Scanner input, String customerId) {
+        List<Rental> rentalsToReturn = new ArrayList<>();
+        boolean addMore = true;
+        while (addMore) {
+            int rentalId = InputUtil.readPositiveInt(input, "Enter Rental ID to return");
+            Rental rental = getRentalById(rentalId);
+            if (rental == null || !rental.getCustomerId().equals(customerId)) {
+                System.out.println("Invalid rental or does not belong to you.");
+                continue;
+            }
+            rentalsToReturn.add(rental);
+            System.out.println("Added Rental for return.");
+            String choice = InputUtil.readString(input, "Return another vehicle? (Y/N)");
+            addMore = choice.equalsIgnoreCase("Y");
+        }
+        return rentalsToReturn;
+    }
+
+    public void completeRentals(List<Rental> rentals) {
+        for (Rental rental : rentals) {
+            rental.setStatus(RentalStatus.COMPLETED);
+            repository.update(rental);
+        }
+    }
+
+    public int getDays(Rental rental) {
+        return rentalTimeCalculator.calculateRentalDays(rental.getStartDate(), rental.getEndDate());
+    }
+
+    public void calculateTotalRent(Rental rental) {
+        rentalPriceCalculator.calculateTotalRent(rental);
     }
 }

@@ -5,6 +5,7 @@ public class IdGeneratorUtil {
     private static int ownerCounter = 1;
     private static int customerCounter = 1;
     private static int rentalCounter = 1;
+    private static int penaltyCounter = 0;
 
     public static String generateVehicleId() {
         return String.format("VEH-%03d", vehicleCounter++);
@@ -20,6 +21,10 @@ public class IdGeneratorUtil {
 
     public static int generateRentalId() {
         return rentalCounter++;
+    }
+
+    public static String generatePenaltyId() {
+        return String.format("PEN-%03d", penaltyCounter++);
     }
 
 

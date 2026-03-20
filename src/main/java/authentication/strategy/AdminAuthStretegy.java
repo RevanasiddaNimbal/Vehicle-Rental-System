@@ -25,7 +25,12 @@ public class AdminAuthStretegy implements AuthLoginStretegy {
         String email = InputUtil.readValidEmail(input, "Enter Email Address");
         String password = InputUtil.readString(input, "Enter Password");
         Admin admin = adminService.getAdminByEmail(email);
-        if (admin != null && admin.getPassword().equals(password)) {
+        if (admin == null) {
+            System.out.println("Admin not found.Please contact rental support.");
+            return null;
+        }
+        
+        if (admin.getPassword().equals(password)) {
             System.out.println("Login Successful.");
             return admin;
         } else {

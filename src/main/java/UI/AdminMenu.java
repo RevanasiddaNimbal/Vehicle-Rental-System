@@ -3,6 +3,7 @@ package UI;
 import admin.controller.AdminController;
 import authentication.model.UserRole;
 import customer.controller.CustomerController;
+import penalty.controller.PenaltyController;
 import rental.controller.RentalController;
 import util.InputUtil;
 import vehicle.controller.VehicleController;
@@ -17,14 +18,16 @@ public class AdminMenu implements UsersMenu {
     private final CustomerController customerController;
     private final AdminController adminController;
     private final RentalController rentalController;
+    private final PenaltyController penaltyController;
 
-    public AdminMenu(Scanner input, VehicleOwnerController ownerController, VehicleController vehicleController, CustomerController customerController, AdminController adminController, RentalController rentalController) {
+    public AdminMenu(Scanner input, VehicleOwnerController ownerController, VehicleController vehicleController, CustomerController customerController, AdminController adminController, RentalController rentalController, PenaltyController penaltyController) {
         this.input = input;
         this.ownerController = ownerController;
         this.vehicleController = vehicleController;
         this.customerController = customerController;
         this.adminController = adminController;
         this.rentalController = rentalController;
+        this.penaltyController = penaltyController;
     }
 
     @Override
@@ -45,8 +48,9 @@ public class AdminMenu implements UsersMenu {
             System.out.println("--- Rental Overview ---");
             System.out.println("8.  View All Active Rentals");
             System.out.println("9.  View Full Rental History");
+            System.out.println("10.  View All Penalties");
             System.out.println("--- Admin account Management ---");
-            System.out.println("10. Update My account");
+            System.out.println("11. Update My account");
             System.out.println("0.  Logout");
 
             choice = InputUtil.readPositiveInt(input, "Enter your choice");
@@ -80,6 +84,9 @@ public class AdminMenu implements UsersMenu {
                     rentalController.viewAllRentals();
                     break;
                 case 10:
+                    penaltyController.viewPenalties();
+                    break;
+                case 11:
                     adminController.updateAdmin(input, adminId);
                     break;
                 case 0:

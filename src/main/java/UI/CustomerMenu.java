@@ -3,6 +3,7 @@ package UI;
 
 import authentication.model.UserRole;
 import customer.controller.CustomerController;
+import penalty.controller.PenaltyController;
 import rental.controller.RentalController;
 import util.InputUtil;
 import vehicle.controller.VehicleController;
@@ -14,12 +15,14 @@ public class CustomerMenu implements UsersMenu {
     private final CustomerController customerController;
     private final RentalController rentalController;
     private final VehicleController vehicleController;
+    private final PenaltyController penaltyController;
 
-    public CustomerMenu(Scanner input, CustomerController customerController, RentalController rentalController, VehicleController vehicleController) {
+    public CustomerMenu(Scanner input, CustomerController customerController, RentalController rentalController, VehicleController vehicleController, PenaltyController penaltyController) {
         this.input = input;
         this.customerController = customerController;
         this.rentalController = rentalController;
         this.vehicleController = vehicleController;
+        this.penaltyController = penaltyController;
     }
 
     @Override
@@ -29,13 +32,16 @@ public class CustomerMenu implements UsersMenu {
             System.out.println("\n========= CUSTOMER PANEL ==============");
             System.out.println("1. View Available Vehicles");
             System.out.println("2. Rent a Vehicle");
-            System.out.println("3. Return a Vehicle");
-            System.out.println("4. Cancel Booking of Vehicle");
-            System.out.println("5. My Active Rental");
+            System.out.println("3. My Active Rental");
+            System.out.println("4. Return a Vehicle");
+            System.out.println("5. Cancel Booking of Vehicle");
             System.out.println("6. My Rental History");
             System.out.println("7. View My Active rental Vehicle Owners");
             System.out.println("8. View All My Rental Vehicle Owners");
-            System.out.println("9. Update My Account");
+            System.out.println("9. View My active rented vehicles");
+            System.out.println("10. View My Rented vehicles");
+            System.out.println("11. View My Penalties");
+            System.out.println("12. Update My Account");
             System.out.println("0. Logout");
 
             choice = InputUtil.readPositiveInt(input, "Enter your choice");
@@ -48,11 +54,12 @@ public class CustomerMenu implements UsersMenu {
                     rentalController.rentVehicle(input, customerId);
                     break;
                 case 3:
+                    rentalController.viewActiveRentalsByCustomerId(customerId);
                     break;
                 case 4:
+                    rentalController.returnVehicle(input, customerId);
                     break;
                 case 5:
-                    rentalController.viewActiveRentalsByCustomerId(customerId);
                     break;
                 case 6:
                     rentalController.viewRentalsByCustomerId(customerId);
@@ -64,6 +71,15 @@ public class CustomerMenu implements UsersMenu {
                     rentalController.viewAllOwnersByCustomerId(customerId);
                     break;
                 case 9:
+                    rentalController.viewActiveVehiclesByCustomerId(customerId);
+                    break;
+                case 10:
+                    rentalController.viewVehiclesByCustomerId(customerId);
+                    break;
+                case 11:
+                    penaltyController.viewPenaltiesByCustomerId(customerId);
+                    break;
+                case 12:
                     customerController.updateCustomer(input, customerId);
                     break;
                 case 0:

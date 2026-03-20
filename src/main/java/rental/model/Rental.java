@@ -42,6 +42,14 @@ public class Rental {
         return days;
     }
 
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public void setDays(int days) {
+        this.days = days;
+    }
+
     public String getCustomerId() {
         return customerId;
     }

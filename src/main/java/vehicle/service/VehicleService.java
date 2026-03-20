@@ -1,5 +1,6 @@
 package vehicle.service;
 
+import rental.model.Rental;
 import vehicle.models.Status;
 import vehicle.models.Vehicle;
 import vehicle.repository.VehicleRepo;
@@ -27,6 +28,13 @@ public class VehicleService {
         }
         vehicle.setStatus(status);
         return repository.update(vehicle);
+    }
+
+    public void updateStatus(List<Rental> rentals, Status status) {
+        if (rentals == null || rentals.isEmpty()) return;
+        for (Rental rental : rentals) {
+            updateStatusById(rental.getVehicleId(), status);
+        }
     }
 
     public boolean updateVehicle(Vehicle vehicle) {

@@ -24,11 +24,18 @@ import invoice.renders.InvoiceRender;
 import invoice.service.InvoiceService;
 import notification.provider.BrevoEmailProvider;
 import notification.service.EmailService;
+import penalty.controller.PenaltyController;
+import penalty.factory.PenaltyStrategyFactory;
+import penalty.model.Penalty;
+import penalty.repository.PenaltyPostgresRepo;
+import penalty.repository.PenaltyRepo;
+import penalty.service.PenaltyService;
 import rental.billing.RentalPriceCalculator;
+import rental.billing.RentalTimeCalculator;
 import rental.controller.RentalController;
 import rental.model.Rental;
 import rental.repository.RentalRepo;
-import rental.repository.RentalsMemoryRepo;
+import rental.repository.RentalsPostgresRepo;
 import rental.service.RentalService;
 import rental.stretegy.BasePriceStrategy;
 import rental.stretegy.DiscountStrategy;
@@ -74,6 +81,7 @@ public class AppConfig {
         UserPrinter<Vehicle> vehiclePrinter = new VehiclePrinter();
         UserPrinter<VehicleOwner> ownerPrinter = new OwnersPrinter();
         UserPrinter<Rental> rentalPrinter = new RentalPrinter();
+        UserPrinter<Penalty> penaltyPrinter = new PenaltyPrinter();
 
         // Vehicle layer.
         Map<Integer, VehicleCreator> creators = new HashMap<>();
@@ -109,16 +117,24 @@ public class AppConfig {
         InvoiceRender invoiceRender = new InvoiceConsoleRender();
         InvoiceService invoiceService = new InvoiceService(invoiceRender);
 
-        //rental layer
+        // rental calculators
         Map<Integer, PricingStrategy> pricingStrategies = new HashMap<>();
         pricingStrategies.put(1, new BasePriceStrategy());
         pricingStrategies.put(2, new WeekendStrategy());
         pricingStrategies.put(3, new DiscountStrategy());
-
         RentalPriceCalculator rentalPriceCalculator = new RentalPriceCalculator(pricingStrategies);
-        RentalRepo rentalRepo = new RentalsMemoryRepo();
-        RentalService rentalService = new RentalService(rentalRepo, rentalPriceCalculator, vehicleService, ownerService, customerService);
-        RentalController rentalController = new RentalController(rentalService, vehicleService, invoiceService, customerService, rentalPrinter, customerPrinter, ownerPrinter);
+        RentalTimeCalculator rentalTimeCalculator = new RentalTimeCalculator();
+
+        // Penalty layer
+        PenaltyStrategyFactory penaltyStrategyFactory = new PenaltyStrategyFactory(rentalTimeCalculator);
+        PenaltyRepo penaltyRepo = new PenaltyPostgresRepo(postgresConnection);
+        PenaltyService penaltyService = new PenaltyService(penaltyRepo, penaltyStrategyFactory);
+        PenaltyController penaltyController = new PenaltyController(penaltyService, penaltyPrinter);
+
+        //rental layer
+        RentalRepo rentalPostgresRepo = new RentalsPostgresRepo(postgresConnection);
+        RentalService rentalService = new RentalService(rentalPostgresRepo, rentalPriceCalculator, vehicleService, ownerService, customerService, rentalTimeCalculator);
+        RentalController rentalController = new RentalController(rentalService, vehicleService, invoiceService, customerService, penaltyService, rentalPrinter, customerPrinter, ownerPrinter, vehiclePrinter, penaltyPrinter);
 
         //Mailer Layer
         EmailServiceConfig mailConfig = new EmailServiceConfig();
@@ -130,7 +146,7 @@ public class AppConfig {
 
         // AuthMenu layer.
         AuthStrategyFactory authStrategyFactory = new AuthStrategyFactory(input, ownerService, adminService, customerService, otpService);
-        MenuFactory menuFactory = new MenuFactory(input, ownerController, vehicleController, customerController, adminController, rentalController);
+        MenuFactory menuFactory = new MenuFactory(input, ownerController, vehicleController, customerController, adminController, rentalController, penaltyController);
         AuthService authService = new AuthService(authStrategyFactory);
         AuthController authController = new AuthController(input, authService, menuFactory);
         UserRoleMenu authMenu = new AuthMenu(input, authController);

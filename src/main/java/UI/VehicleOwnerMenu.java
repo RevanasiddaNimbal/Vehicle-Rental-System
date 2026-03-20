@@ -47,10 +47,10 @@ public class VehicleOwnerMenu implements UsersMenu {
                     vehicleController.viewVehicleByOwnerId(ownerId);
                     break;
                 case 3:
-                    vehicleController.updateVehicle(input);
+                    vehicleController.updateVehicle(input, ownerId);
                     break;
                 case 4:
-                    vehicleController.deleteVehicle(input);
+                    vehicleController.deleteVehicle(input, ownerId);
                     break;
                 case 5:
                     rentalController.viewActiveRentalsByOwnerId(ownerId);

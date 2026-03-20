@@ -2,6 +2,8 @@ package vehicleowner.models;
 
 import authentication.model.AuthUser;
 
+import java.util.Objects;
+
 public class VehicleOwner implements AuthUser {
     private String id;
     private String name;
@@ -80,5 +82,13 @@ public class VehicleOwner implements AuthUser {
 
     public boolean isActive() {
         return active;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (!(obj instanceof VehicleOwner)) return false;
+        VehicleOwner owner = (VehicleOwner) obj;
+        return Objects.equals(id, owner.id);
     }
 }
