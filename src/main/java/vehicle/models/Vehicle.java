@@ -1,5 +1,7 @@
 package vehicle.models;
 
+import java.util.Objects;
+
 public abstract class Vehicle {
     private String id;
     protected String vehicle_type;
@@ -76,5 +78,13 @@ public abstract class Vehicle {
 
     public String getOwnerId() {
         return ownerId;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (!(obj instanceof Vehicle)) return false;
+        Vehicle vehicle = (Vehicle) obj;
+        return Objects.equals(id, vehicle.id);
     }
 }

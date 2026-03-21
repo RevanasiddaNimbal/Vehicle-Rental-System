@@ -1,6 +1,7 @@
 package UI;
 
 import authentication.model.UserRole;
+import cancellation.controller.CancellationController;
 import rental.controller.RentalController;
 import util.InputUtil;
 import vehicle.controller.VehicleController;
@@ -13,12 +14,14 @@ public class VehicleOwnerMenu implements UsersMenu {
     private final VehicleController vehicleController;
     private final VehicleOwnerController ownerController;
     private final RentalController rentalController;
+    private final CancellationController cancellationController;
 
-    public VehicleOwnerMenu(Scanner input, VehicleController vehicleController, VehicleOwnerController ownerController, RentalController rentalController) {
+    public VehicleOwnerMenu(Scanner input, VehicleController vehicleController, VehicleOwnerController ownerController, RentalController rentalController, CancellationController cancellationController) {
         this.input = input;
         this.vehicleController = vehicleController;
         this.ownerController = ownerController;
         this.rentalController = rentalController;
+        this.cancellationController = cancellationController;
     }
 
     @Override
@@ -34,7 +37,8 @@ public class VehicleOwnerMenu implements UsersMenu {
             System.out.println("6. View Rental History of My Vehicles");
             System.out.println("7. View My Active Customers");
             System.out.println("8. View My All Customers");
-            System.out.println("9. Update My Account");
+            System.out.println("9. View Cancellations on My Vehicles");
+            System.out.println("10. Update My Account");
             System.out.println("0. Logout");
 
             choice = InputUtil.readPositiveInt(input, "Enter your choice");
@@ -65,6 +69,9 @@ public class VehicleOwnerMenu implements UsersMenu {
                     rentalController.viewAllCustomersByOwnerId(ownerId);
                     break;
                 case 9:
+                    cancellationController.viewCancellationsByOwnerId(ownerId);
+                    break;
+                case 10:
                     ownerController.updateVehicleOwner(input, ownerId);
                     break;
                 case 0:

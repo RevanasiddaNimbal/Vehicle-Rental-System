@@ -2,6 +2,7 @@ package UI;
 
 import admin.controller.AdminController;
 import authentication.model.UserRole;
+import cancellation.controller.CancellationController;
 import customer.controller.CustomerController;
 import penalty.controller.PenaltyController;
 import rental.controller.RentalController;
@@ -19,8 +20,9 @@ public class AdminMenu implements UsersMenu {
     private final AdminController adminController;
     private final RentalController rentalController;
     private final PenaltyController penaltyController;
+    private final CancellationController cancellationController;
 
-    public AdminMenu(Scanner input, VehicleOwnerController ownerController, VehicleController vehicleController, CustomerController customerController, AdminController adminController, RentalController rentalController, PenaltyController penaltyController) {
+    public AdminMenu(Scanner input, VehicleOwnerController ownerController, VehicleController vehicleController, CustomerController customerController, AdminController adminController, RentalController rentalController, PenaltyController penaltyController, CancellationController cancellationController) {
         this.input = input;
         this.ownerController = ownerController;
         this.vehicleController = vehicleController;
@@ -28,6 +30,7 @@ public class AdminMenu implements UsersMenu {
         this.adminController = adminController;
         this.rentalController = rentalController;
         this.penaltyController = penaltyController;
+        this.cancellationController = cancellationController;
     }
 
     @Override
@@ -49,8 +52,9 @@ public class AdminMenu implements UsersMenu {
             System.out.println("8.  View All Active Rentals");
             System.out.println("9.  View Full Rental History");
             System.out.println("10.  View All Penalties");
+            System.out.println("11.  View All Cancellations");
             System.out.println("--- Admin account Management ---");
-            System.out.println("11. Update My account");
+            System.out.println("12. Update My account");
             System.out.println("0.  Logout");
 
             choice = InputUtil.readPositiveInt(input, "Enter your choice");
@@ -87,6 +91,9 @@ public class AdminMenu implements UsersMenu {
                     penaltyController.viewPenalties();
                     break;
                 case 11:
+                    cancellationController.viewCancellations();
+                    break;
+                case 12:
                     adminController.updateAdmin(input, adminId);
                     break;
                 case 0:

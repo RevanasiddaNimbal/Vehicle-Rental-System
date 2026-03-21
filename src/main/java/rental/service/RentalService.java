@@ -13,6 +13,8 @@ import vehicle.service.VehicleService;
 import vehicleowner.models.VehicleOwner;
 import vehicleowner.service.VehicleOwnerService;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -175,6 +177,11 @@ public class RentalService {
             if (rental == null || !rental.getCustomerId().equals(customerId)) {
                 System.out.println("Invalid rental or does not belong to you.");
                 continue;
+            }
+
+            if (rental.getStartTime().isAfter(LocalTime.now()) || rental.getStartDate().isAfter(LocalDate.now())) {
+                System.out.println("Can't return vehicle before pickup time and date.");
+                break;
             }
             rentalsToReturn.add(rental);
             System.out.println("Added Rental for return.");

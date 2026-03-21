@@ -12,6 +12,11 @@ import authentication.factory.MenuFactory;
 import authentication.repository.OtpStorage;
 import authentication.service.AuthService;
 import authentication.service.OtpService;
+import cancellation.controller.CancellationController;
+import cancellation.model.CancellationRecord;
+import cancellation.repository.CancellationPostgresRepo;
+import cancellation.repository.CancellationRepo;
+import cancellation.service.CancellationService;
 import customer.controller.CustomerController;
 import customer.model.Customer;
 import customer.repository.CustomerRepo;
@@ -72,7 +77,7 @@ public class AppConfig {
         // documentation layer.
         UserRoleMenu documentation = new Documentation();
 
-        // Database layer
+        // Database  connection layer
         DbConfig dbConfig = new DbConfig();
         DatabaseConnection postgresConnection = new PostgresConnection(dbConfig);
 
@@ -82,6 +87,7 @@ public class AppConfig {
         UserPrinter<VehicleOwner> ownerPrinter = new OwnersPrinter();
         UserPrinter<Rental> rentalPrinter = new RentalPrinter();
         UserPrinter<Penalty> penaltyPrinter = new PenaltyPrinter();
+        UserPrinter<CancellationRecord> cancellationPrinter = new CancellationPrinter();
 
         // Vehicle layer.
         Map<Integer, VehicleCreator> creators = new HashMap<>();
@@ -131,10 +137,18 @@ public class AppConfig {
         PenaltyService penaltyService = new PenaltyService(penaltyRepo, penaltyStrategyFactory);
         PenaltyController penaltyController = new PenaltyController(penaltyService, penaltyPrinter);
 
+
         //rental layer
         RentalRepo rentalPostgresRepo = new RentalsPostgresRepo(postgresConnection);
         RentalService rentalService = new RentalService(rentalPostgresRepo, rentalPriceCalculator, vehicleService, ownerService, customerService, rentalTimeCalculator);
-        RentalController rentalController = new RentalController(rentalService, vehicleService, invoiceService, customerService, penaltyService, rentalPrinter, customerPrinter, ownerPrinter, vehiclePrinter, penaltyPrinter);
+
+        //Cancellation layer
+        CancellationRepo cancellationRepo = new CancellationPostgresRepo(postgresConnection);
+        CancellationService cancellationService = new CancellationService(rentalService, vehicleService, cancellationRepo);
+        CancellationController cancellationController = new CancellationController(cancellationService, cancellationPrinter);
+
+        //rental controller
+        RentalController rentalController = new RentalController(rentalService, vehicleService, invoiceService, customerService, penaltyService, rentalPrinter, customerPrinter, ownerPrinter, vehiclePrinter, penaltyPrinter, cancellationService);
 
         //Mailer Layer
         EmailServiceConfig mailConfig = new EmailServiceConfig();
@@ -146,7 +160,7 @@ public class AppConfig {
 
         // AuthMenu layer.
         AuthStrategyFactory authStrategyFactory = new AuthStrategyFactory(input, ownerService, adminService, customerService, otpService);
-        MenuFactory menuFactory = new MenuFactory(input, ownerController, vehicleController, customerController, adminController, rentalController, penaltyController);
+        MenuFactory menuFactory = new MenuFactory(input, ownerController, vehicleController, customerController, adminController, rentalController, penaltyController, cancellationController);
         AuthService authService = new AuthService(authStrategyFactory);
         AuthController authController = new AuthController(input, authService, menuFactory);
         UserRoleMenu authMenu = new AuthMenu(input, authController);

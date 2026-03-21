@@ -2,6 +2,7 @@ package UI;
 
 
 import authentication.model.UserRole;
+import cancellation.controller.CancellationController;
 import customer.controller.CustomerController;
 import penalty.controller.PenaltyController;
 import rental.controller.RentalController;
@@ -16,13 +17,15 @@ public class CustomerMenu implements UsersMenu {
     private final RentalController rentalController;
     private final VehicleController vehicleController;
     private final PenaltyController penaltyController;
+    private final CancellationController cancellationController;
 
-    public CustomerMenu(Scanner input, CustomerController customerController, RentalController rentalController, VehicleController vehicleController, PenaltyController penaltyController) {
+    public CustomerMenu(Scanner input, CustomerController customerController, RentalController rentalController, VehicleController vehicleController, PenaltyController penaltyController, CancellationController cancellationController) {
         this.input = input;
         this.customerController = customerController;
         this.rentalController = rentalController;
         this.vehicleController = vehicleController;
         this.penaltyController = penaltyController;
+        this.cancellationController = cancellationController;
     }
 
     @Override
@@ -41,7 +44,8 @@ public class CustomerMenu implements UsersMenu {
             System.out.println("9. View My active rented vehicles");
             System.out.println("10. View My Rented vehicles");
             System.out.println("11. View My Penalties");
-            System.out.println("12. Update My Account");
+            System.out.println("12. view My Cancellations of rentals");
+            System.out.println("13. Update My Account");
             System.out.println("0. Logout");
 
             choice = InputUtil.readPositiveInt(input, "Enter your choice");
@@ -60,6 +64,7 @@ public class CustomerMenu implements UsersMenu {
                     rentalController.returnVehicle(input, customerId);
                     break;
                 case 5:
+                    rentalController.cancelRental(input, customerId);
                     break;
                 case 6:
                     rentalController.viewRentalsByCustomerId(customerId);
@@ -80,6 +85,9 @@ public class CustomerMenu implements UsersMenu {
                     penaltyController.viewPenaltiesByCustomerId(customerId);
                     break;
                 case 12:
+                    cancellationController.viewCancellationsByCustomerId(customerId);
+                    break;
+                case 13:
                     customerController.updateCustomer(input, customerId);
                     break;
                 case 0:

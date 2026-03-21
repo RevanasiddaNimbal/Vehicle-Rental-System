@@ -13,7 +13,16 @@ public class RentalTimeCalculator {
 
     public long calculateLateHours(LocalDate endDate, LocalTime endTime, LocalDateTime actualReturn) {
         LocalDateTime expectedReturn = LocalDateTime.of(endDate, endTime);
-        long hours = Duration.between(expectedReturn, actualReturn).toHours();
-        return Math.max(hours, 0);
+        long totalMinutes = Duration.between(expectedReturn, actualReturn).toMinutes();
+
+        if (totalMinutes <= 0) return 0;
+
+        long totalTime = totalMinutes / 60;
+        long remender = totalMinutes % 60;
+
+        if (remender > 15) {
+            totalTime += 1;
+        }
+        return Math.max(totalTime, 0);
     }
 }

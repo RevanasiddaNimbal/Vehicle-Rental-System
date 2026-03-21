@@ -1,6 +1,7 @@
 package rental.controller;
 
 import UI.UserPrinter;
+import cancellation.service.CancellationService;
 import customer.model.Customer;
 import customer.service.CustomerService;
 import invoice.model.Invoice;
@@ -30,13 +31,14 @@ public class RentalController {
     private final InvoiceService invoiceService;
     private final CustomerService customerService;
     private final PenaltyService penaltyService;
+    private final CancellationService cancellationService;
     private final UserPrinter<Rental> rentalPrinter;
     private final UserPrinter<Customer> customerPrinter;
     private final UserPrinter<VehicleOwner> ownerPrinter;
     private final UserPrinter<Vehicle> vehiclePrinter;
     private final UserPrinter<Penalty> penaltyPrinter;
 
-    public RentalController(RentalService rentalService, VehicleService vehicleService, InvoiceService invoiceService, CustomerService customerService, PenaltyService penaltyService, UserPrinter<Rental> rentalPrinter, UserPrinter<Customer> customerPrinter, UserPrinter<VehicleOwner> ownerPrinter, UserPrinter<Vehicle> vehiclePrinter, UserPrinter<Penalty> penaltyPrinter) {
+    public RentalController(RentalService rentalService, VehicleService vehicleService, InvoiceService invoiceService, CustomerService customerService, PenaltyService penaltyService, UserPrinter<Rental> rentalPrinter, UserPrinter<Customer> customerPrinter, UserPrinter<VehicleOwner> ownerPrinter, UserPrinter<Vehicle> vehiclePrinter, UserPrinter<Penalty> penaltyPrinter, CancellationService cancellationService) {
         this.rentalService = rentalService;
         this.vehicleService = vehicleService;
         this.invoiceService = invoiceService;
@@ -47,6 +49,7 @@ public class RentalController {
         this.ownerPrinter = ownerPrinter;
         this.vehiclePrinter = vehiclePrinter;
         this.penaltyPrinter = penaltyPrinter;
+        this.cancellationService = cancellationService;
     }
 
     public void rentVehicle(Scanner input, String customerId) {
@@ -146,6 +149,64 @@ public class RentalController {
         rentalService.completeRentals(rentalsToReturn);
         vehicleService.updateStatus(rentalsToReturn, Status.AVAILABLE);
         System.out.println("Vehicle returned successfully!");
+    }
+
+    public void cancelRental(Scanner input, String customerId) {
+        List<Rental> rentalsToCancel = new ArrayList<>();
+        boolean addMore = true;
+
+        while (addMore) {
+
+            int rentalId = InputUtil.readPositiveInt(input, "Enter Rental ID to cancel");
+
+            Rental rental = rentalService.getRentalById(rentalId);
+
+            if (rental == null || !rental.getCustomerId().equals(customerId)) {
+                System.out.println("Invalid rental or does not belong to you.");
+                continue;
+            }
+
+            if (rental.getStatus().equals(RentalStatus.CANCELLED)) {
+                System.out.println("Rental is already cancelled.");
+                continue;
+            }
+
+            if (rental.getStatus().equals(RentalStatus.COMPLETED)) {
+                System.out.println("Cannot cancel completed rental.");
+                continue;
+            }
+
+            if (rental.getStartDate().isBefore(LocalDate.now()) ||
+                    (rental.getStartDate().isEqual(LocalDate.now()) &&
+                            rental.getStartTime().isBefore(LocalTime.now()))) {
+
+                System.out.println("Cannot cancel after rental has started.");
+                continue;
+            }
+
+            rentalsToCancel.add(rental);
+            System.out.println("Added Rental for cancellation.");
+
+            String choice = InputUtil.readString(input, "Cancel another rental? (Y/N)");
+            addMore = choice.equalsIgnoreCase("Y");
+        }
+        if (rentalsToCancel.isEmpty()) {
+            System.out.println("No rentals to cancel.");
+            return;
+        }
+        rentalPrinter.print(rentalsToCancel);
+        String choice = InputUtil.readString(input, "Confirm cancellation? (Y/N)");
+
+        if (!choice.equalsIgnoreCase("Y")) {
+            System.out.println("Failed to cancel Rental.");
+            return;
+        }
+        for (Rental rental : rentalsToCancel) {
+            cancellationService.cancelRentalByRentalId(rental.getId());
+        }
+        vehicleService.updateStatus(rentalsToCancel, Status.AVAILABLE);
+        System.out.println("Cancellation successfully!");
+
     }
 
     public void viewActiveRentalsByCustomerId(String customerId) {
