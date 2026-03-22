@@ -15,7 +15,7 @@ public class WalletCredentialService {
     public void defaultWalletCredential(String walletId) {
         WalletCredential walletCredential = walletCredentialRepo.findByWalletId(walletId);
         if (walletCredential == null) {
-            WalletCredential credential = new WalletCredential(walletId, "123456");
+            WalletCredential credential = new WalletCredential(walletId, PasswordUtil.getHashPassword("123456"));
             walletCredentialRepo.save(credential);
             System.out.println("default wallet credential created successfully");
         }

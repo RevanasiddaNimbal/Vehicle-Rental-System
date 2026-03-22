@@ -153,8 +153,8 @@ public class AppConfig {
 
         // Wallet layer
         WalletRepo walletRepo = new WalletMemoryRepo();
-        WalletService walletService = new WalletService(walletRepo);
-        WalletController walletController = new WalletController(walletCredentialService, walletService);
+        WalletService walletService = new WalletService(walletRepo, walletCredentialService);
+        WalletController walletController = new WalletController(walletService);
 
         // Wallet strategy layer
         PostRegisterationStrategy walletStrategy = new WalletSetUpStrategy(input, walletService, walletCredentialService);
@@ -179,9 +179,28 @@ public class AppConfig {
         OtpStorage otpStorage = new OtpStorage();
         OtpService otpService = new OtpService(otpStorage, mailService);
 
+        //  Customer Menus Layer
+        WalletManagementMenu walletMenu = new WalletManagementMenu(input, walletController);
+        CustomerHistoryMenu customerHistoryMenu = new CustomerHistoryMenu(input, rentalController, penaltyController, cancellationController);
+        CustomerRentalsMenu customerRentalsMenu = new CustomerRentalsMenu(input, vehicleController, rentalController);
+        CustomerAccountMenu customerAccountMenu = new CustomerAccountMenu(input, customerController);
+
+        // owners Menu layer
+        VehicleOwnerHistoryMenu ownerHistoryMenu = new VehicleOwnerHistoryMenu(input, rentalController, cancellationController);
+        VehicleOwnerRentalsMenu ownerRentalsMenu = new VehicleOwnerRentalsMenu(input, rentalController);
+        VehicleOwnerAccountMenu ownerAccountMenu = new VehicleOwnerAccountMenu(input, ownerController);
+
+        // admin Menu layer
+        AdminAccountMenu adminAccountMenu = new AdminAccountMenu(input, adminController);
+        AdminsVehicleMenu adminsVehicleMenu = new AdminsVehicleMenu(input, vehicleController);
+        AdminsCustomerMenu adminsCustomerMenu = new AdminsCustomerMenu(input, customerController);
+        AdminOwnersManu adminOwnersManu = new AdminOwnersManu(input, ownerController);
+        AdminRentalMenu adminRentalMenu = new AdminRentalMenu(input, rentalController, penaltyController, cancellationController);
+
+
         // AuthMenu layer.
         AuthStrategyFactory authStrategyFactory = new AuthStrategyFactory(input, ownerService, adminService, customerService, otpService);
-        MenuFactory menuFactory = new MenuFactory(input, ownerController, vehicleController, customerController, adminController, rentalController, penaltyController, cancellationController);
+        MenuFactory menuFactory = new MenuFactory(input, walletMenu, customerHistoryMenu, customerRentalsMenu, customerAccountMenu, ownerAccountMenu, ownerRentalsMenu, ownerHistoryMenu, adminAccountMenu, adminsVehicleMenu, adminsCustomerMenu, adminOwnersManu, adminRentalMenu);
         AuthService authService = new AuthService(authStrategyFactory, walletStrategy);
         AuthController authController = new AuthController(input, authService, menuFactory);
         UserRoleMenu authMenu = new AuthMenu(input, authController);

@@ -22,7 +22,6 @@ public class AdminController {
         System.out.println("---- Update Admin -----");
         System.out.println("1. Username");
         System.out.println("2. Email");
-        System.out.println("3. Password");
         System.out.println("0. back");
         int choice = InputUtil.readPositiveInt(input, "Enter your choice");
         switch (choice) {
@@ -34,10 +33,6 @@ public class AdminController {
                 String email = InputUtil.readValidEmail(input, "Enter your new  Email");
                 admin.setEmail(email);
                 break;
-            case 3:
-                String password = InputUtil.readValidPassword(input, "Enter your new  Password");
-                admin.setPassword(password);
-                break;
             case 0:
                 return;
             default:
@@ -48,6 +43,18 @@ public class AdminController {
         } else {
             System.out.println("Failed to Update Admin details.");
         }
+    }
+
+    public void resetPassword(Scanner input, String adminId) {
+        if (adminId == null) {
+            System.out.println("Amin Id is required");
+            return;
+        }
+        if (service.ResetPassword(input, adminId))
+            System.out.println("Password Reset Successful");
+        else
+            System.out.println("Password Reset Failed.Please try again");
+
     }
 
 }

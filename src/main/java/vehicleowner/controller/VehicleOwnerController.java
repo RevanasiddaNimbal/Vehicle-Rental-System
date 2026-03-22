@@ -56,7 +56,6 @@ public class VehicleOwnerController {
         System.out.println("2. Email address");
         System.out.println("3. Phone number");
         System.out.println("4. Address");
-        System.out.println("5. Password");
         System.out.println("0. back");
         int choice = InputUtil.readPositiveInt(input, "Enter choice");
         switch (choice) {
@@ -76,10 +75,6 @@ public class VehicleOwnerController {
                 String Address = InputUtil.readString(input, "Enter new address");
                 vehicleOwner.setAddress(Address);
                 break;
-            case 5:
-                String password = InputUtil.readValidPassword(input, "Enter new password");
-                vehicleOwner.setPassword(password);
-                break;
             case 0:
                 return;
             default:
@@ -92,6 +87,18 @@ public class VehicleOwnerController {
             System.out.println("Failed to update vehicle Owner.");
         }
 
+    }
+
+    public void resetPassword(Scanner input, String ownerId) {
+        if (ownerId == null) {
+            System.out.println("Owner ID is required");
+            return;
+        }
+        if (service.resetPassword(input, ownerId)) {
+            System.out.println("Password Reset Successfully");
+        } else {
+            System.out.println("Failed to reset password.Please try again");
+        }
     }
 
     public void viewOwners() {

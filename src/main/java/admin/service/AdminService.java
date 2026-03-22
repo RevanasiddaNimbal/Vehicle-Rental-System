@@ -2,6 +2,9 @@ package admin.service;
 
 import admin.model.Admin;
 import admin.repository.AdminRepo;
+import util.InputUtil;
+
+import java.util.Scanner;
 
 public class AdminService {
     private final AdminRepo repository;
@@ -23,6 +26,21 @@ public class AdminService {
             repository.save(admin);
             System.out.println("Supper Admin created successfully");
         }
+    }
+
+    public boolean ResetPassword(Scanner input, String adminId) {
+        Admin admin = repository.findById(adminId);
+        if (admin == null) {
+            return false;
+        }
+        String oldPassword = InputUtil.readValidPassword(input, "Enter old password");
+        String newPassword = InputUtil.readValidPassword(input, "Enter new password");
+        if (!admin.getPassword().equals(oldPassword)) {
+            System.out.println("Old password doesn't match");
+            return false;
+        }
+        admin.setPassword(newPassword);
+        return repository.update(admin);
     }
 
     public boolean updateAdmin(Admin admin) {

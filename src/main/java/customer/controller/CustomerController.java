@@ -48,6 +48,18 @@ public class CustomerController {
         }
     }
 
+    public void resetPassword(Scanner input, String customerId) {
+        if (customerId == null) {
+            System.out.println("Customer Id is required");
+            return;
+        }
+        if (service.resetPassword(input, customerId)) {
+            System.out.println("Reset Password Successfully.");
+        } else {
+            System.out.println("Failed to reset Password.Please try again");
+        }
+    }
+
     public void updateCustomer(Scanner input, String Id) {
         Customer customer = service.getCustomerById(Id);
 
@@ -62,7 +74,6 @@ public class CustomerController {
         System.out.println("3. Phone number");
         System.out.println("4. Address");
         System.out.println("5. Driving License Number");
-        System.out.println("6. Password");
         System.out.println("0. Back");
 
         int choice = InputUtil.readPositiveInt(input, "Enter choice");
@@ -91,10 +102,6 @@ public class CustomerController {
             case 5:
                 String license = InputUtil.readString(input, "Enter new Driving License Number");
                 customer.setDrivingLicenseNumber(license);
-                break;
-            case 6:
-                String password = InputUtil.readValidPassword(input, "Enter new password");
-                customer.setPassword(password);
                 break;
             case 0:
                 return;

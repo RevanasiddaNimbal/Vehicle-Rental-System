@@ -1,100 +1,61 @@
 package UI;
 
-import admin.controller.AdminController;
-import authentication.model.UserRole;
-import cancellation.controller.CancellationController;
-import customer.controller.CustomerController;
-import penalty.controller.PenaltyController;
-import rental.controller.RentalController;
 import util.InputUtil;
-import vehicle.controller.VehicleController;
-import vehicleowner.controller.VehicleOwnerController;
 
 import java.util.Scanner;
 
 public class AdminMenu implements UsersMenu {
     private final Scanner input;
-    private final VehicleOwnerController ownerController;
-    private final VehicleController vehicleController;
-    private final CustomerController customerController;
-    private final AdminController adminController;
-    private final RentalController rentalController;
-    private final PenaltyController penaltyController;
-    private final CancellationController cancellationController;
+    private final AdminAccountMenu accountManagementMenu;
+    private final AdminRentalMenu rentalMenu;
+    private final AdminsCustomerMenu customerMenu;
+    private final WalletManagementMenu walletManagementMenu;
+    private final AdminOwnersManu ownerMenu;
+    private final AdminsVehicleMenu vehicleMenu;
 
-    public AdminMenu(Scanner input, VehicleOwnerController ownerController, VehicleController vehicleController, CustomerController customerController, AdminController adminController, RentalController rentalController, PenaltyController penaltyController, CancellationController cancellationController) {
+    public AdminMenu(Scanner input, AdminOwnersManu ownerMenu, AdminsVehicleMenu vehicleMenu, AdminsCustomerMenu customerMenu, AdminRentalMenu rentalMenu, AdminAccountMenu accountManagementMenu, WalletManagementMenu walletManagementMenu) {
         this.input = input;
-        this.ownerController = ownerController;
-        this.vehicleController = vehicleController;
-        this.customerController = customerController;
-        this.adminController = adminController;
-        this.rentalController = rentalController;
-        this.penaltyController = penaltyController;
-        this.cancellationController = cancellationController;
+        this.ownerMenu = ownerMenu;
+        this.vehicleMenu = vehicleMenu;
+        this.customerMenu = customerMenu;
+        this.rentalMenu = rentalMenu;
+        this.accountManagementMenu = accountManagementMenu;
+        this.walletManagementMenu = walletManagementMenu;
     }
 
     @Override
-    public void show(UserRole role, String adminId) {
+    public void show(String adminId) {
         int choice;
         while (true) {
             System.out.println("\n========= ADMIN PANEL =========");
-            System.out.println("--- Vehicle Owner Management ---");
-            System.out.println("1.  View All Vehicle Owners");
-            System.out.println("2.  Activate  Vehicle Owner");
-            System.out.println("3.  Deactivate Vehicle Owner");
-            System.out.println("--- Customer Management ---");
-            System.out.println("4.  View All Customers");
-            System.out.println("5.  Activate Customer");
-            System.out.println("6.  Deactivate Customer");
-            System.out.println("--- Vehicle Overview ---");
-            System.out.println("7.  View All Vehicles");
-            System.out.println("--- Rental Overview ---");
-            System.out.println("8.  View All Active Rentals");
-            System.out.println("9.  View Full Rental History");
-            System.out.println("10.  View All Penalties");
-            System.out.println("11.  View All Cancellations");
-            System.out.println("--- Admin account Management ---");
-            System.out.println("12. Update My account");
+            System.out.println("1. Rental Management");
+            System.out.println("2. Wallet Management");
+            System.out.println("1. Vehicle Owners Management");
+            System.out.println("2. Customers Management");
+            System.out.println("3. Vehicle Management");
+            System.out.println("4. Account Management");
             System.out.println("0.  Logout");
 
             choice = InputUtil.readPositiveInt(input, "Enter your choice");
 
             switch (choice) {
                 case 1:
-                    ownerController.viewOwners();
+                    rentalMenu.show(adminId);
                     break;
                 case 2:
-                    ownerController.activateVehicleOwner(input);
+                    walletManagementMenu.show("SYSTEM");
                     break;
                 case 3:
-                    ownerController.deactivateVehicleOwner(input);
+                    ownerMenu.show(adminId);
                     break;
                 case 4:
-                    customerController.viewCustomers();
+                    customerMenu.show(adminId);
                     break;
                 case 5:
-                    customerController.activateCustomer(input);
+                    vehicleMenu.show(adminId);
                     break;
                 case 6:
-                    customerController.deactivateCustomer(input);
-                    break;
-                case 7:
-                    vehicleController.viewVehicles();
-                    break;
-                case 8:
-                    rentalController.viewActiveRentals();
-                    break;
-                case 9:
-                    rentalController.viewAllRentals();
-                    break;
-                case 10:
-                    penaltyController.viewPenalties();
-                    break;
-                case 11:
-                    cancellationController.viewCancellations();
-                    break;
-                case 12:
-                    adminController.updateAdmin(input, adminId);
+                    accountManagementMenu.show(adminId);
                     break;
                 case 0:
                     System.out.println("Logged out from Admin.");
