@@ -24,7 +24,7 @@ public class WalletManagementMenu implements UsersMenu {
             System.out.println("\n========= Wallet Management Menu ==============");
             System.out.println("1. Check Wallet Balance");
             System.out.println("2. Deposit Amount to Wallet");
-            System.out.println("3. withdraw Amount from Wallet");
+            System.out.println("3. Withdraw Amount from Wallet");
             System.out.println("4. Reset Password");
             System.out.println("0. back");
             choice = InputUtil.readPositiveInt(input, "Enter your choice");

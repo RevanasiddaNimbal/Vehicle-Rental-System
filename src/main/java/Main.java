@@ -7,7 +7,8 @@ public class Main {
 
     public static void main(String[] args) {
         try (Scanner input = new Scanner(System.in)) {
-            Application app = AppConfig.createApplication(input);
+            AppConfig appConfig = new AppConfig();
+            Application app = appConfig.createApplication(input);
             app.start();
 
         } catch (Exception e) {

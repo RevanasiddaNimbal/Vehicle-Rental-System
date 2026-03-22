@@ -1,220 +1,104 @@
 package config;
 
-import UI.*;
-import admin.controller.AdminController;
-import admin.repository.AdminPostgresRepo;
-import admin.repository.AdminRepo;
-import admin.service.AdminService;
+import UI.AuthMenu;
+import UI.Documentation;
+import UI.UserRoleMenu;
 import application.Application;
-import authentication.controller.AuthController;
-import authentication.factory.AuthStrategyFactory;
-import authentication.factory.MenuFactory;
-import authentication.repository.OtpStorage;
-import authentication.service.AuthService;
-import authentication.service.OtpService;
-import cancellation.controller.CancellationController;
-import cancellation.model.CancellationRecord;
-import cancellation.repository.CancellationPostgresRepo;
-import cancellation.repository.CancellationRepo;
-import cancellation.service.CancellationService;
-import customer.controller.CustomerController;
-import customer.model.Customer;
-import customer.repository.CustomerRepo;
-import customer.repository.CustomersPostgresRepo;
-import customer.service.CustomerService;
-import database.DatabaseConnection;
-import database.PostgresConnection;
 import initializer.SystemInitializer;
-import invoice.renders.InvoiceConsoleRender;
-import invoice.renders.InvoiceRender;
-import invoice.service.InvoiceService;
-import notification.provider.BrevoEmailProvider;
-import notification.service.EmailService;
-import penalty.controller.PenaltyController;
-import penalty.factory.PenaltyStrategyFactory;
-import penalty.model.Penalty;
-import penalty.repository.PenaltyPostgresRepo;
-import penalty.repository.PenaltyRepo;
-import penalty.service.PenaltyService;
-import rental.billing.RentalPriceCalculator;
-import rental.billing.RentalTimeCalculator;
-import rental.controller.RentalController;
-import rental.model.Rental;
-import rental.repository.RentalRepo;
-import rental.repository.RentalsPostgresRepo;
-import rental.service.RentalService;
-import rental.stretegy.BasePriceStrategy;
-import rental.stretegy.DiscountStrategy;
-import rental.stretegy.PricingStrategy;
-import rental.stretegy.WeekendStrategy;
-import vehicle.controller.VehicleController;
-import vehicle.creator.AutoCreator;
-import vehicle.creator.BikeCreator;
-import vehicle.creator.CarCreator;
-import vehicle.creator.VehicleCreator;
-import vehicle.models.Auto;
-import vehicle.models.Bike;
-import vehicle.models.Car;
-import vehicle.models.Vehicle;
-import vehicle.repository.VehicleRepo;
-import vehicle.repository.VehiclesPostgresRepo;
-import vehicle.service.VehicleService;
-import vehicle.updater.AutoUpdater;
-import vehicle.updater.BikeUpdater;
-import vehicle.updater.CarUpdater;
-import vehicle.updater.VehicleUpdater;
-import vehicleowner.controller.VehicleOwnerController;
-import vehicleowner.models.VehicleOwner;
-import vehicleowner.repository.VehicleOwnerRepo;
-import vehicleowner.repository.VehicleOwnersPostgresRepo;
-import vehicleowner.service.VehicleOwnerService;
-import wallet.controller.WalletController;
-import wallet.controller.WalletCredentialController;
-import wallet.repository.WalletCredentialPostgresRepo;
-import wallet.repository.WalletCredentialRepo;
-import wallet.repository.WalletPostgresRepo;
-import wallet.repository.WalletRepo;
-import wallet.service.WalletCredentialService;
-import wallet.service.WalletService;
-import wallet.stretegy.PostRegisterationStrategy;
-import wallet.stretegy.WalletSetUpStrategy;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Scanner;
 
 public class AppConfig {
-    public static Application createApplication(Scanner input) {
-        // documentation layer.
+
+    private DatabaseConfig databaseConfig;
+    private RepositoryConfig repositoryConfig;
+    private ServiceConfig serviceConfig;
+    private PrinterConfig printerConfig;
+    private StrategyConfig strategyConfig;
+    private NotificationConfig notificationConfig;
+    private ControllerConfig controllerConfig;
+    private MenuConfig menuConfig;
+    private AuthConfig authConfig;
+    private SystemInitializer systemInitializer;
+
+    public DatabaseConfig getDatabaseConfig() {
+        if (databaseConfig == null) {
+            databaseConfig = new DatabaseConfig();
+        }
+        return databaseConfig;
+    }
+
+    public RepositoryConfig getRepositoryConfig() {
+        if (repositoryConfig == null) {
+            repositoryConfig = new RepositoryConfig(getDatabaseConfig());
+        }
+        return repositoryConfig;
+    }
+
+    public ServiceConfig getServiceConfig() {
+        if (serviceConfig == null) {
+            serviceConfig = new ServiceConfig(getRepositoryConfig());
+        }
+        return serviceConfig;
+    }
+
+    public PrinterConfig getPrinterConfig() {
+        if (printerConfig == null) {
+            printerConfig = new PrinterConfig();
+        }
+        return printerConfig;
+    }
+
+    public StrategyConfig getStrategyConfig(Scanner input) {
+        if (strategyConfig == null) {
+            strategyConfig = new StrategyConfig(getServiceConfig(), input);
+        }
+        return strategyConfig;
+    }
+
+    public NotificationConfig getNotificationConfig() {
+        if (notificationConfig == null) {
+            notificationConfig = new NotificationConfig();
+        }
+        return notificationConfig;
+    }
+
+    public ControllerConfig getControllerConfig(Scanner input) {
+        if (controllerConfig == null) {
+            controllerConfig = new ControllerConfig(getServiceConfig(), getPrinterConfig(), getStrategyConfig(input), input);
+        }
+        return controllerConfig;
+    }
+
+    public MenuConfig getMenuConfig(Scanner input) {
+        if (menuConfig == null) {
+            menuConfig = new MenuConfig(getControllerConfig(input), input);
+        }
+        return menuConfig;
+    }
+
+    public AuthConfig getAuthConfig(Scanner input) {
+        if (authConfig == null) {
+            authConfig = new AuthConfig(getServiceConfig(), getNotificationConfig(), getStrategyConfig(input), getMenuConfig(input), input);
+        }
+        return authConfig;
+    }
+
+    public SystemInitializer getSystemInitializer() {
+        if (systemInitializer == null) {
+            systemInitializer = new SystemInitializer(
+                    getServiceConfig().getAdminService(),
+                    getServiceConfig().getWalletService(),
+                    getServiceConfig().getWalletCredentialService()
+            );
+        }
+        return systemInitializer;
+    }
+
+    public Application createApplication(Scanner input) {
+        getSystemInitializer().initialize();
         UserRoleMenu documentation = new Documentation();
-
-        // Database  connection layer
-        DbConfig dbConfig = new DbConfig();
-        DatabaseConnection postgresConnection = new PostgresConnection(dbConfig);
-
-        //Printer layer
-        UserPrinter<Customer> customerPrinter = new CustomerPrinter();
-        UserPrinter<Vehicle> vehiclePrinter = new VehiclePrinter();
-        UserPrinter<VehicleOwner> ownerPrinter = new OwnersPrinter();
-        UserPrinter<Rental> rentalPrinter = new RentalPrinter();
-        UserPrinter<Penalty> penaltyPrinter = new PenaltyPrinter();
-        UserPrinter<CancellationRecord> cancellationPrinter = new CancellationPrinter();
-
-        // Vehicle layer.
-        Map<Integer, VehicleCreator> creators = new HashMap<>();
-        creators.put(1, new BikeCreator());
-        creators.put(2, new CarCreator());
-        creators.put(3, new AutoCreator());
-
-        Map<Class<? extends Vehicle>, VehicleUpdater> updaters = new HashMap<>();
-        updaters.put(Bike.class, new BikeUpdater());
-        updaters.put(Car.class, new CarUpdater());
-        updaters.put(Auto.class, new AutoUpdater());
-
-        VehicleRepo vehicleRepo = new VehiclesPostgresRepo(postgresConnection);
-        VehicleService vehicleService = new VehicleService(vehicleRepo);
-        VehicleController vehicleController = new VehicleController(vehicleService, creators, updaters, vehiclePrinter);
-
-        // Admin layer
-        AdminRepo adminRepo = new AdminPostgresRepo(postgresConnection);
-        AdminService adminService = new AdminService(adminRepo);
-        AdminController adminController = new AdminController(adminService);
-
-        // Vehicle-Owner layer.
-        VehicleOwnerRepo ownerRepo = new VehicleOwnersPostgresRepo(postgresConnection);
-        VehicleOwnerService ownerService = new VehicleOwnerService(ownerRepo);
-        VehicleOwnerController ownerController = new VehicleOwnerController(ownerService, ownerPrinter);
-
-        //Customer Layer
-        CustomerRepo customerRepo = new CustomersPostgresRepo(postgresConnection);
-        CustomerService customerService = new CustomerService(customerRepo);
-        CustomerController customerController = new CustomerController(customerService, customerPrinter);
-
-        // Invoice layer
-        InvoiceRender invoiceRender = new InvoiceConsoleRender();
-        InvoiceService invoiceService = new InvoiceService(invoiceRender);
-
-        // rental calculators
-        Map<Integer, PricingStrategy> pricingStrategies = new HashMap<>();
-        pricingStrategies.put(1, new BasePriceStrategy());
-        pricingStrategies.put(2, new WeekendStrategy());
-        pricingStrategies.put(3, new DiscountStrategy());
-        RentalPriceCalculator rentalPriceCalculator = new RentalPriceCalculator(pricingStrategies);
-        RentalTimeCalculator rentalTimeCalculator = new RentalTimeCalculator();
-
-        // Penalty layer
-        PenaltyStrategyFactory penaltyStrategyFactory = new PenaltyStrategyFactory(rentalTimeCalculator);
-        PenaltyRepo penaltyRepo = new PenaltyPostgresRepo(postgresConnection);
-        PenaltyService penaltyService = new PenaltyService(penaltyRepo, penaltyStrategyFactory);
-        PenaltyController penaltyController = new PenaltyController(penaltyService, penaltyPrinter);
-
-        //Wallet credential layer
-        WalletCredentialRepo walletCredentialRepo = new WalletCredentialPostgresRepo(postgresConnection);
-        WalletCredentialService walletCredentialService = new WalletCredentialService(walletCredentialRepo);
-
-        // Wallet layer
-        WalletRepo walletRepo = new WalletPostgresRepo(postgresConnection);
-        WalletService walletService = new WalletService(walletRepo, walletCredentialService);
-        WalletController walletController = new WalletController(walletService);
-
-        // Wallet strategy layer
-        PostRegisterationStrategy walletStrategy = new WalletSetUpStrategy(input, walletService, walletCredentialService);
-
-        // wallet Credential controller layer
-        WalletCredentialController walletCredentialController = new WalletCredentialController(input, walletCredentialService, walletService);
-
-        //rental layer
-        RentalRepo rentalPostgresRepo = new RentalsPostgresRepo(postgresConnection);
-        RentalService rentalService = new RentalService(rentalPostgresRepo, rentalPriceCalculator, vehicleService, ownerService, customerService, rentalTimeCalculator);
-
-        //Cancellation layer
-        CancellationRepo cancellationRepo = new CancellationPostgresRepo(postgresConnection);
-        CancellationService cancellationService = new CancellationService(rentalService, vehicleService, cancellationRepo);
-        CancellationController cancellationController = new CancellationController(cancellationService, cancellationPrinter);
-
-        //rental controller
-        RentalController rentalController = new RentalController(rentalService, vehicleService, invoiceService, customerService, penaltyService, rentalPrinter, customerPrinter, ownerPrinter, vehiclePrinter, penaltyPrinter, cancellationService);
-
-        //Mailer Layer
-        EmailServiceConfig mailConfig = new EmailServiceConfig();
-        EmailService mailService = new BrevoEmailProvider(mailConfig);
-
-        //Otp layer
-        OtpStorage otpStorage = new OtpStorage();
-        OtpService otpService = new OtpService(otpStorage, mailService);
-
-        //  Customer Menus Layer
-        WalletManagementMenu walletMenu = new WalletManagementMenu(input, walletController, walletCredentialController);
-        CustomerHistoryMenu customerHistoryMenu = new CustomerHistoryMenu(input, rentalController, penaltyController, cancellationController);
-        CustomerRentalsMenu customerRentalsMenu = new CustomerRentalsMenu(input, vehicleController, rentalController);
-        CustomerAccountMenu customerAccountMenu = new CustomerAccountMenu(input, customerController);
-
-        // owners Menu layer
-        VehicleOwnerHistoryMenu ownerHistoryMenu = new VehicleOwnerHistoryMenu(input, rentalController, cancellationController);
-        VehicleOwnerRentalsMenu ownerRentalsMenu = new VehicleOwnerRentalsMenu(input, rentalController);
-        VehicleOwnerAccountMenu ownerAccountMenu = new VehicleOwnerAccountMenu(input, ownerController);
-        VehicleOwnerVehiclesMenu vehiclesMenu = new VehicleOwnerVehiclesMenu(input, vehicleController);
-
-        // admin Menu layer
-        AdminAccountMenu adminAccountMenu = new AdminAccountMenu(input, adminController);
-        AdminsVehicleMenu adminsVehicleMenu = new AdminsVehicleMenu(input, vehicleController);
-        AdminsCustomerMenu adminsCustomerMenu = new AdminsCustomerMenu(input, customerController);
-        AdminOwnersManu adminOwnersManu = new AdminOwnersManu(input, ownerController);
-        AdminRentalMenu adminRentalMenu = new AdminRentalMenu(input, rentalController, penaltyController, cancellationController);
-
-
-        // AuthMenu layer.
-        AuthStrategyFactory authStrategyFactory = new AuthStrategyFactory(input, ownerService, adminService, customerService, otpService);
-        MenuFactory menuFactory = new MenuFactory(input, walletMenu, customerHistoryMenu, customerRentalsMenu, customerAccountMenu, ownerAccountMenu, ownerRentalsMenu, ownerHistoryMenu, adminAccountMenu, adminsVehicleMenu, adminsCustomerMenu, adminOwnersManu, adminRentalMenu, vehiclesMenu);
-        AuthService authService = new AuthService(authStrategyFactory, walletStrategy);
-        AuthController authController = new AuthController(input, authService, menuFactory);
-        UserRoleMenu authMenu = new AuthMenu(input, authController);
-
-        SystemInitializer initializer = new SystemInitializer(adminService, walletService, walletCredentialService);
-
-        initializer.initialize();
-
-
+        UserRoleMenu authMenu = new AuthMenu(input, getAuthConfig(input).getAuthController());
         return new Application(input, documentation, authMenu);
     }
 }
