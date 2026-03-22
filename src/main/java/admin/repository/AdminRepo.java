@@ -3,6 +3,8 @@ package admin.repository;
 import admin.model.Admin;
 
 public interface AdminRepo {
+    public void save(Admin admin);
+
     public Admin findByEmail(String email);
 
     public Admin findById(String id);

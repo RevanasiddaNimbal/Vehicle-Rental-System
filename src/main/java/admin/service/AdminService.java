@@ -10,6 +10,21 @@ public class AdminService {
         this.repository = repository;
     }
 
+    public void createDefaultAdmins() {
+        Admin assistant = repository.findById("ADM-001");
+        if (assistant == null) {
+            Admin admin = new Admin("ADM-001", "Assistant", "rrx2038@gmail.com", "123456", false);
+            repository.save(admin);
+            System.out.println("Normal Admin created successfully");
+        }
+        Admin manager = repository.findById("ADM-002");
+        if (manager == null) {
+            Admin admin = new Admin("ADM-002", "Manager", "revanasiddanimbal82@gmail.com", "123456", true);
+            repository.save(admin);
+            System.out.println("Supper Admin created successfully");
+        }
+    }
+
     public boolean updateAdmin(Admin admin) {
         if (repository.findById(admin.getId()) == null) {
             return false;

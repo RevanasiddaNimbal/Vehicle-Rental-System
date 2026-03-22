@@ -1,5 +1,7 @@
 package authentication.strategy;
 
+import authentication.model.AuthUser;
+
 public interface AuthRegisterStretegy {
-    void register();
+    AuthUser register();
 }

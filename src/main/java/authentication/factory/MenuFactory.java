@@ -46,6 +46,6 @@ public class MenuFactory {
                     new CustomerMenu(input, customerController, rentalController, vehicleController, penaltyController, cancellationController);
         };
 
-        menu.show(role, userId);
+        menu.show(userId);
     }
 }

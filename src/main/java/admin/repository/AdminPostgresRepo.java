@@ -39,8 +39,29 @@ public class AdminPostgresRepo implements AdminRepo {
     }
 
     @Override
+    public void save(Admin admin) {
+
+        String query = "INSERT INTO admins (id, username, email, password, is_super_admin) VALUES (?, ?, ?, ?, ?) ON CONFLICT (id) DO NOTHING;";
+
+        try (Connection connection = databaseConnection.getConnection();
+             PreparedStatement ps = connection.prepareStatement(query)) {
+
+            ps.setString(1, admin.getId());
+            ps.setString(2, admin.getUsername());
+            ps.setString(3, admin.getEmail());
+            ps.setString(4, admin.getPassword());
+            ps.setBoolean(5, admin.getIsSuperAdmin());
+
+            ps.executeUpdate();
+
+        } catch (SQLException e) {
+            throw new DataAccessException("Failed to save admin.", e);
+        }
+    }
+
+    @Override
     public boolean update(Admin admin) {
-        String query = "UPDATE Admins SET username = ?, email = ?, password = ? WHERE id = ?";
+        String query = "UPDATE Admins SET username = ?, email = ?, password = ?, is_super_admin= ? WHERE id = ?";
 
         try (Connection connection = databaseConnection.getConnection();
              PreparedStatement ps = connection.prepareStatement(query)) {
@@ -49,9 +70,10 @@ public class AdminPostgresRepo implements AdminRepo {
             ps.setString(2, admin.getEmail());
             ps.setString(3, admin.getPassword());
             ps.setString(4, admin.getId());
+            ps.setBoolean(5, admin.getIsSuperAdmin());
 
-            int rowsAffected = ps.executeUpdate();
-            return rowsAffected > 0;
+            int rows = ps.executeUpdate();
+            return rows > 0;
 
         } catch (SQLException e) {
             throw new DataAccessException("Failed to update admin.", e);
@@ -82,10 +104,10 @@ public class AdminPostgresRepo implements AdminRepo {
             String username = rs.getString("username");
             String password = rs.getString("password");
             String adminEmail = rs.getString("email");
-            return new Admin(id, username, adminEmail, password);
+            boolean isSuperAdmin = rs.getBoolean("is_super_admin");
+            return new Admin(id, username, adminEmail, password, isSuperAdmin);
         } catch (SQLException e) {
             throw new DataAccessException("Failed to read admin.", e);
         }
-
     }
 }

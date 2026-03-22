@@ -6,7 +6,8 @@ public class IdGeneratorUtil {
     private static int customerCounter = 1;
     private static int rentalCounter = 1;
     private static int penaltyCounter = 1;
-    private static int CancellationCounter = 1;
+    private static int cancellationCounter = 1;
+    private static int walletCounter = 1;
 
 
     public static String generateVehicleId() {
@@ -30,7 +31,11 @@ public class IdGeneratorUtil {
     }
 
     public static String generateCancellationId() {
-        return String.format("CAN-%03d", customerCounter++);
+        return String.format("CAN-%03d", cancellationCounter++);
+    }
+
+    public static String generateWalletId() {
+        return String.format("WAL-%03d", walletCounter++);
     }
 
 

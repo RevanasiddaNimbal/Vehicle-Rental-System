@@ -7,12 +7,14 @@ public class Admin implements AuthUser {
     private String username;
     private String email;
     private String password;
+    private boolean isSuperAdmin;
 
-    public Admin(String id, String username, String email, String password) {
+    public Admin(String id, String username, String email, String password, boolean isSuperAdmin) {
         this.id = id;
         this.username = username;
         this.email = email;
         this.password = password;
+        this.isSuperAdmin = isSuperAdmin;
     }
 
     public String getId() {
@@ -43,6 +45,10 @@ public class Admin implements AuthUser {
     @Override
     public String getPassword() {
         return password;
+    }
+
+    public boolean getIsSuperAdmin() {
+        return isSuperAdmin;
     }
 
 

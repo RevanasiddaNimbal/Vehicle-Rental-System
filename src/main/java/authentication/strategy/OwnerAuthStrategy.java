@@ -23,7 +23,7 @@ public class OwnerAuthStrategy implements AuthLoginStretegy, AuthRegisterStreteg
     }
 
     @Override
-    public void register() {
+    public AuthUser register() {
         String id = IdGeneratorUtil.generateVehicleOwnerId();
         String name = InputUtil.readString(input, "Enter Full Name");
         String email = InputUtil.readValidEmail(input, "Enter Email Address");
@@ -33,7 +33,7 @@ public class OwnerAuthStrategy implements AuthLoginStretegy, AuthRegisterStreteg
 
         if (service.getVehicleOwnerByEmail(email) != null) {
             System.out.println("Vehicle Owner Already Exists");
-            return;
+            return null;
         }
         VehicleOwner owner = new VehicleOwner(id, name, email, phone, PasswordUtil.getHashPassword(password), Address, false);
 
@@ -44,8 +44,10 @@ public class OwnerAuthStrategy implements AuthLoginStretegy, AuthRegisterStreteg
             } else {
                 System.out.println("Failed to Register Vehicle Owner");
             }
+            return owner;
         } else {
             System.out.println("Registration Failed.");
+            return null;
         }
     }
 

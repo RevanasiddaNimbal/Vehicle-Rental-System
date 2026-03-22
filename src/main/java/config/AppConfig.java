@@ -24,6 +24,7 @@ import customer.repository.CustomersPostgresRepo;
 import customer.service.CustomerService;
 import database.DatabaseConnection;
 import database.PostgresConnection;
+import initializer.SystemInitializer;
 import invoice.renders.InvoiceConsoleRender;
 import invoice.renders.InvoiceRender;
 import invoice.service.InvoiceService;
@@ -67,6 +68,15 @@ import vehicleowner.models.VehicleOwner;
 import vehicleowner.repository.VehicleOwnerRepo;
 import vehicleowner.repository.VehicleOwnersPostgresRepo;
 import vehicleowner.service.VehicleOwnerService;
+import wallet.controller.WalletController;
+import wallet.repository.WalletCredentialMemoryRepo;
+import wallet.repository.WalletCredentialRepo;
+import wallet.repository.WalletMemoryRepo;
+import wallet.repository.WalletRepo;
+import wallet.service.WalletCredentialService;
+import wallet.service.WalletService;
+import wallet.stretegy.PostRegisterationStrategy;
+import wallet.stretegy.WalletSetUpStrategy;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -137,6 +147,17 @@ public class AppConfig {
         PenaltyService penaltyService = new PenaltyService(penaltyRepo, penaltyStrategyFactory);
         PenaltyController penaltyController = new PenaltyController(penaltyService, penaltyPrinter);
 
+        //Wallet credential layer
+        WalletCredentialRepo walletCredentialRepo = new WalletCredentialMemoryRepo();
+        WalletCredentialService walletCredentialService = new WalletCredentialService(walletCredentialRepo);
+
+        // Wallet layer
+        WalletRepo walletRepo = new WalletMemoryRepo();
+        WalletService walletService = new WalletService(walletRepo);
+        WalletController walletController = new WalletController(walletCredentialService, walletService);
+
+        // Wallet strategy layer
+        PostRegisterationStrategy walletStrategy = new WalletSetUpStrategy(input, walletService, walletCredentialService);
 
         //rental layer
         RentalRepo rentalPostgresRepo = new RentalsPostgresRepo(postgresConnection);
@@ -161,9 +182,13 @@ public class AppConfig {
         // AuthMenu layer.
         AuthStrategyFactory authStrategyFactory = new AuthStrategyFactory(input, ownerService, adminService, customerService, otpService);
         MenuFactory menuFactory = new MenuFactory(input, ownerController, vehicleController, customerController, adminController, rentalController, penaltyController, cancellationController);
-        AuthService authService = new AuthService(authStrategyFactory);
+        AuthService authService = new AuthService(authStrategyFactory, walletStrategy);
         AuthController authController = new AuthController(input, authService, menuFactory);
         UserRoleMenu authMenu = new AuthMenu(input, authController);
+
+        SystemInitializer initializer = new SystemInitializer(adminService, walletService, walletCredentialService);
+
+        initializer.initialize();
 
 
         return new Application(input, documentation, authMenu);

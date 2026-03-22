@@ -24,7 +24,7 @@ public class CustomerAuthStretegy implements AuthLoginStretegy, AuthRegisterStre
     }
 
     @Override
-    public void register() {
+    public AuthUser register() {
 
         String id = IdGeneratorUtil.generateCustomerId();
         String name = InputUtil.readString(input, "Enter Full Name");
@@ -36,7 +36,7 @@ public class CustomerAuthStretegy implements AuthLoginStretegy, AuthRegisterStre
 
         if (service.getCustomerByEmail(email) != null) {
             System.out.println("Customer Already Exists");
-            return;
+            return null;
         }
         Customer customer = new Customer(id, name, email, phone, address, license, PasswordUtil.getHashPassword(password), false);
 
@@ -47,11 +47,11 @@ public class CustomerAuthStretegy implements AuthLoginStretegy, AuthRegisterStre
                 System.out.println("Customer Registered Successfully");
             } else {
                 System.out.println("Failed to Register Customer");
-
             }
+            return customer;
         } else {
             System.out.println("Registration Failed.");
-
+            return null;
         }
     }
 
