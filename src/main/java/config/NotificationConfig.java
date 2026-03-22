@@ -12,7 +12,7 @@ public class NotificationConfig {
 
     public EmailService getEmailService() {
         if (emailService == null) {
-            emailService = new BrevoEmailProvider(new EmailServiceConfig());
+            emailService = new BrevoEmailProvider(new EmailPropertiesConfig());
         }
         return emailService;
     }

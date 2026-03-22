@@ -2,7 +2,7 @@ package database;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
-import config.DbConfig;
+import config.DbPropertiesConfig;
 import exception.DataAccessException;
 
 import java.sql.Connection;
@@ -11,11 +11,11 @@ import java.sql.SQLException;
 public class PostgresConnection implements DatabaseConnection {
     private final HikariDataSource ds;
 
-    public PostgresConnection(DbConfig config) {
+    public PostgresConnection(DbPropertiesConfig config) {
         this.ds = createDataSource(config);
     }
 
-    private HikariDataSource createDataSource(DbConfig config) {
+    private HikariDataSource createDataSource(DbPropertiesConfig config) {
         try {
             HikariConfig hikariConfig = new HikariConfig();
             hikariConfig.setPoolName("VehicleRentalPool");

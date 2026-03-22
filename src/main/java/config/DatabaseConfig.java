@@ -9,7 +9,7 @@ public class DatabaseConfig {
 
     public DatabaseConnection getPostgresConnection() {
         if (postgresConnection == null) {
-            postgresConnection = new PostgresConnection(new DbConfig());
+            postgresConnection = new PostgresConnection(new DbPropertiesConfig());
         }
         return postgresConnection;
     }

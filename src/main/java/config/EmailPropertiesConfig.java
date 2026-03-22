@@ -3,11 +3,11 @@ package config;
 import java.io.InputStream;
 import java.util.Properties;
 
-public class EmailServiceConfig {
+public class EmailPropertiesConfig {
 
     private final Properties properties = new Properties();
 
-    public EmailServiceConfig() {
+    public EmailPropertiesConfig() {
         load();
     }
 

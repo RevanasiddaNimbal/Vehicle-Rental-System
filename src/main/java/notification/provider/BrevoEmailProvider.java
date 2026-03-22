@@ -1,6 +1,6 @@
 package notification.provider;
 
-import config.EmailServiceConfig;
+import config.EmailPropertiesConfig;
 import exception.DataAccessException;
 import notification.model.EmailMessage;
 import notification.service.EmailService;
@@ -16,7 +16,7 @@ public class BrevoEmailProvider implements EmailService {
     private final String senderName;
     private final String apiUrl;
 
-    public BrevoEmailProvider(EmailServiceConfig config) {
+    public BrevoEmailProvider(EmailPropertiesConfig config) {
         this.apiKey = config.getApiKey();
         this.senderEmail = config.getSenderEmail();
         this.senderName = config.getSenderName();

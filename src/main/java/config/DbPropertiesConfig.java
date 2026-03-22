@@ -3,10 +3,10 @@ package config;
 import java.io.InputStream;
 import java.util.Properties;
 
-public class DbConfig {
+public class DbPropertiesConfig {
     private final Properties properties = new Properties();
 
-    public DbConfig() {
+    public DbPropertiesConfig() {
         load();
     }
 
