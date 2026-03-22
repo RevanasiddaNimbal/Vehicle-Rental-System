@@ -9,8 +9,9 @@ public class WalletCredentialMemoryRepo implements WalletCredentialRepo {
     Map<String, WalletCredential> storage = new HashMap<>();
 
     @Override
-    public void save(WalletCredential walletCredential) {
+    public boolean save(WalletCredential walletCredential) {
         storage.put(walletCredential.getWalletId(), walletCredential);
+        return true;
     }
 
     @Override

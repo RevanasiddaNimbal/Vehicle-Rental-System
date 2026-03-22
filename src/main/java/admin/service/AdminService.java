@@ -3,6 +3,7 @@ package admin.service;
 import admin.model.Admin;
 import admin.repository.AdminRepo;
 import util.InputUtil;
+import util.PasswordUtil;
 
 import java.util.Scanner;
 
@@ -35,7 +36,7 @@ public class AdminService {
         }
         String oldPassword = InputUtil.readValidPassword(input, "Enter old password");
         String newPassword = InputUtil.readValidPassword(input, "Enter new password");
-        if (!admin.getPassword().equals(oldPassword)) {
+        if (!PasswordUtil.verify(oldPassword, admin.getPassword())) {
             System.out.println("Old password doesn't match");
             return false;
         }

@@ -9,8 +9,9 @@ public class WalletMemoryRepo implements WalletRepo {
     Map<String, Wallet> storage = new HashMap<>();
 
     @Override
-    public void save(Wallet wallet) {
+    public boolean save(Wallet wallet) {
         storage.put(wallet.getWalletId(), wallet);
+        return true;
     }
 
     @Override

@@ -3,6 +3,7 @@ package customer.service;
 import customer.model.Customer;
 import customer.repository.CustomerRepo;
 import util.InputUtil;
+import util.PasswordUtil;
 
 import java.util.List;
 import java.util.Scanner;
@@ -37,7 +38,7 @@ public class CustomerService {
         }
         String oldPassword = InputUtil.readValidPassword(input, "Enter your old password");
         String newPassword = InputUtil.readValidPassword(input, "Enter your new password");
-        if (!customer.getPassword().equals(oldPassword)) {
+        if (!PasswordUtil.verify(oldPassword, customer.getPassword())) {
             System.out.println("oldPasswords do not match");
             return false;
         }

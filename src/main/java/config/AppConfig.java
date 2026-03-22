@@ -69,9 +69,10 @@ import vehicleowner.repository.VehicleOwnerRepo;
 import vehicleowner.repository.VehicleOwnersPostgresRepo;
 import vehicleowner.service.VehicleOwnerService;
 import wallet.controller.WalletController;
-import wallet.repository.WalletCredentialMemoryRepo;
+import wallet.controller.WalletCredentialController;
+import wallet.repository.WalletCredentialPostgresRepo;
 import wallet.repository.WalletCredentialRepo;
-import wallet.repository.WalletMemoryRepo;
+import wallet.repository.WalletPostgresRepo;
 import wallet.repository.WalletRepo;
 import wallet.service.WalletCredentialService;
 import wallet.service.WalletService;
@@ -148,16 +149,19 @@ public class AppConfig {
         PenaltyController penaltyController = new PenaltyController(penaltyService, penaltyPrinter);
 
         //Wallet credential layer
-        WalletCredentialRepo walletCredentialRepo = new WalletCredentialMemoryRepo();
+        WalletCredentialRepo walletCredentialRepo = new WalletCredentialPostgresRepo(postgresConnection);
         WalletCredentialService walletCredentialService = new WalletCredentialService(walletCredentialRepo);
 
         // Wallet layer
-        WalletRepo walletRepo = new WalletMemoryRepo();
+        WalletRepo walletRepo = new WalletPostgresRepo(postgresConnection);
         WalletService walletService = new WalletService(walletRepo, walletCredentialService);
         WalletController walletController = new WalletController(walletService);
 
         // Wallet strategy layer
         PostRegisterationStrategy walletStrategy = new WalletSetUpStrategy(input, walletService, walletCredentialService);
+
+        // wallet Credential controller layer
+        WalletCredentialController walletCredentialController = new WalletCredentialController(input, walletCredentialService, walletService);
 
         //rental layer
         RentalRepo rentalPostgresRepo = new RentalsPostgresRepo(postgresConnection);
@@ -180,7 +184,7 @@ public class AppConfig {
         OtpService otpService = new OtpService(otpStorage, mailService);
 
         //  Customer Menus Layer
-        WalletManagementMenu walletMenu = new WalletManagementMenu(input, walletController);
+        WalletManagementMenu walletMenu = new WalletManagementMenu(input, walletController, walletCredentialController);
         CustomerHistoryMenu customerHistoryMenu = new CustomerHistoryMenu(input, rentalController, penaltyController, cancellationController);
         CustomerRentalsMenu customerRentalsMenu = new CustomerRentalsMenu(input, vehicleController, rentalController);
         CustomerAccountMenu customerAccountMenu = new CustomerAccountMenu(input, customerController);
@@ -189,6 +193,7 @@ public class AppConfig {
         VehicleOwnerHistoryMenu ownerHistoryMenu = new VehicleOwnerHistoryMenu(input, rentalController, cancellationController);
         VehicleOwnerRentalsMenu ownerRentalsMenu = new VehicleOwnerRentalsMenu(input, rentalController);
         VehicleOwnerAccountMenu ownerAccountMenu = new VehicleOwnerAccountMenu(input, ownerController);
+        VehicleOwnerVehiclesMenu vehiclesMenu = new VehicleOwnerVehiclesMenu(input, vehicleController);
 
         // admin Menu layer
         AdminAccountMenu adminAccountMenu = new AdminAccountMenu(input, adminController);
@@ -200,7 +205,7 @@ public class AppConfig {
 
         // AuthMenu layer.
         AuthStrategyFactory authStrategyFactory = new AuthStrategyFactory(input, ownerService, adminService, customerService, otpService);
-        MenuFactory menuFactory = new MenuFactory(input, walletMenu, customerHistoryMenu, customerRentalsMenu, customerAccountMenu, ownerAccountMenu, ownerRentalsMenu, ownerHistoryMenu, adminAccountMenu, adminsVehicleMenu, adminsCustomerMenu, adminOwnersManu, adminRentalMenu);
+        MenuFactory menuFactory = new MenuFactory(input, walletMenu, customerHistoryMenu, customerRentalsMenu, customerAccountMenu, ownerAccountMenu, ownerRentalsMenu, ownerHistoryMenu, adminAccountMenu, adminsVehicleMenu, adminsCustomerMenu, adminOwnersManu, adminRentalMenu, vehiclesMenu);
         AuthService authService = new AuthService(authStrategyFactory, walletStrategy);
         AuthController authController = new AuthController(input, authService, menuFactory);
         UserRoleMenu authMenu = new AuthMenu(input, authController);

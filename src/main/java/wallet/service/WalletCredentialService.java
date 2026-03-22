@@ -1,8 +1,11 @@
 package wallet.service;
 
+import util.InputUtil;
 import util.PasswordUtil;
 import wallet.model.WalletCredential;
 import wallet.repository.WalletCredentialRepo;
+
+import java.util.Scanner;
 
 public class WalletCredentialService {
 
@@ -10,6 +13,14 @@ public class WalletCredentialService {
 
     public WalletCredentialService(WalletCredentialRepo walletCredentialRepo) {
         this.walletCredentialRepo = walletCredentialRepo;
+    }
+
+    public WalletCredential getWalletCredential(String walletId) {
+        WalletCredential walletCredential = walletCredentialRepo.findByWalletId(walletId);
+        if (walletCredential == null) {
+            return null;
+        }
+        return walletCredential;
     }
 
     public void defaultWalletCredential(String walletId) {
@@ -44,23 +55,26 @@ public class WalletCredentialService {
         return PasswordUtil.verify(password, credential.getPasswordHash());
     }
 
-    public void changePassword(String walletId, String oldPassword, String newPassword) {
+    public boolean changePassword(Scanner input, String walletId) {
 
         WalletCredential credential = walletCredentialRepo.findByWalletId(walletId);
 
         if (credential == null) {
             System.out.println("Credential not found");
-            return;
+            return false;
         }
+
+        String oldPassword = InputUtil.readValidPassword(input, "Enter old password");
+        String newPassword = InputUtil.readValidPassword(input, "Enter new password");
 
         if (!PasswordUtil.verify(oldPassword, credential.getPasswordHash())) {
             System.out.println("Old password does not match");
-            return;
+            return false;
         }
 
         String newHash = PasswordUtil.getHashPassword(newPassword);
         WalletCredential newCredential = new WalletCredential(walletId, newHash);
-        walletCredentialRepo.update(newCredential);
+        return walletCredentialRepo.update(newCredential);
     }
 
 }

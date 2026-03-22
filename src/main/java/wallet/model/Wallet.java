@@ -1,7 +1,7 @@
 package wallet.model;
 
 public class Wallet {
-    private final String walletId;
+    private String walletId;
     private final String userId;
     private double balance;
 
@@ -9,6 +9,10 @@ public class Wallet {
         this.walletId = walletId;
         this.userId = userId;
         this.balance = balance;
+    }
+
+    public void setWalletId(String walletId) {
+        this.walletId = walletId;
     }
 
     public String getWalletId() {
@@ -22,7 +26,7 @@ public class Wallet {
     public double getBalance() {
         return balance;
     }
-    
+
     public void credit(double amount) {
         validateAmount(amount);
         this.balance += amount;

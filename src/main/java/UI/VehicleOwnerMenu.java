@@ -10,13 +10,15 @@ public class VehicleOwnerMenu implements UsersMenu {
     private final WalletManagementMenu walletManagementMenu;
     private final VehicleOwnerAccountMenu AccountManagementMenu;
     private final VehicleOwnerRentalsMenu rentalMenu;
+    private final VehicleOwnerVehiclesMenu vehiclesMenu;
 
-    public VehicleOwnerMenu(Scanner input, VehicleOwnerRentalsMenu rentalMenu, VehicleOwnerAccountMenu accountManagementMenu, VehicleOwnerHistoryMenu historyMenu, WalletManagementMenu walletManagementMenu) {
+    public VehicleOwnerMenu(Scanner input, VehicleOwnerRentalsMenu rentalMenu, VehicleOwnerAccountMenu accountManagementMenu, VehicleOwnerHistoryMenu historyMenu, WalletManagementMenu walletManagementMenu, VehicleOwnerVehiclesMenu vehiclesMenu) {
         this.input = input;
         this.historyMenu = historyMenu;
         this.AccountManagementMenu = accountManagementMenu;
         this.walletManagementMenu = walletManagementMenu;
         this.rentalMenu = rentalMenu;
+        this.vehiclesMenu = vehiclesMenu;
     }
 
 
@@ -25,25 +27,29 @@ public class VehicleOwnerMenu implements UsersMenu {
         int choice;
         while (true) {
             System.out.println("\n========= VEHICLE OWNER PANEL =============");
-            System.out.println("1. Rental Management");
-            System.out.println("2. Wallet Management");
-            System.out.println("3. History Management");
-            System.out.println("4. Account Management");
+            System.out.println("1. Vehicles Management");
+            System.out.println("2. Rental Management");
+            System.out.println("3. Wallet Management");
+            System.out.println("4. History Management");
+            System.out.println("5. Account Management");
             System.out.println("0. Logout");
 
             choice = InputUtil.readPositiveInt(input, "Enter your choice");
 
             switch (choice) {
                 case 1:
-                    rentalMenu.show(ownerId);
+                    vehiclesMenu.show(ownerId);
                     break;
                 case 2:
-                    walletManagementMenu.show(ownerId);
+                    rentalMenu.show(ownerId);
                     break;
                 case 3:
-                    historyMenu.show(ownerId);
+                    walletManagementMenu.show(ownerId);
                     break;
                 case 4:
+                    historyMenu.show(ownerId);
+                    break;
+                case 5:
                     AccountManagementMenu.show(ownerId);
                     break;
                 case 0:

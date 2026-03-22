@@ -99,7 +99,7 @@ public class WalletService {
 
     private boolean isValidAmount(double amount) {
         if (amount <= 0) {
-            System.out.println("Amount must be positive");
+            System.out.println("Amount must be more than zero");
             return false;
         }
         return true;

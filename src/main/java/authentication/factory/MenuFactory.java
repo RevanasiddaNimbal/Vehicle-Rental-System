@@ -19,6 +19,7 @@ public class MenuFactory {
     private final AdminsCustomerMenu adminsCustomerMenu;
     private final AdminOwnersManu adminOwnersManu;
     private final AdminRentalMenu adminRentalMenu;
+    private final VehicleOwnerVehiclesMenu vehiclesMenu;
 
     public MenuFactory(
             Scanner input,
@@ -33,7 +34,8 @@ public class MenuFactory {
             AdminsVehicleMenu adminsVehicleMenu,
             AdminsCustomerMenu adminsCustomerMenu,
             AdminOwnersManu adminOwnersManu,
-            AdminRentalMenu adminRentalMenu
+            AdminRentalMenu adminRentalMenu,
+            VehicleOwnerVehiclesMenu vehiclesMenu
     ) {
         this.input = input;
         this.walletMenu = walletMenu;
@@ -48,6 +50,7 @@ public class MenuFactory {
         this.adminsCustomerMenu = adminsCustomerMenu;
         this.adminOwnersManu = adminOwnersManu;
         this.adminRentalMenu = adminRentalMenu;
+        this.vehiclesMenu = vehiclesMenu;
     }
 
     public void showMenu(UserRole role, String userId) {
@@ -55,7 +58,7 @@ public class MenuFactory {
             case ADMIN ->
                     new AdminMenu(input, adminOwnersManu, adminsVehicleMenu, adminsCustomerMenu, adminRentalMenu, adminAccountMenu, walletMenu);
             case OWNER ->
-                    new VehicleOwnerMenu(input, vehicleOwnerRentalsMenu, vehicleOwnerAccountMenu, vehicleOwnerHistoryMenu, walletMenu);
+                    new VehicleOwnerMenu(input, vehicleOwnerRentalsMenu, vehicleOwnerAccountMenu, vehicleOwnerHistoryMenu, walletMenu, vehiclesMenu);
             case CUSTOMER ->
                     new CustomerMenu(input, customerRentalsMenu, walletMenu, customerHistoryMenu, customerAccountManagementMenu);
         };

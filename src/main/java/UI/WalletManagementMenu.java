@@ -2,16 +2,19 @@ package UI;
 
 import util.InputUtil;
 import wallet.controller.WalletController;
+import wallet.controller.WalletCredentialController;
 
 import java.util.Scanner;
 
 public class WalletManagementMenu implements UsersMenu {
     private final WalletController walletController;
+    private final WalletCredentialController walletCredentialController;
     private final Scanner input;
 
-    public WalletManagementMenu(Scanner input, WalletController walletController) {
+    public WalletManagementMenu(Scanner input, WalletController walletController, WalletCredentialController walletCredentialController) {
         this.input = input;
         this.walletController = walletController;
+        this.walletCredentialController = walletCredentialController;
     }
 
     @Override
@@ -22,6 +25,7 @@ public class WalletManagementMenu implements UsersMenu {
             System.out.println("1. Check Wallet Balance");
             System.out.println("2. Deposit Amount to Wallet");
             System.out.println("3. withdraw Amount from Wallet");
+            System.out.println("4. Reset Password");
             System.out.println("0. back");
             choice = InputUtil.readPositiveInt(input, "Enter your choice");
             switch (choice) {
@@ -33,6 +37,9 @@ public class WalletManagementMenu implements UsersMenu {
                     break;
                 case 3:
                     walletController.withdraw(input, userId);
+                    break;
+                case 4:
+                    walletCredentialController.resetPassword(userId);
                     break;
                 case 0:
                     return;

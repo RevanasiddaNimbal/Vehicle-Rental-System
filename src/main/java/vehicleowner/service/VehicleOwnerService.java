@@ -1,6 +1,7 @@
 package vehicleowner.service;
 
 import util.InputUtil;
+import util.PasswordUtil;
 import vehicleowner.models.VehicleOwner;
 import vehicleowner.repository.VehicleOwnerRepo;
 
@@ -37,7 +38,7 @@ public class VehicleOwnerService {
         String oldPassword = InputUtil.readValidPassword(input, "Enter old password");
         String newPassword = InputUtil.readValidPassword(input, "Enter new password");
 
-        if (!vehicleOwner.getPassword().equals(oldPassword)) {
+        if (!PasswordUtil.verify(oldPassword, vehicleOwner.getPassword())) {
             System.out.println("Passwords do not match.");
             return false;
         }

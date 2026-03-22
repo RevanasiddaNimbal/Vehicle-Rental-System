@@ -50,4 +50,5 @@ public class WalletController {
         else
             System.out.println("Failed to withdraw amount. Please try again");
     }
+
 }

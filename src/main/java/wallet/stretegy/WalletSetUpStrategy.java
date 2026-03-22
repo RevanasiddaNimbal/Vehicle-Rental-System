@@ -22,7 +22,7 @@ public class WalletSetUpStrategy implements PostRegisterationStrategy {
     public void create(String userId) {
         Wallet wallet = walletService.createWallet(input, userId);
 
-        String pin = InputUtil.readValidPassword(input, "Enter Wallet PIN");
+        String pin = InputUtil.readValidPassword(input, "Set Wallet PIN");
 
         credentialService.createWalletCredential(wallet.getWalletId(), pin);
         System.out.println("Wallet created successfully with walletId: " + wallet.getWalletId());

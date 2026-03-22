@@ -3,7 +3,7 @@ package wallet.repository;
 import wallet.model.WalletCredential;
 
 public interface WalletCredentialRepo {
-    void save(WalletCredential walletCredentials);
+    boolean save(WalletCredential walletCredentials);
 
     boolean update(WalletCredential walletCredentials);
 
