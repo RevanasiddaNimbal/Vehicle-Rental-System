@@ -14,8 +14,10 @@ public class AdminMemoryRepo implements AdminRepo {
     }
 
     @Override
-    public void save(Admin admin) {
+    public boolean save(Admin admin) {
+        if (!Storage.containsKey(admin.getId())) return false;
         Storage.put(admin.getId(), admin);
+        return true;
     }
 
     @Override

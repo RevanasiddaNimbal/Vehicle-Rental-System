@@ -2,6 +2,8 @@ package admin.model;
 
 import authentication.model.AuthUser;
 
+import java.util.Objects;
+
 public class Admin implements AuthUser {
     private final String id;
     private String username;
@@ -47,9 +49,20 @@ public class Admin implements AuthUser {
         return password;
     }
 
-    public boolean getIsSuperAdmin() {
+    public boolean isSuperAdmin() {
         return isSuperAdmin;
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (!(obj instanceof Admin)) return false;
+        Admin admin = (Admin) obj;
+        return Objects.equals(id, admin.id);
+    }
 
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
 }

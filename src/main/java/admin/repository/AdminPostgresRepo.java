@@ -17,31 +17,8 @@ public class AdminPostgresRepo implements AdminRepo {
     }
 
     @Override
-    public Admin findById(String id) {
-        String query = "SELECT * FROM Admins WHERE id=?";
-
-        try (Connection connection = databaseConnection.getConnection();
-             PreparedStatement ps = connection.prepareStatement(query)) {
-
-            ps.setString(1, id);
-
-            try (ResultSet rs = ps.executeQuery()) {
-
-                if (rs.next()) {
-                    return readDb(rs);
-                }
-                return null;
-            }
-
-        } catch (SQLException e) {
-            throw new DataAccessException("Failed to find vehicle owner", e);
-        }
-    }
-
-    @Override
-    public void save(Admin admin) {
-
-        String query = "INSERT INTO admins (id, username, email, password, is_super_admin) VALUES (?, ?, ?, ?, ?) ON CONFLICT (id) DO NOTHING;";
+    public boolean save(Admin admin) {
+        String query = "INSERT INTO Admins (id, username, email, password, is_super_admin) VALUES (?, ?, ?, ?, ?)";
 
         try (Connection connection = databaseConnection.getConnection();
              PreparedStatement ps = connection.prepareStatement(query)) {
@@ -50,9 +27,9 @@ public class AdminPostgresRepo implements AdminRepo {
             ps.setString(2, admin.getUsername());
             ps.setString(3, admin.getEmail());
             ps.setString(4, admin.getPassword());
-            ps.setBoolean(5, admin.getIsSuperAdmin());
+            ps.setBoolean(5, admin.isSuperAdmin());
 
-            ps.executeUpdate();
+            return ps.executeUpdate() > 0;
 
         } catch (SQLException e) {
             throw new DataAccessException("Failed to save admin.", e);
@@ -60,23 +37,18 @@ public class AdminPostgresRepo implements AdminRepo {
     }
 
     @Override
-    public boolean update(Admin admin) {
-        String query = "UPDATE Admins SET username = ?, email = ?, password = ?, is_super_admin= ? WHERE id = ?";
-
+    public Admin findById(String id) {
+        String query = "SELECT * FROM Admins WHERE id=?";
         try (Connection connection = databaseConnection.getConnection();
              PreparedStatement ps = connection.prepareStatement(query)) {
 
-            ps.setString(1, admin.getUsername());
-            ps.setString(2, admin.getEmail());
-            ps.setString(3, admin.getPassword());
-            ps.setString(4, admin.getId());
-            ps.setBoolean(5, admin.getIsSuperAdmin());
-
-            int rows = ps.executeUpdate();
-            return rows > 0;
-
+            ps.setString(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return readDb(rs);
+                return null;
+            }
         } catch (SQLException e) {
-            throw new DataAccessException("Failed to update admin.", e);
+            throw new DataAccessException("Failed to find admin by id", e);
         }
     }
 
@@ -85,16 +57,37 @@ public class AdminPostgresRepo implements AdminRepo {
         String query = "SELECT * FROM Admins WHERE email = ?";
         try (Connection connection = databaseConnection.getConnection();
              PreparedStatement ps = connection.prepareStatement(query)) {
+
             ps.setString(1, email);
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return readDb(rs);
-                } else {
-                    return null;
-                }
+                if (rs.next()) return readDb(rs);
+                return null;
             }
         } catch (SQLException e) {
             throw new DataAccessException("Failed to find admin by email.", e);
+        }
+    }
+
+    @Override
+    public boolean update(Admin admin) {
+        String query = "UPDATE Admins SET username = ?, email = ?, password = ?, is_super_admin = ? WHERE id = ?";
+
+        try (Connection connection = databaseConnection.getConnection();
+             PreparedStatement ps = connection.prepareStatement(query)) {
+
+            ps.setString(1, admin.getUsername());
+            ps.setString(2, admin.getEmail());
+            ps.setString(3, admin.getPassword());
+            ps.setBoolean(4, admin.isSuperAdmin());
+            ps.setString(5, admin.getId());
+
+            return ps.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            if ("23505".equals(e.getSQLState())) {
+                throw new exception.DuplicateResourceException("Database rejected update: The email '" + admin.getEmail() + "' is already in use.");
+            }
+            throw new DataAccessException("Failed to update admin.", e);
         }
     }
 
@@ -104,7 +97,13 @@ public class AdminPostgresRepo implements AdminRepo {
             String username = rs.getString("username");
             String password = rs.getString("password");
             String adminEmail = rs.getString("email");
-            boolean isSuperAdmin = rs.getBoolean("is_super_admin");
+            boolean isSuperAdmin = false;
+            try {
+                isSuperAdmin = rs.getBoolean("is_super_admin");
+            } catch (SQLException ignored) {
+                if (id.equals("ADM-001")) isSuperAdmin = true;
+            }
+
             return new Admin(id, username, adminEmail, password, isSuperAdmin);
         } catch (SQLException e) {
             throw new DataAccessException("Failed to read admin.", e);

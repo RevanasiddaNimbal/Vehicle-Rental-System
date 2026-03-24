@@ -2,6 +2,9 @@ package admin.service;
 
 import admin.model.Admin;
 import admin.repository.AdminRepo;
+import exception.DuplicateResourceException;
+import exception.ResourceNotFoundException;
+import exception.UnauthorizedAccessException;
 import util.InputUtil;
 import util.PasswordUtil;
 
@@ -17,28 +20,31 @@ public class AdminService {
     public void createDefaultAdmins() {
         Admin assistant = repository.findById("ADM-001");
         if (assistant == null) {
-            Admin admin = new Admin("ADM-001", "Assistant", "rrx2038@gmail.com", "123456", false);
+            Admin admin = new Admin("ADM-001", "Assistant", "rrx2038@gmail.com", PasswordUtil.getHashPassword("123456"), false);
             repository.save(admin);
             System.out.println("Normal Admin created successfully");
         }
         Admin manager = repository.findById("ADM-002");
         if (manager == null) {
-            Admin admin = new Admin("ADM-002", "Manager", "revanasiddanimbal82@gmail.com", "123456", true);
+            Admin admin = new Admin("ADM-002", "Manager", "revanasiddanimbal82@gmail.com", PasswordUtil.getHashPassword("123456"), true);
             repository.save(admin);
             System.out.println("Supper Admin created successfully");
         }
     }
 
-    public boolean ResetPassword(Scanner input, String adminId) {
+    public boolean resetPassword(Scanner input, String adminId) {
         Admin admin = repository.findById(adminId);
         if (admin == null) {
             return false;
         }
         String oldPassword = InputUtil.readValidPassword(input, "Enter old password");
         String newPassword = InputUtil.readValidPassword(input, "Enter new password");
+        if (oldPassword.equals(newPassword)) {
+            throw new IllegalArgumentException("Old passwords do not match with new password");
+        }
+        
         if (!PasswordUtil.verify(oldPassword, admin.getPassword())) {
-            System.out.println("Old password doesn't match");
-            return false;
+            throw new IllegalArgumentException("Invalid old password");
         }
         admin.setPassword(newPassword);
         return repository.update(admin);
@@ -46,17 +52,33 @@ public class AdminService {
 
     public boolean updateAdmin(Admin admin) {
         if (repository.findById(admin.getId()) == null) {
-            return false;
+            throw new ResourceNotFoundException("Admin ID not found.");
         }
-        return repository.update(admin);
 
+        Admin adminWithSameEmail = repository.findByEmail(admin.getEmail());
+        if (adminWithSameEmail != null && !adminWithSameEmail.getId().equals(admin.getId())) {
+            throw new DuplicateResourceException("Update failed: The email '" + admin.getEmail() + "' is already in use by another Admin.");
+        }
+
+        return repository.update(admin);
     }
 
     public Admin getAdminById(String id) {
-        return repository.findById(id);
+        Admin admin = repository.findById(id);
+        if (admin == null) {
+            throw new ResourceNotFoundException("Admin not found with ID: " + id);
+        }
+        return admin;
     }
 
     public Admin getAdminByEmail(String email) {
         return repository.findByEmail(email);
+    }
+
+    public void verifySuperAdmin(String adminId) {
+        Admin admin = getAdminById(adminId);
+        if (!admin.isSuperAdmin()) {
+            throw new UnauthorizedAccessException("Action Denied: Only a Super Admin can perform this operation.");
+        }
     }
 }

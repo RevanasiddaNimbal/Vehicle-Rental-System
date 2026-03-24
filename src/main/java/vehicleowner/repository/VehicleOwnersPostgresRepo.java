@@ -2,6 +2,7 @@ package vehicleowner.repository;
 
 import database.DatabaseConnection;
 import exception.DataAccessException;
+import exception.DuplicateResourceException;
 import vehicleowner.models.VehicleOwner;
 
 import java.sql.Connection;
@@ -52,6 +53,9 @@ public class VehicleOwnersPostgresRepo implements VehicleOwnerRepo {
             return ps.executeUpdate() > 0;
 
         } catch (SQLException e) {
+            if ("23505".equals(e.getSQLState())) {
+                throw new DuplicateResourceException("Database rejected update: The email '" + owner.getEmail() + "' is already in use.");
+            }
             throw new DataAccessException("Failed to update vehicle owner", e);
         }
     }

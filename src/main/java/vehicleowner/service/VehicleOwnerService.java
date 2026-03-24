@@ -31,6 +31,11 @@ public class VehicleOwnerService {
         if (!existing.isActive()) {
             throw new InactiveUserException("User is no longer in the system. Please contact support.");
         }
+        VehicleOwner ownerWithSameEmail = repository.findByEmail(vehicleOwner.getEmail());
+
+        if (ownerWithSameEmail != null && !ownerWithSameEmail.getId().equals(vehicleOwner.getId())) {
+            throw new DuplicateResourceException("Update failed: The email '" + vehicleOwner.getEmail() + "' is already registered to another account.");
+        }
         return repository.update(vehicleOwner);
     }
 
