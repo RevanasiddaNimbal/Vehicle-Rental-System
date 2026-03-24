@@ -3,6 +3,7 @@ package vehicle.service;
 import exception.DataAccessException;
 import exception.ServiceException;
 import exception.ValidationException;
+import exception.VehicleDeleteNotAllowedException;
 import rental.model.Rental;
 import vehicle.models.Status;
 import vehicle.models.Vehicle;
@@ -116,23 +117,19 @@ public class VehicleService {
         }
     }
 
-    // ===== DELETE =====
-    public boolean deleteVehicle(Vehicle vehicle) {
-        if (vehicle == null || vehicle.getId() == null || vehicle.getId().isBlank()) {
-            throw new ValidationException("Vehicle id is required for delete.");
-        }
-        try {
-            return repository.deleteById(vehicle.getId());
-        } catch (DataAccessException dae) {
-            throw new ServiceException("Failed to delete vehicle id=" + vehicle.getId(), dae);
-        }
-    }
-
-    // Keep your old behavior if controller uses deleteById directly
     public boolean deleteVehicleById(String id) {
         if (id == null || id.isBlank()) throw new ValidationException("Vehicle id is required for delete.");
+
         try {
+            Vehicle vehicle = repository.findById(id);
+            if (vehicle == null) return false;
+
+            if (vehicle.getStatus() == Status.RENTED) {
+                throw new VehicleDeleteNotAllowedException("Cannot delete vehicle " + id + " because it is RENTED.");
+            }
+
             return repository.deleteById(id);
+
         } catch (DataAccessException dae) {
             throw new ServiceException("Failed to delete vehicle id=" + id, dae);
         }

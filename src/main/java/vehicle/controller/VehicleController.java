@@ -3,6 +3,7 @@ package vehicle.controller;
 import UI.UserPrinter;
 import exception.ServiceException;
 import exception.ValidationException;
+import exception.VehicleDeleteNotAllowedException;
 import util.IdGeneratorUtil;
 import util.IdPrefix;
 import util.InputUtil;
@@ -163,7 +164,6 @@ public class VehicleController {
         }
     }
 
-
     public void deleteVehicle(Scanner input, String ownerId) {
         try {
             String id = InputUtil.readString(input, "Please Enter Vehicle ID");
@@ -186,6 +186,8 @@ public class VehicleController {
                 System.out.println("Vehicle not deleted.");
             }
 
+        } catch (VehicleDeleteNotAllowedException ex) {
+            System.out.println(ex.getMessage());
         } catch (ValidationException ve) {
             System.out.println("Validation error: " + ve.getMessage());
         } catch (ServiceException se) {

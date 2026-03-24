@@ -22,6 +22,8 @@ public class VehiclesMemoryRepo implements VehicleRepo {
     public boolean update(Vehicle vehicle) {
         if (vehicle == null || vehicle.getId() == null) return false;
         if (!storage.containsKey(vehicle.getId())) return false;
+        Vehicle existing = storage.get(vehicle.getId());
+        if (existing == null || !existing.isActive()) return false;
 
         storage.put(vehicle.getId(), vehicle);
         return true;
@@ -30,19 +32,30 @@ public class VehiclesMemoryRepo implements VehicleRepo {
     @Override
     public boolean deleteById(String id) {
         if (id == null) return false;
-        return storage.remove(id) != null;
+
+        Vehicle existing = storage.get(id);
+        if (existing == null || !existing.isActive()) return false;
+
+        existing.setActive(false);
+        storage.put(id, existing);
+        return true;
     }
+
 
     @Override
     public List<Vehicle> findAll() {
-        return new ArrayList<>(storage.values());
+        List<Vehicle> result = new ArrayList<>();
+        for (Vehicle v : storage.values()) {
+            if (v.isActive()) result.add(v);
+        }
+        return result;
     }
 
     @Override
     public List<Vehicle> findByStatus(Status status) {
         List<Vehicle> vehicles = new ArrayList<>();
         for (Vehicle vehicle : storage.values()) {
-            if (vehicle.getStatus() == status) {
+            if (vehicle.isActive() && vehicle.getStatus() == status) {
                 vehicles.add(vehicle);
             }
         }
@@ -52,14 +65,16 @@ public class VehiclesMemoryRepo implements VehicleRepo {
     @Override
     public Vehicle findById(String id) {
         if (id == null) return null;
-        return storage.get(id);
+
+        Vehicle v = storage.get(id);
+        return (v != null && v.isActive()) ? v : null;
     }
 
     @Override
     public List<Vehicle> findByOwnerId(String ownerId) {
         List<Vehicle> vehicles = new ArrayList<>();
         for (Vehicle vehicle : storage.values()) {
-            if (ownerId != null && ownerId.equals(vehicle.getOwnerId())) {
+            if (vehicle.isActive() && ownerId != null && ownerId.equals(vehicle.getOwnerId())) {
                 vehicles.add(vehicle);
             }
         }

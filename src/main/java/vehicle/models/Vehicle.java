@@ -10,6 +10,7 @@ public abstract class Vehicle {
     protected double pricePerDay;
     protected Status status;
     protected String ownerId;
+    protected boolean active;
 
     public Vehicle(String id, String brand, Category category, double pricePerDay, Status status, String ownerId) {
         this.id = id;
@@ -18,6 +19,7 @@ public abstract class Vehicle {
         this.pricePerDay = pricePerDay;
         this.status = status;
         this.ownerId = ownerId;
+        this.active = true;
     }
 
     public void setId(String id) {
@@ -78,6 +80,14 @@ public abstract class Vehicle {
 
     public String getOwnerId() {
         return ownerId;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
+    public boolean isActive() {
+        return active;
     }
 
     @Override
