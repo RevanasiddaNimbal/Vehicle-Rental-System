@@ -23,18 +23,12 @@ public class VehiclesPostgresRepo implements VehicleRepo {
     public boolean save(Vehicle vehicle) {
         String query = "INSERT INTO vehicles" +
                 "(vehicle_type, brand, category, price_per_day, status," +
-                " engine_capacity, seating_capacity, fuel_type,owner_id)" +
-                "VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                " engine_capacity, seating_capacity, fuel_type,owner_id,id)" +
+                "VALUES ( ? ,?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection connection = databaseConnection.getConnection();
              PreparedStatement ps = connection.prepareStatement(query, new String[]{"id"})) {
             setDataForSave(vehicle, ps);
             int rows = ps.executeUpdate();
-            if (rows > 0) {
-                ResultSet id = ps.getGeneratedKeys();
-                if (id.next()) {
-                    vehicle.setId(id.getString("id"));
-                }
-            }
             return rows > 0;
         } catch (SQLException e) {
 //            e.printStackTrace();
@@ -197,6 +191,7 @@ public class VehiclesPostgresRepo implements VehicleRepo {
         try {
             setDbData(vehicle, ps);
             ps.setString(9, vehicle.getOwnerId());
+            ps.setString(10, vehicle.getId());
 
         } catch (SQLException e) {
             throw new DataAccessException("Failed to save vehicle", e);

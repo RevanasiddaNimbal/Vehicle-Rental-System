@@ -5,10 +5,16 @@ import util.InputUtil;
 import vehicle.models.Bike;
 import vehicle.models.FuelType;
 import vehicle.models.Vehicle;
+import vehicle.models.VehicleType;
 
 import java.util.Scanner;
 
 public class BikeUpdater extends BaseUpdater {
+    @Override
+    public VehicleType getVehicleType() {
+        return VehicleType.BIKE;
+    }
+
     @Override
     public void showSpecificMenu() {
         System.out.println("5. Update engine Capacity");

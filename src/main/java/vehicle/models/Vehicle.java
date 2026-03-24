@@ -87,4 +87,9 @@ public abstract class Vehicle {
         Vehicle vehicle = (Vehicle) obj;
         return Objects.equals(id, vehicle.id);
     }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
 }

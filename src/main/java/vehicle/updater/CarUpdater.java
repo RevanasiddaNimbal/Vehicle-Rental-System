@@ -5,10 +5,16 @@ import util.InputUtil;
 import vehicle.models.Car;
 import vehicle.models.FuelType;
 import vehicle.models.Vehicle;
+import vehicle.models.VehicleType;
 
 import java.util.Scanner;
 
 public class CarUpdater extends BaseUpdater {
+    @Override
+    public VehicleType getVehicleType() {
+        return VehicleType.CAR;
+    }
+
     @Override
     public void showSpecificMenu() {
         System.out.println("5. Update Seat Capacity");

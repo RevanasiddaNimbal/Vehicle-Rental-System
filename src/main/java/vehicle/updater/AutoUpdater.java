@@ -3,10 +3,16 @@ package vehicle.updater;
 import util.InputUtil;
 import vehicle.models.Auto;
 import vehicle.models.Vehicle;
+import vehicle.models.VehicleType;
 
 import java.util.Scanner;
 
 public class AutoUpdater extends BaseUpdater {
+    @Override
+    public VehicleType getVehicleType() {
+        return VehicleType.AUTO;
+    }
+
     @Override
     public void showSpecificMenu() {
         System.out.println("5.Update Seat Capacity");

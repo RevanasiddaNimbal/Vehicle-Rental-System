@@ -5,10 +5,14 @@ import util.InputUtil;
 import vehicle.models.Category;
 import vehicle.models.Status;
 import vehicle.models.Vehicle;
+import vehicle.models.VehicleType;
+import vehicle.policy.CategoryPolicy;
 
 import java.util.Scanner;
 
 public abstract class BaseUpdater implements VehicleUpdater {
+    public abstract VehicleType getVehicleType();
+
     @Override
     public void updateVehicle(Vehicle vehicle, Scanner input) {
         System.out.println("----Update Vehicle----");
@@ -36,7 +40,7 @@ public abstract class BaseUpdater implements VehicleUpdater {
                 vehicle.setPricePerDay(price);
                 break;
             case 3:
-                Category category = EnumUtil.selectEnum(input, Category.class, "Select new Category");
+                Category category = EnumUtil.selectCategory(input, CategoryPolicy.allowedCategories(getVehicleType()), "Select new Category");
                 vehicle.setCategory(category);
                 break;
             case 4:
