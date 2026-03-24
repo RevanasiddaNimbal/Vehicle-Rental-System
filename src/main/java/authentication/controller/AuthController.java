@@ -29,8 +29,8 @@ public class AuthController {
         }
     }
 
-    public void resetPassword(UserRole role) {
-        service.resetPassword(role);
+    public void forgotPassword(UserRole role) {
+        service.forgotPassword(role);
     }
 
 }

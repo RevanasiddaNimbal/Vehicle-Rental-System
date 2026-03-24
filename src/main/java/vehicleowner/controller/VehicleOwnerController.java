@@ -1,6 +1,9 @@
 package vehicleowner.controller;
 
 import UI.UserPrinter;
+import exception.DuplicateResourceException;
+import exception.InactiveUserException;
+import exception.ResourceNotFoundException;
 import util.InputUtil;
 import vehicleowner.models.VehicleOwner;
 import vehicleowner.service.VehicleOwnerService;
@@ -19,85 +22,104 @@ public class VehicleOwnerController {
 
     public void deactivateVehicleOwner(Scanner input) {
         String id = InputUtil.readString(input, "Enter Vehicle Owner ID");
-        if (service.getVehicleOwnerById(id) == null) {
-            System.out.println("Vehicle Owner ID Not Found");
-            return;
-        }
-
-        if (service.deactivateOwnerById(id)) {
+        try {
+            service.deactivateOwnerById(id);
             System.out.println("Blocked Vehicle Owner Successfully.");
-        } else {
-            System.out.println("Failed to block vehicle Owner.");
+        } catch (ResourceNotFoundException e) {
+            System.out.println("Error: " + e.getMessage());
         }
     }
 
     public void activateVehicleOwner(Scanner input) {
         String id = InputUtil.readString(input, "Enter Vehicle Owner ID");
-        if (service.getVehicleOwnerById(id) == null) {
-            System.out.println("Vehicle Owner ID Not Found");
-            return;
-        }
-        if (service.activateOwnerById(id)) {
-            System.out.println("activated Vehicle Owner Successfully.");
-        } else {
-            System.out.println("Failed to activate vehicle Owner.");
+        try {
+            service.activateOwnerById(id);
+            System.out.println("Activated Vehicle Owner Successfully.");
+        } catch (ResourceNotFoundException e) {
+            System.out.println("Error: " + e.getMessage());
         }
     }
 
     public void updateVehicleOwner(Scanner input, String ownerId) {
-        VehicleOwner vehicleOwner = service.getVehicleOwnerById(ownerId);
-        if (vehicleOwner == null) {
-            System.out.println("Vehicle Owner ID Not Found");
-            return;
-        }
+        try {
+            VehicleOwner vehicleOwner = service.getVehicleOwnerById(ownerId);
 
-        System.out.println("----Update Vehicle Owner----");
-        System.out.println("1. Name");
-        System.out.println("2. Email address");
-        System.out.println("3. Phone number");
-        System.out.println("4. Address");
-        System.out.println("0. back");
-        int choice = InputUtil.readPositiveInt(input, "Enter choice");
-        switch (choice) {
-            case 1:
-                String name = InputUtil.readString(input, "Enter new full name");
-                vehicleOwner.setName(name);
-                break;
-            case 2:
-                String email = InputUtil.readValidEmail(input, "Enter new email address");
-                vehicleOwner.setEmail(email);
-                break;
-            case 3:
-                String phone = InputUtil.readValidPhone(input, "Enter new phone number");
-                vehicleOwner.setPhone(phone);
-                break;
-            case 4:
-                String Address = InputUtil.readString(input, "Enter new address");
-                vehicleOwner.setAddress(Address);
-                break;
-            case 0:
-                return;
-            default:
-                System.out.println("Invalid choice");
-                return;
-        }
-        if (service.updateVehicleOwner(vehicleOwner)) {
-            System.out.println("Vehicle Owner Updated Successfully");
-        } else {
-            System.out.println("Failed to update vehicle Owner.");
-        }
+            boolean updating = true;
+            boolean hasChanges = false;
 
+            while (updating) {
+                System.out.println("\n---- Update Vehicle Owner ----");
+                System.out.println("1. Name");
+                System.out.println("2. Email address");
+                System.out.println("3. Phone number");
+                System.out.println("4. Address");
+                System.out.println("5. Password");
+                System.out.println("0. Save and Exit");
+
+                int choice = InputUtil.readPositiveInt(input, "Enter choice");
+
+                switch (choice) {
+                    case 1:
+                        vehicleOwner.setName(InputUtil.readString(input, "Enter new full name"));
+                        hasChanges = true;
+                        break;
+                    case 2:
+                        vehicleOwner.setEmail(InputUtil.readValidEmail(input, "Enter new email address"));
+                        hasChanges = true;
+                        break;
+                    case 3:
+                        vehicleOwner.setPhone(InputUtil.readValidPhone(input, "Enter new phone number"));
+                        hasChanges = true;
+                        break;
+                    case 4:
+                        vehicleOwner.setAddress(InputUtil.readString(input, "Enter new address"));
+                        hasChanges = true;
+                        break;
+                    case 5:
+                        vehicleOwner.setPassword(InputUtil.readValidPassword(input, "Enter new password"));
+                        hasChanges = true;
+                        break;
+                    case 0:
+                        updating = false;
+                        break;
+                    default:
+                        System.out.println("Invalid choice. Try again.");
+                }
+            }
+            if (hasChanges) {
+                service.updateVehicleOwner(vehicleOwner);
+                System.out.println("Vehicle Owner Updated Successfully.");
+            } else {
+                System.out.println("No changes were made.");
+            }
+
+        } catch (InactiveUserException e) {
+            System.out.println("Error: " + e.getMessage());
+        } catch (ResourceNotFoundException | DuplicateResourceException e) {
+            System.out.println("Error: " + e.getMessage());
+        } catch (Exception e) {
+            System.out.println("An unexpected error occurred: " + e.getMessage());
+        }
     }
 
     public void resetPassword(Scanner input, String ownerId) {
-        if (ownerId == null) {
-            System.out.println("Owner ID is required");
-            return;
-        }
-        if (service.resetPassword(input, ownerId)) {
-            System.out.println("Password Reset Successfully");
-        } else {
-            System.out.println("Failed to reset password.Please try again");
+        String oldPassword = InputUtil.readString(input, "Enter your CURRENT password");
+        String newPassword = InputUtil.readValidPassword(input, "Enter your NEW password");
+
+        try {
+            if (service.resetPassword(ownerId, oldPassword, newPassword)) {
+                System.out.println("Password updated successfully.");
+            } else {
+                System.out.println("Failed to update password. Please try again later.");
+            }
+        } catch (IllegalArgumentException e) {
+            System.out.println("Error: " + e.getMessage());
+        } catch (InactiveUserException e) {
+            System.out.println("Error: User account is no longer active.");
+        } catch (ResourceNotFoundException e) {
+            System.out.println("Error: Vehicle Owner not found.");
+        } catch (Exception e) {
+            System.out.println("An unexpected error occurred: " + e.getMessage());
         }
     }
 

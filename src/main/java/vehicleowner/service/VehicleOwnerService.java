@@ -1,12 +1,13 @@
 package vehicleowner.service;
 
-import util.InputUtil;
+import exception.DuplicateResourceException;
+import exception.InactiveUserException;
+import exception.ResourceNotFoundException;
 import util.PasswordUtil;
 import vehicleowner.models.VehicleOwner;
 import vehicleowner.repository.VehicleOwnerRepo;
 
 import java.util.List;
-import java.util.Scanner;
 
 public class VehicleOwnerService {
     private final VehicleOwnerRepo repository;
@@ -17,48 +18,46 @@ public class VehicleOwnerService {
 
     public boolean addVehicleOwner(VehicleOwner vehicleOwner) {
         if (repository.findByEmail(vehicleOwner.getEmail()) != null) {
-            System.out.println("Owner Already Exists.");
-            return false;
+            throw new DuplicateResourceException("Owner with this email already exists.");
         }
         return repository.save(vehicleOwner);
     }
 
     public boolean updateVehicleOwner(VehicleOwner vehicleOwner) {
-        if (repository.findById(vehicleOwner.getId()) == null) {
-            return false;
+        VehicleOwner existing = repository.findById(vehicleOwner.getId());
+        if (existing == null) {
+            throw new ResourceNotFoundException("Vehicle Owner ID not found.");
+        }
+        if (!existing.isActive()) {
+            throw new InactiveUserException("User is no longer in the system. Please contact support.");
         }
         return repository.update(vehicleOwner);
     }
 
-    public boolean resetPassword(Scanner input, String ownerId) {
-        VehicleOwner vehicleOwner = repository.findById(ownerId);
-        if (vehicleOwner == null) {
-            return false;
-        }
-        String oldPassword = InputUtil.readValidPassword(input, "Enter old password");
-        String newPassword = InputUtil.readValidPassword(input, "Enter new password");
+    public boolean resetPassword(String ownerId, String oldPassword, String newPassword) {
+        VehicleOwner owner = getVehicleOwnerById(ownerId);
 
-        if (!PasswordUtil.verify(oldPassword, vehicleOwner.getPassword())) {
-            System.out.println("Passwords do not match.");
-            return false;
+        if (!PasswordUtil.verify(oldPassword, owner.getPassword())) {
+            throw new IllegalArgumentException("Incorrect current password.");
         }
-        vehicleOwner.setPassword(newPassword);
-        return repository.update(vehicleOwner);
 
+        owner.setPassword(PasswordUtil.getHashPassword(newPassword));
+
+        return repository.update(owner);
     }
 
     public boolean deactivateOwnerById(String id) {
-        if (repository.findById(id) == null) {
-            return false;
+        if (!repository.deactivateById(id)) {
+            throw new ResourceNotFoundException("Failed to block: Vehicle Owner ID not found.");
         }
-        return repository.deactivateById(id);
+        return true;
     }
 
     public boolean activateOwnerById(String id) {
-        if (repository.findById(id) == null) {
-            return false;
+        if (!repository.activateById(id)) {
+            throw new ResourceNotFoundException("Failed to activate: Vehicle Owner ID not found.");
         }
-        return repository.activateById(id);
+        return true;
     }
 
     public List<VehicleOwner> getVehicleOwners() {
@@ -66,10 +65,21 @@ public class VehicleOwnerService {
     }
 
     public VehicleOwner getVehicleOwnerById(String id) {
-        return repository.findById(id);
+        VehicleOwner owner = repository.findById(id);
+        if (owner == null) {
+            throw new ResourceNotFoundException("Vehicle Owner not found with ID: " + id);
+        }
+        if (!owner.isActive()) {
+            throw new InactiveUserException("User is no longer in the system. Please contact support.");
+        }
+        return owner;
     }
 
     public VehicleOwner getVehicleOwnerByEmail(String email) {
-        return repository.findByEmail(email);
+        VehicleOwner owner = repository.findByEmail(email);
+        if (owner != null && !owner.isActive()) {
+            throw new InactiveUserException("User is no longer in the system. Please contact support.");
+        }
+        return owner;
     }
 }

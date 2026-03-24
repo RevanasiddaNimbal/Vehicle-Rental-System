@@ -84,7 +84,7 @@ public class CustomerAuthStretegy implements AuthLoginStretegy, AuthRegisterStre
     }
 
     @Override
-    public void resetPassword() {
+    public void forgotPassword() {
         String email = InputUtil.readValidEmail(input, "Enter Email Address");
         Customer customer = service.getCustomerByEmail(email);
         if (customer == null) {

@@ -30,10 +30,10 @@ public class AdminMenu implements UsersMenu {
             System.out.println("\n========= ADMIN PANEL =========");
             System.out.println("1. Rental Management");
             System.out.println("2. Wallet Management");
-            System.out.println("1. Vehicle Owners Management");
-            System.out.println("2. Customers Management");
-            System.out.println("3. Vehicle Management");
-            System.out.println("4. Account Management");
+            System.out.println("3. Vehicle Owners Management");
+            System.out.println("4. Customers Management");
+            System.out.println("5. Vehicle Management");
+            System.out.println("6. Account Management");
             System.out.println("0.  Logout");
 
             choice = InputUtil.readPositiveInt(input, "Enter your choice");

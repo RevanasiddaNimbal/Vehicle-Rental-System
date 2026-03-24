@@ -13,14 +13,14 @@ public class VehicleOwner implements AuthUser {
     private String password;
     private boolean active;
 
-    public VehicleOwner(String id, String name, String email, String phone, String password, String address, boolean active) {
+    public VehicleOwner(String id, String name, String email, String phone, String password, String address) {
         this.id = id;
         this.name = name;
         this.email = email;
         this.phone = phone;
         this.password = password;
         this.address = address;
-        this.active = active;
+        this.active = true;
     }
 
     public void activate() {
@@ -29,6 +29,10 @@ public class VehicleOwner implements AuthUser {
 
     public void deactivate() {
         this.active = false;
+    }
+
+    public boolean isActive() {
+        return active;
     }
 
     public void setId(String id) {
@@ -53,7 +57,6 @@ public class VehicleOwner implements AuthUser {
 
     public String getEmail() {
         return email;
-
     }
 
     public void setPhone(String phone) {
@@ -80,15 +83,16 @@ public class VehicleOwner implements AuthUser {
         return address;
     }
 
-    public boolean isActive() {
-        return active;
-    }
-
     @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;
         if (!(obj instanceof VehicleOwner)) return false;
         VehicleOwner owner = (VehicleOwner) obj;
         return Objects.equals(id, owner.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 }

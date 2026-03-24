@@ -5,6 +5,6 @@ import authentication.model.AuthUser;
 public interface AuthLoginStretegy {
     AuthUser login();
 
-    void resetPassword();
+    void forgotPassword();
 
 }

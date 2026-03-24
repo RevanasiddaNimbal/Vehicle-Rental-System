@@ -33,9 +33,9 @@ public class AuthService {
         return strategy.login();
     }
 
-    public void resetPassword(UserRole role) {
+    public void forgotPassword(UserRole role) {
         AuthLoginStretegy strategy = factory.getLoginStrategy(role);
-        strategy.resetPassword();
+        strategy.forgotPassword();
     }
 }
 

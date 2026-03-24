@@ -35,7 +35,7 @@ public class AuthMenu implements UserRoleMenu {
                     controller.login(role);
                     break;
                 case 2:
-                    controller.resetPassword(role);
+                    controller.forgotPassword(role);
                     break;
                 case 3:
                     controller.register(role);

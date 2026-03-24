@@ -12,7 +12,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class VehicleOwnersPostgresRepo implements VehicleOwnerRepo {
-
     private final DatabaseConnection databaseConnection;
 
     public VehicleOwnersPostgresRepo(DatabaseConnection databaseConnection) {
@@ -21,24 +20,17 @@ public class VehicleOwnersPostgresRepo implements VehicleOwnerRepo {
 
     @Override
     public boolean save(VehicleOwner owner) {
-
         String query = "INSERT INTO vehicle_owners " +
-                "(name, email, phone, password, address, active) " +
-                "VALUES (?, ?, ?, ?, ?, ?)";
+                "(id, name, email, phone, password, address, active) " +
+                "VALUES (?, ?, ?, ?, ?, ?, TRUE)";
 
         try (Connection connection = databaseConnection.getConnection();
-             PreparedStatement ps = connection.prepareStatement(query, new String[]{"id"})) {
+             PreparedStatement ps = connection.prepareStatement(query)) {
 
-            setDbData(owner, ps);
+            ps.setString(1, owner.getId());
+            setDbData(owner, ps, 2);
 
-            int rows = ps.executeUpdate();
-            if (rows > 0) {
-                ResultSet id = ps.getGeneratedKeys();
-                if (id.next()) {
-                    owner.setId(id.getString("id"));
-                }
-            }
-            return rows > 0;
+            return ps.executeUpdate() > 0;
 
         } catch (SQLException e) {
             throw new DataAccessException("Failed to save vehicle owner", e);
@@ -48,17 +40,16 @@ public class VehicleOwnersPostgresRepo implements VehicleOwnerRepo {
     @Override
     public boolean update(VehicleOwner owner) {
         String query = "UPDATE vehicle_owners SET " +
-                "name=?, email=?, phone=?, password=?, address=?, active=? " +
-                "WHERE id=?";
+                "name = ?, email = ?, phone = ?, password = ?, address = ? " +
+                "WHERE id = ? AND active = TRUE";
 
         try (Connection connection = databaseConnection.getConnection();
              PreparedStatement ps = connection.prepareStatement(query)) {
 
-            setDbDataForUpdate(owner, ps);
+            setDbData(owner, ps, 1);
+            ps.setString(6, owner.getId());
 
-            int rows = ps.executeUpdate();
-
-            return rows > 0;
+            return ps.executeUpdate() > 0;
 
         } catch (SQLException e) {
             throw new DataAccessException("Failed to update vehicle owner", e);
@@ -67,36 +58,28 @@ public class VehicleOwnersPostgresRepo implements VehicleOwnerRepo {
 
     @Override
     public boolean deactivateById(String id) {
-
-        String query = "UPDATE vehicle_owners SET active=false WHERE id=?";
+        String query = "UPDATE vehicle_owners SET active = FALSE WHERE id = ? AND active = TRUE";
 
         try (Connection connection = databaseConnection.getConnection();
              PreparedStatement ps = connection.prepareStatement(query)) {
 
             ps.setString(1, id);
-
-            int rows = ps.executeUpdate();
-
-            return rows > 0;
+            return ps.executeUpdate() > 0;
 
         } catch (SQLException e) {
-            throw new DataAccessException("Failed to deactivate vehicle owner", e);
+            throw new DataAccessException("Failed to deactivate vehicle owner (soft delete)", e);
         }
     }
 
     @Override
     public boolean activateById(String id) {
-
-        String query = "UPDATE vehicle_owners SET active=true WHERE id=?";
+        String query = "UPDATE vehicle_owners SET active = TRUE WHERE id = ? AND active = FALSE";
 
         try (Connection connection = databaseConnection.getConnection();
              PreparedStatement ps = connection.prepareStatement(query)) {
 
             ps.setString(1, id);
-
-            int rows = ps.executeUpdate();
-
-            return rows > 0;
+            return ps.executeUpdate() > 0;
 
         } catch (SQLException e) {
             throw new DataAccessException("Failed to activate vehicle owner", e);
@@ -105,8 +88,7 @@ public class VehicleOwnersPostgresRepo implements VehicleOwnerRepo {
 
     @Override
     public VehicleOwner findById(String id) {
-
-        String query = "SELECT * FROM vehicle_owners WHERE id=?";
+        String query = "SELECT * FROM vehicle_owners WHERE id = ?";
 
         try (Connection connection = databaseConnection.getConnection();
              PreparedStatement ps = connection.prepareStatement(query)) {
@@ -114,25 +96,36 @@ public class VehicleOwnersPostgresRepo implements VehicleOwnerRepo {
             ps.setString(1, id);
 
             try (ResultSet rs = ps.executeQuery()) {
-
-                if (rs.next()) {
-                    return readDbResult(rs);
-                }
-
-                return null;
+                return rs.next() ? readDbResult(rs) : null;
             }
 
         } catch (SQLException e) {
-            throw new DataAccessException("Failed to find vehicle owner", e);
+            throw new DataAccessException("Failed to find vehicle owner by id", e);
+        }
+    }
+
+    @Override
+    public VehicleOwner findByEmail(String email) {
+        String query = "SELECT * FROM vehicle_owners WHERE email = ? AND active = TRUE";
+
+        try (Connection connection = databaseConnection.getConnection();
+             PreparedStatement ps = connection.prepareStatement(query)) {
+
+            ps.setString(1, email);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? readDbResult(rs) : null;
+            }
+
+        } catch (SQLException e) {
+            throw new DataAccessException("Failed to find vehicle owner by email", e);
         }
     }
 
     @Override
     public List<VehicleOwner> findAll() {
-
-        List<VehicleOwner> owners = new ArrayList<>();
-
         String query = "SELECT * FROM vehicle_owners";
+        List<VehicleOwner> owners = new ArrayList<>();
 
         try (Connection connection = databaseConnection.getConnection();
              PreparedStatement ps = connection.prepareStatement(query);
@@ -141,36 +134,10 @@ public class VehicleOwnersPostgresRepo implements VehicleOwnerRepo {
             while (rs.next()) {
                 owners.add(readDbResult(rs));
             }
-
         } catch (SQLException e) {
-            throw new DataAccessException("Failed to fetch vehicle owners", e);
+            throw new DataAccessException("Failed to find vehicle owners", e);
         }
-
         return owners;
-    }
-
-    @Override
-    public VehicleOwner findByEmail(String email) {
-
-        String query = "SELECT * FROM vehicle_owners WHERE email=?";
-
-        try (Connection connection = databaseConnection.getConnection();
-             PreparedStatement ps = connection.prepareStatement(query)) {
-
-            ps.setString(1, email);
-
-            try (ResultSet rs = ps.executeQuery()) {
-
-                if (rs.next()) {
-                    return readDbResult(rs);
-                }
-
-                return null;
-            }
-
-        } catch (SQLException e) {
-            throw new DataAccessException("Failed to find vehicle owner by email", e);
-        }
     }
 
     private VehicleOwner readDbResult(ResultSet rs) {
@@ -181,36 +148,26 @@ public class VehicleOwnersPostgresRepo implements VehicleOwnerRepo {
             String phone = rs.getString("phone");
             String password = rs.getString("password");
             String address = rs.getString("address");
-            boolean isActive = rs.getBoolean("active");
+            boolean active = rs.getBoolean("active");
 
-            VehicleOwner owner = new VehicleOwner(id, name, email, phone, password, address, isActive);
+            VehicleOwner owner = new VehicleOwner(id, name, email, phone, password, address);
+
+            if (!active) {
+                owner.deactivate();
+            }
 
             return owner;
 
         } catch (SQLException e) {
-            throw new DataAccessException("Failed to read vehicle owner", e);
+            throw new DataAccessException("Failed to read vehicle owner from result set", e);
         }
     }
 
-    private void setDbData(VehicleOwner owner, PreparedStatement ps) {
-        try {
-            ps.setString(1, owner.getName());
-            ps.setString(2, owner.getEmail());
-            ps.setString(3, owner.getPhone());
-            ps.setString(4, owner.getPassword());
-            ps.setString(5, owner.getAddress());
-            ps.setBoolean(6, owner.isActive());
-        } catch (SQLException e) {
-            throw new DataAccessException("Failed to set vehicle owner data", e);
-        }
-    }
-
-    private void setDbDataForUpdate(VehicleOwner owner, PreparedStatement ps) {
-        setDbData(owner, ps);
-        try {
-            ps.setString(7, owner.getId());
-        } catch (SQLException e) {
-            throw new DataAccessException("Failed to update vehicle owner", e);
-        }
+    private void setDbData(VehicleOwner owner, PreparedStatement ps, int startIndex) throws SQLException {
+        ps.setString(startIndex, owner.getName());
+        ps.setString(startIndex + 1, owner.getEmail());
+        ps.setString(startIndex + 2, owner.getPhone());
+        ps.setString(startIndex + 3, owner.getPassword());
+        ps.setString(startIndex + 4, owner.getAddress());
     }
 }

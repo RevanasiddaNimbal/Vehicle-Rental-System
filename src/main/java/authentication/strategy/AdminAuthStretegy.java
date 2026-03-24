@@ -29,7 +29,7 @@ public class AdminAuthStretegy implements AuthLoginStretegy {
             System.out.println("Admin not found.Please contact rental support.");
             return null;
         }
-        
+
         if (admin.getPassword().equals(password)) {
             System.out.println("Login Successful.");
             return admin;
@@ -41,7 +41,7 @@ public class AdminAuthStretegy implements AuthLoginStretegy {
     }
 
     @Override
-    public void resetPassword() {
+    public void forgotPassword() {
         String email = InputUtil.readValidEmail(input, "Enter Email Address");
         Admin admin = adminService.getAdminByEmail(email);
 
