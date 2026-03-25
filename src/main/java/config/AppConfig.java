@@ -5,6 +5,7 @@ import UI.Documentation;
 import UI.UserRoleMenu;
 import application.Application;
 import initializer.SystemInitializer;
+import rental.service.RentalService;
 
 import java.util.Scanner;
 
@@ -99,6 +100,7 @@ public class AppConfig {
         getSystemInitializer().initialize();
         UserRoleMenu documentation = new Documentation();
         UserRoleMenu authMenu = new AuthMenu(input, getAuthConfig(input).getAuthController());
-        return new Application(input, documentation, authMenu);
+        RentalService rentalService = getServiceConfig().getRentalService();
+        return new Application(input, documentation, authMenu, rentalService);
     }
 }

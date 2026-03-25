@@ -1,8 +1,9 @@
 package penalty.stretegy;
 
-import penalty.model.Penalty;
 import rental.billing.RentalTimeCalculator;
 import rental.model.Rental;
+
+import java.time.LocalDateTime;
 
 public class LateReturnPenaltyStrategy implements PenaltyStrategy {
     private static final double PENALTY_PERCENTAGE = 0.03;
@@ -13,17 +14,17 @@ public class LateReturnPenaltyStrategy implements PenaltyStrategy {
     }
 
     @Override
-    public double calculate(Rental rental, Penalty penalty) {
+    public double calculate(Rental rental) {
         long lateHours = timeCalculator.calculateLateHours(
                 rental.getEndDate(),
                 rental.getEndTime(),
-                java.time.LocalDateTime.now() // actual return time
+                LocalDateTime.now()
         );
 
-        if (lateHours <= 0) return 0;
+        if (lateHours <= 0) {
+            return 0.0;
+        }
 
-        double totalFine = rental.getTotalPrice() * PENALTY_PERCENTAGE * lateHours;
-        penalty.setPenaltyAmount(totalFine);
-        return totalFine;
+        return rental.getTotalPrice() * PENALTY_PERCENTAGE * lateHours;
     }
 }

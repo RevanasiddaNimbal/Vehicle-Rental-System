@@ -1,6 +1,7 @@
 package cancellation.model;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 public class CancellationRecord {
     private String id;
@@ -57,5 +58,13 @@ public class CancellationRecord {
 
     public LocalDateTime getCanceledAt() {
         return canceledAt;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof CancellationRecord)) return false;
+        CancellationRecord that = (CancellationRecord) o;
+        return Objects.equals(id, that.id);
     }
 }

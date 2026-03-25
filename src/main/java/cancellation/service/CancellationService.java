@@ -5,10 +5,12 @@ import cancellation.model.CancellationRecord;
 import cancellation.model.PolicyType;
 import cancellation.repository.CancellationRepo;
 import cancellation.stretegy.CancellationStrategy;
+import exception.ResourceNotFoundException;
 import rental.model.Rental;
 import rental.model.RentalStatus;
 import rental.service.RentalService;
 import util.IdGeneratorUtil;
+import util.IdPrefix;
 import vehicle.models.Vehicle;
 import vehicle.service.VehicleService;
 
@@ -29,12 +31,18 @@ public class CancellationService {
     public void cancelRentalByRentalId(int rentalId) {
         Rental rental = rentalService.getRentalById(rentalId);
         if (rental == null) {
-            System.out.println("Invalid rental Id");
-            return;
+            throw new ResourceNotFoundException("Rental ID " + rentalId + " not found.");
         }
-        if (rental.getStatus().equals(RentalStatus.CANCELLED)) {
-            System.out.println("Rental is already cancelled");
-            return;
+        if (rental.getStatus() == RentalStatus.CANCELLED) {
+            throw new IllegalStateException("Rental is already cancelled.");
+        }
+        if (rental.getStatus() == RentalStatus.COMPLETED) {
+            throw new IllegalStateException("Cannot cancel a completed rental.");
+        }
+
+        Vehicle vehicle = vehicleService.getVehiclesById(rental.getVehicleId());
+        if (vehicle == null) {
+            throw new ResourceNotFoundException("Associated vehicle not found.");
         }
 
         CancellationStrategy strategy = CancellationStrategyFactory.getStrategy(rental);
@@ -43,9 +51,7 @@ public class CancellationService {
 
         rentalService.updateRentalStatus(rentalId, RentalStatus.CANCELLED);
 
-        Vehicle vehicle = vehicleService.getVehiclesById(rental.getVehicleId());
-
-        CancellationRecord record = new CancellationRecord(IdGeneratorUtil.generateCancellationId(), rentalId, rental.getCustomerId(), rental.getVehicleId(), vehicle.getOwnerId(), type, refundAmount, LocalDateTime.now());
+        CancellationRecord record = new CancellationRecord(IdGeneratorUtil.generate(IdPrefix.CAN), rentalId, rental.getCustomerId(), rental.getVehicleId(), vehicle.getOwnerId(), type, refundAmount, LocalDateTime.now());
         cancellationRepo.save(record);
     }
 

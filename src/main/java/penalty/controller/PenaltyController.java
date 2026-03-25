@@ -16,22 +16,30 @@ public class PenaltyController {
     }
 
     public void viewPenalties() {
-        List<Penalty> penalties = penaltyService.getAllPenalty();
-        if (penalties.isEmpty()) {
-            System.out.println("No penalties found");
-            return;
+        try {
+            List<Penalty> penalties = penaltyService.getAllPenalties();
+            if (penalties.isEmpty()) {
+                System.out.println("No penalties found.");
+                return;
+            }
+            printer.print(penalties);
+        } catch (Exception e) {
+            System.out.println("Failed to fetch penalties: " + e.getMessage());
         }
-        printer.print(penalties);
     }
 
     public void viewPenaltiesByCustomerId(String customerId) {
-        List<Penalty> penalties = penaltyService.getPenaltiesByCustomerId(customerId);
-        if (penalties.isEmpty()) {
-            System.out.println("No penalties found");
-            return;
+        try {
+            List<Penalty> penalties = penaltyService.getPenaltiesByCustomerId(customerId);
+            if (penalties.isEmpty()) {
+                System.out.println("No penalties found for this customer.");
+                return;
+            }
+            printer.print(penalties);
+        } catch (IllegalArgumentException e) {
+            System.out.println("Error: " + e.getMessage());
+        } catch (Exception e) {
+            System.out.println("Failed to fetch customer penalties: " + e.getMessage());
         }
-        printer.print(penalties);
     }
-
-
 }

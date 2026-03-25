@@ -8,6 +8,7 @@ import penalty.repository.PenaltyRepo;
 import penalty.stretegy.PenaltyStrategy;
 import rental.model.Rental;
 import util.IdGeneratorUtil;
+import util.IdPrefix;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -22,12 +23,19 @@ public class PenaltyService {
         this.penaltyStrategyFactory = penaltyStrategyFactory;
     }
 
-    public Penalty getLeteReturnPenalty(Rental rental, PenaltyType penaltyType) {
+    public Penalty getLateReturnPenalty(Rental rental, PenaltyType penaltyType) {
         PenaltyStrategy strategy = penaltyStrategyFactory.getPenaltyStrategy(penaltyType);
-        if (strategy == null) return null;
-        Penalty penalty = new Penalty(IdGeneratorUtil.generatePenaltyId(), rental.getId(), rental.getVehicleId(), rental.getCustomerId(), 0, PenaltyType.LATE_RETURN, PenaltyReason.VEHICLE_RETURNED_LATE, LocalDate.now());
-        strategy.calculate(rental, penalty);
-        return penalty;
+        if (strategy == null) {
+            throw new IllegalArgumentException("Unsupported penalty type: " + penaltyType);
+        }
+
+        double amount = strategy.calculate(rental);
+
+        if (amount <= 0) {
+            return null;
+        }
+
+        return new Penalty(IdGeneratorUtil.generate(IdPrefix.PEN), rental.getId(), rental.getVehicleId(), rental.getCustomerId(), amount, PenaltyType.LATE_RETURN, PenaltyReason.VEHICLE_RETURNED_LATE, LocalDate.now());
     }
 
     public List<Penalty> calculatePenalties(List<Rental> rentals, PenaltyType penaltyType) {
@@ -35,8 +43,8 @@ public class PenaltyService {
         if (rentals == null || rentals.isEmpty()) return penalties;
 
         for (Rental rental : rentals) {
-            Penalty penalty = getLeteReturnPenalty(rental, penaltyType);
-            if (penalty != null && penalty.getAmount() > 0) {
+            Penalty penalty = getLateReturnPenalty(rental, penaltyType);
+            if (penalty != null) {
                 penalties.add(penalty);
                 penaltyRepo.save(penalty);
             }
@@ -45,11 +53,13 @@ public class PenaltyService {
     }
 
     public List<Penalty> getPenaltiesByCustomerId(String customerId) {
-        if (customerId == null) return null;
+        if (customerId == null || customerId.isEmpty()) {
+            throw new IllegalArgumentException("Customer ID cannot be null or empty.");
+        }
         return penaltyRepo.findByCustomerId(customerId);
     }
 
-    public List<Penalty> getAllPenalty() {
+    public List<Penalty> getAllPenalties() {
         return penaltyRepo.findAll();
     }
 }

@@ -11,7 +11,9 @@ public class InvoiceService {
     }
 
     public void printInvoice(Invoice invoice) {
-        invoice.calculateTotalRents();
+        if (invoice == null || invoice.getCustomer() == null) {
+            throw new IllegalArgumentException("Invoice cannot be null");
+        }
         invoiceRender.render(invoice);
     }
 }

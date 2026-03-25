@@ -1,6 +1,7 @@
 package penalty.model;
 
 import java.time.LocalDate;
+import java.util.Objects;
 
 public class Penalty {
     private String id;
@@ -63,4 +64,11 @@ public class Penalty {
         return issuedDate;
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (!(obj instanceof Penalty)) return false;
+        Penalty penalty = (Penalty) obj;
+        return Objects.equals(id, penalty.id);
+    }
 }

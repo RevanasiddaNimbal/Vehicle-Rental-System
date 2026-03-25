@@ -26,37 +26,41 @@ public class VehicleOwnerMenu implements UsersMenu {
     public void show(String ownerId) {
         int choice;
         while (true) {
-            System.out.println("\n========= VEHICLE OWNER PANEL =============");
-            System.out.println("1. Vehicles Management");
-            System.out.println("2. Rental Management");
-            System.out.println("3. Wallet Management");
-            System.out.println("4. History Management");
-            System.out.println("5. Account Management");
-            System.out.println("0. Logout");
+            try {
+                System.out.println("\n========= VEHICLE OWNER PANEL =============");
+                System.out.println("1. Vehicles Management");
+                System.out.println("2. Rental Management");
+                System.out.println("3. Wallet Management");
+                System.out.println("4. History Management");
+                System.out.println("5. Account Management");
+                System.out.println("0. Logout");
 
-            choice = InputUtil.readPositiveInt(input, "Enter your choice");
+                choice = InputUtil.readPositiveInt(input, "Enter your choice");
 
-            switch (choice) {
-                case 1:
-                    vehiclesMenu.show(ownerId);
-                    break;
-                case 2:
-                    rentalMenu.show(ownerId);
-                    break;
-                case 3:
-                    walletManagementMenu.show(ownerId);
-                    break;
-                case 4:
-                    historyMenu.show(ownerId);
-                    break;
-                case 5:
-                    AccountManagementMenu.show(ownerId);
-                    break;
-                case 0:
-                    System.out.println("Logged out from Owner panel.");
-                    return;
-                default:
-                    System.out.println("Invalid choice. Try again.");
+                switch (choice) {
+                    case 1:
+                        vehiclesMenu.show(ownerId);
+                        break;
+                    case 2:
+                        rentalMenu.show(ownerId);
+                        break;
+                    case 3:
+                        walletManagementMenu.show(ownerId);
+                        break;
+                    case 4:
+                        historyMenu.show(ownerId);
+                        break;
+                    case 5:
+                        AccountManagementMenu.show(ownerId);
+                        break;
+                    case 0:
+                        System.out.println("Logged out from Owner panel.");
+                        return;
+                    default:
+                        System.out.println("Invalid choice. Try again.");
+                }
+            } catch (Exception e) {
+                System.out.println("Unexpected error: " + e.getMessage());
             }
         }
     }

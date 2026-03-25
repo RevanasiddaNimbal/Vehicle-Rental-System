@@ -7,26 +7,10 @@ import java.security.SecureRandom;
 public class IdGeneratorUtil {
     private static final char[] BASE62 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ".toCharArray();
     private static final SecureRandom RAND = new SecureRandom();
-
     private static int rentalCounter = 1;
-    private static int penaltyCounter = 1;
-    private static int cancellationCounter = 1;
-    private static int walletCounter = 1;
-
+    
     public static int generateRentalId() {
         return rentalCounter++;
-    }
-
-    public static String generatePenaltyId() {
-        return String.format("PEN-%03d", penaltyCounter++);
-    }
-
-    public static String generateCancellationId() {
-        return String.format("CAN-%03d", cancellationCounter++);
-    }
-
-    public static String generateWalletId() {
-        return String.format("WAL-%03d", walletCounter++);
     }
 
     public static String generate(IdPrefix prefix) {

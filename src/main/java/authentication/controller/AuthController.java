@@ -5,15 +5,11 @@ import authentication.model.AuthUser;
 import authentication.model.UserRole;
 import authentication.service.AuthService;
 
-import java.util.Scanner;
-
 public class AuthController {
     private final AuthService service;
-    private final Scanner input;
     private final MenuFactory menuFactory;
 
-    public AuthController(Scanner input, AuthService service, MenuFactory menuFactory) {
-        this.input = input;
+    public AuthController(AuthService service, MenuFactory menuFactory) {
         this.service = service;
         this.menuFactory = menuFactory;
     }

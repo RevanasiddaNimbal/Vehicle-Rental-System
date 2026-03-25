@@ -24,31 +24,35 @@ public class CustomerMenu implements UsersMenu {
     public void show(String customerId) {
         int choice;
         while (true) {
-            System.out.println("\n========= CUSTOMER PANEL ==============\");");
-            System.out.println("1. Rental Management");
-            System.out.println("2. Wallet Management");
-            System.out.println("3. History Management");
-            System.out.println("4. Account Management");
-            System.out.println("0. Logout");
-            choice = InputUtil.readPositiveInt(input, "Enter your choice");
-            switch (choice) {
-                case 1:
-                    customerRentalsMenu.show(customerId);
-                    break;
-                case 2:
-                    customerWalletMenu.show(customerId);
-                    break;
-                case 3:
-                    customerHistoryMenu.show(customerId);
-                    break;
-                case 4:
-                    accountManagementMenu.show(customerId);
-                    break;
-                case 0:
-                    System.out.println("Logging out...");
-                    return;
-                default:
-                    System.out.println("Invalid choice.Please try again");
+            try {
+                System.out.println("\n========= CUSTOMER PANEL ==============");
+                System.out.println("1. Rental Management");
+                System.out.println("2. Wallet Management");
+                System.out.println("3. History Management");
+                System.out.println("4. Account Management");
+                System.out.println("0. Logout");
+                choice = InputUtil.readPositiveInt(input, "Enter your choice");
+                switch (choice) {
+                    case 1:
+                        customerRentalsMenu.show(customerId);
+                        break;
+                    case 2:
+                        customerWalletMenu.show(customerId);
+                        break;
+                    case 3:
+                        customerHistoryMenu.show(customerId);
+                        break;
+                    case 4:
+                        accountManagementMenu.show(customerId);
+                        break;
+                    case 0:
+                        System.out.println("Logging out...");
+                        return;
+                    default:
+                        System.out.println("Invalid choice.Please try again");
+                }
+            } catch (Exception e) {
+                System.out.println("Unexpected error: " + e.getMessage());
             }
         }
     }

@@ -4,10 +4,10 @@ public enum IdPrefix {
     VEH("VEH"),
     OWN("OWN"),
     CUS("CUS"),
-    RENT("RNT"),
     CAN("CAN"),
     PEN("PEN"),
-    INV("INV");
+    INV("INV"),
+    WAL("WAL");
 
     private final String value;
 

@@ -1,5 +1,7 @@
 package wallet.model;
 
+import java.util.Objects;
+
 public class WalletCredential {
     private final String walletId;
     private final String password;
@@ -15,5 +17,13 @@ public class WalletCredential {
 
     public String getPasswordHash() {
         return password;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (!(obj instanceof WalletCredential)) return false;
+        WalletCredential that = (WalletCredential) obj;
+        return Objects.equals(walletId, that.walletId);
     }
 }

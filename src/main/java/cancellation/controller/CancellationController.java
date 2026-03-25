@@ -16,30 +16,41 @@ public class CancellationController {
     }
 
     public void viewCancellations() {
-        List<CancellationRecord> records = cancellationService.getAllCancellationRecords();
-        if (records.isEmpty()) {
-            System.out.println("There are no cancellations found.");
-            return;
+        try {
+            List<CancellationRecord> records = cancellationService.getAllCancellationRecords();
+            if (records.isEmpty()) {
+                System.out.println("There are no cancellations found.");
+                return;
+            }
+            printer.print(records);
+        } catch (Exception e) {
+            System.out.println("Failed to fetch cancellations: " + e.getMessage());
         }
-        printer.print(records);
     }
 
     public void viewCancellationsByCustomerId(String customerId) {
-        List<CancellationRecord> records = cancellationService.getAllCancellationRecordsByCustomerId(customerId);
-        if (records.isEmpty()) {
-            System.out.println("There are no cancellations for this Customer.");
-            return;
+        try {
+            List<CancellationRecord> records = cancellationService.getAllCancellationRecordsByCustomerId(customerId);
+            if (records.isEmpty()) {
+                System.out.println("There are no cancellations for this Customer.");
+                return;
+            }
+            printer.print(records);
+        } catch (Exception e) {
+            System.out.println("Failed to fetch customer cancellations: " + e.getMessage());
         }
-        printer.print(records);
     }
 
     public void viewCancellationsByOwnerId(String ownerId) {
-        List<CancellationRecord> records = cancellationService.getAllCancellationRecordsByOwnerId(ownerId);
-        if (records.isEmpty()) {
-            System.out.println("There are no cancellations for this Owner.");
-            return;
+        try {
+            List<CancellationRecord> records = cancellationService.getAllCancellationRecordsByOwnerId(ownerId);
+            if (records.isEmpty()) {
+                System.out.println("There are no cancellations for this Owner.");
+                return;
+            }
+            printer.print(records);
+        } catch (Exception e) {
+            System.out.println("Failed to fetch owner cancellations: " + e.getMessage());
         }
-        printer.print(records);
-
     }
 }

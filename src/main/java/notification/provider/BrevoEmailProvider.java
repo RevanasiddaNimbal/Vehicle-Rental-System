@@ -1,7 +1,7 @@
 package notification.provider;
 
 import config.EmailPropertiesConfig;
-import exception.DataAccessException;
+import exception.NotificationException;
 import notification.model.EmailMessage;
 import notification.service.EmailService;
 
@@ -25,9 +25,10 @@ public class BrevoEmailProvider implements EmailService {
 
     @Override
     public boolean sendEmail(EmailMessage message) {
+        HttpURLConnection conn = null;
         try {
             URL url = new URL(apiUrl);
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn = (HttpURLConnection) url.openConnection();
 
             conn.setRequestMethod("POST");
             conn.setRequestProperty("accept", "application/json");
@@ -37,6 +38,16 @@ public class BrevoEmailProvider implements EmailService {
             conn.setConnectTimeout(10000);
             conn.setReadTimeout(10000);
 
+            String body = message.getMessageBody()
+                    .replace("\\", "\\\\")
+                    .replace("\"", "\\\"")
+                    .replace("\n", "\\n")
+                    .replace("\r", "");
+
+            String subject = message.getSubject()
+                    .replace("\\", "\\\\")
+                    .replace("\"", "\\\"");
+
             String jsonBody = String.format(
                     "{\"sender\":{\"name\":\"%s\",\"email\":\"%s\"}," +
                             "\"to\":[{\"email\":\"%s\"}]," +
@@ -45,10 +56,9 @@ public class BrevoEmailProvider implements EmailService {
                     senderName,
                     senderEmail,
                     message.getTo(),
-                    message.getSubject(),
-                    message.getMessageBody().replace("\n", "\\n")
+                    subject,
+                    body
             );
-
 
             try (OutputStream os = conn.getOutputStream()) {
                 os.write(jsonBody.getBytes(StandardCharsets.UTF_8));
@@ -57,14 +67,19 @@ public class BrevoEmailProvider implements EmailService {
 
             int responseCode = conn.getResponseCode();
 
-            if (responseCode == 200 || responseCode == 201) {
+            if (responseCode == 200 || responseCode == 201 || responseCode == 202) {
                 return true;
             } else {
+                System.err.println("Email API Error: Received HTTP " + responseCode);
                 return false;
             }
 
         } catch (Exception e) {
-            throw new DataAccessException("Failed to send Email.", e);
+            throw new NotificationException("Failed to connect to Email API.", e);
+        } finally {
+            if (conn != null) {
+                conn.disconnect();
+            }
         }
     }
 }

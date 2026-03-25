@@ -1,11 +1,10 @@
 package wallet.service;
 
-import util.InputUtil;
+import exception.InvalidCredentialsException;
+import exception.ResourceNotFoundException;
 import util.PasswordUtil;
 import wallet.model.WalletCredential;
 import wallet.repository.WalletCredentialRepo;
-
-import java.util.Scanner;
 
 public class WalletCredentialService {
 
@@ -18,7 +17,7 @@ public class WalletCredentialService {
     public WalletCredential getWalletCredential(String walletId) {
         WalletCredential walletCredential = walletCredentialRepo.findByWalletId(walletId);
         if (walletCredential == null) {
-            return null;
+            throw new ResourceNotFoundException("Wallet credentials not found for ID: " + walletId);
         }
         return walletCredential;
     }
@@ -28,53 +27,41 @@ public class WalletCredentialService {
         if (walletCredential == null) {
             WalletCredential credential = new WalletCredential(walletId, PasswordUtil.getHashPassword("123456"));
             walletCredentialRepo.save(credential);
-            System.out.println("default wallet credential created successfully");
         }
     }
 
     public void createWalletCredential(String walletId, String password) {
         WalletCredential walletCredential = walletCredentialRepo.findByWalletId(walletId);
         if (walletCredential != null) {
-            System.out.println("Wallet Credential already exists");
-            return;
+            throw new IllegalStateException("Wallet Credential already exists for this wallet.");
         }
 
         String hashPassword = PasswordUtil.getHashPassword(password);
-
         WalletCredential credential = new WalletCredential(walletId, hashPassword);
         walletCredentialRepo.save(credential);
     }
 
     public boolean verifyWalletPassword(String walletId, String password) {
-
         WalletCredential credential = walletCredentialRepo.findByWalletId(walletId);
         if (credential == null) {
-            System.out.println("Credential not found");
-            return false;
+            throw new ResourceNotFoundException("Wallet credentials not found.");
         }
         return PasswordUtil.verify(password, credential.getPasswordHash());
     }
 
-    public boolean changePassword(Scanner input, String walletId) {
-
+    public void changePassword(String walletId, String oldPassword, String newPassword) {
         WalletCredential credential = walletCredentialRepo.findByWalletId(walletId);
 
         if (credential == null) {
-            System.out.println("Credential not found");
-            return false;
+            throw new ResourceNotFoundException("Wallet credentials not found.");
         }
 
-        String oldPassword = InputUtil.readValidPassword(input, "Enter old password");
-        String newPassword = InputUtil.readValidPassword(input, "Enter new password");
-
         if (!PasswordUtil.verify(oldPassword, credential.getPasswordHash())) {
-            System.out.println("Old password does not match");
-            return false;
+            throw new InvalidCredentialsException("Old password does not match.");
         }
 
         String newHash = PasswordUtil.getHashPassword(newPassword);
         WalletCredential newCredential = new WalletCredential(walletId, newHash);
-        return walletCredentialRepo.update(newCredential);
+        walletCredentialRepo.update(newCredential);
     }
-
 }

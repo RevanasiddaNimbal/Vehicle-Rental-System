@@ -48,7 +48,7 @@ public class AuthConfig {
 
     public AuthController getAuthController() {
         if (authController == null) {
-            authController = new AuthController(input, getAuthService(), menuConfig.getMenuFactory());
+            authController = new AuthController(getAuthService(), menuConfig.getMenuFactory());
         }
         return authController;
     }

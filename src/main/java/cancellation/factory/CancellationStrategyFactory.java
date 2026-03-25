@@ -11,11 +11,8 @@ import java.time.LocalDateTime;
 
 public class CancellationStrategyFactory {
     public static CancellationStrategy getStrategy(Rental rental) {
-
-        long hours = Duration.between(
-                LocalDateTime.now(),
-                rental.getStartDate().atTime(rental.getStartTime())
-        ).toHours();
+        LocalDateTime rentalStart = rental.getStartDate().atTime(rental.getStartTime());
+        long hours = Duration.between(LocalDateTime.now(), rentalStart).toHours();
 
         if (hours >= 48) return new FullRefundStrategy();
         if (hours >= 24) return new PartialRefundStrategy();

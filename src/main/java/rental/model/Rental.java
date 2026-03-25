@@ -5,20 +5,23 @@ import java.time.LocalTime;
 
 public class Rental {
     private int id;
-    private String customerId;
-    private String vehicleId;
-    private LocalDate startDate;
-    private LocalDate endDate;
-    private LocalTime startTime;
-    private LocalTime endTime;
+    private final String customerId;
+    private final String vehicleId;
+    private final LocalDate startDate;
+    private final LocalDate endDate;
+    private final LocalTime startTime;
+    private final LocalTime endTime;
     private int days;
-    private double basePrice;
+    private final double basePrice;
     private double totalPrice;
     private double weekendCharge;
     private double discount;
     private RentalStatus status;
 
     public Rental(int id, String customerId, String vehicleId, LocalDate startDate, LocalDate endDate, LocalTime startTime, LocalTime endTime, int days, double basePrice, double totalPrice, double weekendCharge, double discount, RentalStatus status) {
+        if (customerId == null || vehicleId == null || startDate == null || endDate == null || startTime == null || endTime == null || status == null) {
+            throw new IllegalArgumentException("Rental properties cannot be null.");
+        }
         this.id = id;
         this.customerId = customerId;
         this.vehicleId = vehicleId;
@@ -38,16 +41,8 @@ public class Rental {
         return id;
     }
 
-    public int getDays() {
-        return days;
-    }
-
     public void setId(int id) {
         this.id = id;
-    }
-
-    public void setDays(int days) {
-        this.days = days;
     }
 
     public String getCustomerId() {
@@ -74,16 +69,21 @@ public class Rental {
         return endTime;
     }
 
+    public int getDays() {
+        return days;
+    }
+
+    public void setDays(int days) {
+        if (days < 0) throw new IllegalArgumentException("Days cannot be negative.");
+        this.days = days;
+    }
+
     public double getBasePrice() {
         return basePrice;
     }
 
-    public void setWeekendCharge(double weekendCharge) {
-        this.weekendCharge = weekendCharge;
-    }
-
-    public void setDiscount(double discount) {
-        this.discount = discount;
+    public double getTotalPrice() {
+        return totalPrice;
     }
 
     public void setTotalPrice(double totalPrice) {
@@ -94,12 +94,16 @@ public class Rental {
         return weekendCharge;
     }
 
+    public void setWeekendCharge(double weekendCharge) {
+        this.weekendCharge = weekendCharge;
+    }
+
     public double getDiscount() {
         return discount;
     }
 
-    public double getTotalPrice() {
-        return totalPrice;
+    public void setDiscount(double discount) {
+        this.discount = discount;
     }
 
     public RentalStatus getStatus() {
@@ -107,6 +111,15 @@ public class Rental {
     }
 
     public void setStatus(RentalStatus status) {
+        if (status == null) throw new IllegalArgumentException("Status cannot be null.");
         this.status = status;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (!(obj instanceof Rental)) return false;
+        Rental rental = (Rental) obj;
+        return id == rental.id;
     }
 }

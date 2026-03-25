@@ -2,12 +2,14 @@ package rental.service;
 
 import customer.model.Customer;
 import customer.service.CustomerService;
+import exception.ResourceNotFoundException;
+import exception.VehicleNotAvailableException;
 import rental.billing.RentalPriceCalculator;
 import rental.billing.RentalTimeCalculator;
 import rental.model.Rental;
 import rental.model.RentalStatus;
 import rental.repository.RentalRepo;
-import util.InputUtil;
+import vehicle.models.Status;
 import vehicle.models.Vehicle;
 import vehicle.service.VehicleService;
 import vehicleowner.models.VehicleOwner;
@@ -17,7 +19,9 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class RentalService {
     private final RentalRepo repository;
@@ -26,6 +30,7 @@ public class RentalService {
     private final CustomerService customerService;
     private final RentalPriceCalculator rentalPriceCalculator;
     private final RentalTimeCalculator rentalTimeCalculator;
+    private final ExecutorService asyncExecutor;
 
     public RentalService(RentalRepo repository, RentalPriceCalculator rentalPriceCalculator, VehicleService vehicleService, VehicleOwnerService vehicleOwnerService, CustomerService customerService, RentalTimeCalculator rentalTimeCalculator) {
         this.repository = repository;
@@ -34,23 +39,116 @@ public class RentalService {
         this.vehicleOwnerService = vehicleOwnerService;
         this.customerService = customerService;
         this.rentalTimeCalculator = rentalTimeCalculator;
+        this.asyncExecutor = Executors.newFixedThreadPool(10);
     }
 
-    public boolean addRental(Rental rental) {
-        if (rental == null) return false;
-
-        List<Rental> activeRentals = repository.findAllByVehicleId(rental.getVehicleId());
-        for (Rental r : activeRentals) {
-            if (r.getStatus() == RentalStatus.BOOKED) return false;
+    public CompletableFuture<Void> bookRentalsAsync(List<Rental> rentals) {
+        if (rentals == null || rentals.isEmpty()) {
+            return CompletableFuture.failedFuture(new IllegalArgumentException("Rental list cannot be null or empty."));
         }
-        return repository.save(rental);
+
+        return CompletableFuture.runAsync(() -> {
+            List<Vehicle> lockedVehicles = new ArrayList<>();
+            try {
+                for (Rental rental : rentals) {
+                    Vehicle vehicle = vehicleService.getVehiclesById(rental.getVehicleId());
+                    if (vehicle == null) {
+                        throw new ResourceNotFoundException("Vehicle not found: " + rental.getVehicleId());
+                    }
+                    if (vehicle.getStatus() != Status.AVAILABLE) {
+                        throw new VehicleNotAvailableException("Vehicle " + vehicle.getId() + " is no longer available.");
+                    }
+
+                    boolean isLocked = vehicleService.updateStatusById(vehicle.getId(), Status.RESERVED);
+                    if (!isLocked) {
+                        throw new VehicleNotAvailableException("Failed to lock vehicle " + vehicle.getId());
+                    }
+                    lockedVehicles.add(vehicle);
+
+                    rental.setStatus(RentalStatus.BOOKED);
+                    boolean isSaved = repository.save(rental);
+                    if (!isSaved) {
+                        throw new RuntimeException("Database error: Could not save rental for vehicle " + vehicle.getId());
+                    }
+
+                    vehicleService.updateStatusById(vehicle.getId(), Status.RENTED);
+                }
+            } catch (Exception e) {
+                for (Vehicle lockedVehicle : lockedVehicles) {
+                    vehicleService.updateStatusById(lockedVehicle.getId(), Status.AVAILABLE);
+                }
+                throw new RuntimeException(e.getMessage(), e);
+            }
+        }, asyncExecutor);
+    }
+
+    public void shutdownAsyncExecutor() {
+        if (!asyncExecutor.isShutdown()) {
+            asyncExecutor.shutdown();
+        }
+    }
+
+    public Rental processReturnValidation(int rentalId, String customerId) {
+        Rental rental = repository.findById(rentalId);
+        if (rental == null) {
+            throw new ResourceNotFoundException("Rental ID " + rentalId + " not found.");
+        }
+        if (!rental.getCustomerId().equals(customerId)) {
+            throw new IllegalArgumentException("This rental does not belong to you.");
+        }
+        if (rental.getStatus() != RentalStatus.BOOKED) {
+            throw new IllegalStateException("Rental is already completed or cancelled.");
+        }
+        if (rental.getStartDate().isAfter(LocalDate.now()) ||
+                (rental.getStartDate().isEqual(LocalDate.now()) && rental.getStartTime().isAfter(LocalTime.now()))) {
+            throw new IllegalStateException("Cannot return a vehicle before the pickup time.");
+        }
+        return rental;
+    }
+
+    public Rental processCancelValidation(int rentalId, String customerId) {
+        Rental rental = repository.findById(rentalId);
+        if (rental == null) {
+            throw new ResourceNotFoundException("Rental ID " + rentalId + " not found.");
+        }
+        if (!rental.getCustomerId().equals(customerId)) {
+            throw new IllegalArgumentException("This rental does not belong to you.");
+        }
+        if (rental.getStatus() == RentalStatus.CANCELLED) {
+            throw new IllegalStateException("Rental is already cancelled.");
+        }
+        if (rental.getStatus() == RentalStatus.COMPLETED) {
+            throw new IllegalStateException("Cannot cancel a completed rental.");
+        }
+        if (rental.getStartDate().isBefore(LocalDate.now()) ||
+                (rental.getStartDate().isEqual(LocalDate.now()) && rental.getStartTime().isBefore(LocalTime.now()))) {
+            throw new IllegalStateException("Cannot cancel after the rental period has started.");
+        }
+        return rental;
+    }
+
+    public void completeRentals(List<Rental> rentals) {
+        for (Rental rental : rentals) {
+            rental.setStatus(RentalStatus.COMPLETED);
+            repository.update(rental);
+        }
     }
 
     public void updateRentalStatus(int rentalId, RentalStatus status) {
         Rental rental = repository.findById(rentalId);
-        if (rental == null) return;
+        if (rental == null) {
+            throw new ResourceNotFoundException("Rental ID " + rentalId + " not found.");
+        }
         rental.setStatus(status);
         repository.update(rental);
+    }
+
+    public void calculateTotalRent(Rental rental) {
+        rentalPriceCalculator.calculateTotalRent(rental);
+    }
+
+    public int getDays(Rental rental) {
+        return rentalTimeCalculator.calculateRentalDays(rental.getStartDate(), rental.getEndDate());
     }
 
     public Rental getRentalById(int id) {
@@ -63,8 +161,7 @@ public class RentalService {
 
     public List<Rental> getActiveRentals() {
         List<Rental> result = new ArrayList<>();
-        List<Rental> rentals = repository.findAll();
-        for (Rental rental : rentals) {
+        for (Rental rental : repository.findAll()) {
             if (rental.getStatus() == RentalStatus.BOOKED) result.add(rental);
         }
         return result;
@@ -76,8 +173,7 @@ public class RentalService {
 
     public List<Rental> getActiveRentalsByCustomerId(String customerId) {
         List<Rental> result = new ArrayList<>();
-        List<Rental> rentals = repository.findAllByCustomerId(customerId);
-        for (Rental rental : rentals) {
+        for (Rental rental : repository.findAllByCustomerId(customerId)) {
             if (rental.getStatus() == RentalStatus.BOOKED) result.add(rental);
         }
         return result;
@@ -85,8 +181,7 @@ public class RentalService {
 
     public List<Rental> getRentalsByOwnerId(String ownerId) {
         List<Rental> result = new ArrayList<>();
-        List<Vehicle> vehicles = vehicleService.getVehiclesByOwnerId(ownerId);
-        for (Vehicle vehicle : vehicles) {
+        for (Vehicle vehicle : vehicleService.getVehiclesByOwnerId(ownerId)) {
             List<Rental> rentals = repository.findAllByVehicleId(vehicle.getId());
             if (rentals != null) result.addAll(rentals);
         }
@@ -95,8 +190,7 @@ public class RentalService {
 
     public List<Rental> getActiveRentalsByOwnerId(String ownerId) {
         List<Rental> result = new ArrayList<>();
-        List<Vehicle> vehicles = vehicleService.getVehiclesByOwnerId(ownerId);
-        for (Vehicle vehicle : vehicles) {
+        for (Vehicle vehicle : vehicleService.getVehiclesByOwnerId(ownerId)) {
             List<Rental> rentals = repository.findAllByVehicleId(vehicle.getId());
             if (rentals != null) {
                 for (Rental rental : rentals) {
@@ -108,19 +202,16 @@ public class RentalService {
     }
 
     public List<VehicleOwner> getActiveOwnersByCustomerId(String customerId) {
-        List<Rental> rentals = getActiveRentalsByCustomerId(customerId);
-        return getVehicleOwners(rentals);
+        return getVehicleOwners(getActiveRentalsByCustomerId(customerId));
     }
 
     public List<VehicleOwner> getAllOwnersByCustomerId(String customerId) {
-        List<Rental> rentals = getRentalsByCustomerId(customerId);
-        return getVehicleOwners(rentals);
+        return getVehicleOwners(getRentalsByCustomerId(customerId));
     }
 
     public List<Customer> getActiveCustomersByOwnerId(String ownerId) {
         List<Customer> customers = new ArrayList<>();
-        List<Rental> activeRentals = getActiveRentalsByOwnerId(ownerId);
-        for (Rental rental : activeRentals) {
+        for (Rental rental : getActiveRentalsByOwnerId(ownerId)) {
             Customer customer = customerService.getCustomerById(rental.getCustomerId());
             if (customer != null && !customers.contains(customer)) customers.add(customer);
         }
@@ -129,8 +220,7 @@ public class RentalService {
 
     public List<Customer> getAllCustomersByOwnerId(String ownerId) {
         List<Customer> customers = new ArrayList<>();
-        List<Rental> rentals = getRentalsByOwnerId(ownerId);
-        for (Rental rental : rentals) {
+        for (Rental rental : getRentalsByOwnerId(ownerId)) {
             Customer customer = customerService.getCustomerById(rental.getCustomerId());
             if (customer != null && !customers.contains(customer)) customers.add(customer);
         }
@@ -139,8 +229,7 @@ public class RentalService {
 
     public List<Vehicle> getActiveVehiclesByCustomerId(String customerId) {
         List<Vehicle> vehicles = new ArrayList<>();
-        List<Rental> rentals = getActiveRentalsByCustomerId(customerId);
-        for (Rental rental : rentals) {
+        for (Rental rental : getActiveRentalsByCustomerId(customerId)) {
             Vehicle vehicle = vehicleService.getVehiclesById(rental.getVehicleId());
             if (vehicle != null && !vehicles.contains(vehicle)) vehicles.add(vehicle);
         }
@@ -149,8 +238,7 @@ public class RentalService {
 
     public List<Vehicle> getVehiclesByCustomerId(String customerId) {
         List<Vehicle> vehicles = new ArrayList<>();
-        List<Rental> rentals = getRentalsByCustomerId(customerId);
-        for (Rental rental : rentals) {
+        for (Rental rental : getRentalsByCustomerId(customerId)) {
             Vehicle vehicle = vehicleService.getVehiclesById(rental.getVehicleId());
             if (vehicle != null && !vehicles.contains(vehicle)) vehicles.add(vehicle);
         }
@@ -166,43 +254,5 @@ public class RentalService {
             if (owner != null && !owners.contains(owner)) owners.add(owner);
         }
         return owners;
-    }
-
-    public List<Rental> collectRentalsForReturn(Scanner input, String customerId) {
-        List<Rental> rentalsToReturn = new ArrayList<>();
-        boolean addMore = true;
-        while (addMore) {
-            int rentalId = InputUtil.readPositiveInt(input, "Enter Rental ID to return");
-            Rental rental = getRentalById(rentalId);
-            if (rental == null || !rental.getCustomerId().equals(customerId)) {
-                System.out.println("Invalid rental or does not belong to you.");
-                continue;
-            }
-
-            if (rental.getStartTime().isAfter(LocalTime.now()) || rental.getStartDate().isAfter(LocalDate.now())) {
-                System.out.println("Can't return vehicle before pickup time and date.");
-                break;
-            }
-            rentalsToReturn.add(rental);
-            System.out.println("Added Rental for return.");
-            String choice = InputUtil.readString(input, "Return another vehicle? (Y/N)");
-            addMore = choice.equalsIgnoreCase("Y");
-        }
-        return rentalsToReturn;
-    }
-
-    public void completeRentals(List<Rental> rentals) {
-        for (Rental rental : rentals) {
-            rental.setStatus(RentalStatus.COMPLETED);
-            repository.update(rental);
-        }
-    }
-
-    public int getDays(Rental rental) {
-        return rentalTimeCalculator.calculateRentalDays(rental.getStartDate(), rental.getEndDate());
-    }
-
-    public void calculateTotalRent(Rental rental) {
-        rentalPriceCalculator.calculateTotalRent(rental);
     }
 }

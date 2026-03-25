@@ -1,5 +1,7 @@
 package wallet.model;
 
+import java.util.Objects;
+
 public class Wallet {
     private String walletId;
     private final String userId;
@@ -34,12 +36,23 @@ public class Wallet {
 
     public void debit(double amount) {
         validateAmount(amount);
-        if (this.balance < amount) throw new IllegalArgumentException("Insufficient balance");
+        if (this.balance < amount) {
+            throw new IllegalArgumentException("Insufficient balance");
+        }
         this.balance -= amount;
     }
 
     private void validateAmount(double amount) {
-        if (amount <= 0) throw new IllegalArgumentException("Amount must be positive");
+        if (amount <= 0) {
+            throw new IllegalArgumentException("Amount must be positive");
+        }
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (!(obj instanceof Wallet)) return false;
+        Wallet wallet = (Wallet) obj;
+        return Objects.equals(walletId, wallet.walletId);
+    }
 }

@@ -18,23 +18,27 @@ public class CustomerAccountMenu implements UsersMenu {
     public void show(String customerId) {
         int choice;
         while (true) {
-            System.out.println("\n========= Customer Account Management Menu ==============");
-            System.out.println("1. Reset Password");
-            System.out.println("2. Update My Account");
-            System.out.println("0. Logout");
-            choice = InputUtil.readPositiveInt(input, "Enter your choice");
-            switch (choice) {
-                case 1:
-                    customerController.resetPassword(input, customerId);
-                    break;
-                case 2:
-                    customerController.updateCustomer(input, customerId);
-                    break;
-                case 0:
-                    return;
-                default:
-                    System.out.println("Invalid choice.Please try again");
+            try {
+                System.out.println("\n========= Customer Account Management Menu ==============");
+                System.out.println("1. Reset Password");
+                System.out.println("2. Update My Account");
+                System.out.println("0. Logout");
+                choice = InputUtil.readPositiveInt(input, "Enter your choice");
+                switch (choice) {
+                    case 1:
+                        customerController.resetPassword(input, customerId);
+                        break;
+                    case 2:
+                        customerController.updateCustomer(input, customerId);
+                        break;
+                    case 0:
+                        return;
+                    default:
+                        System.out.println("Invalid choice.Please try again");
 
+                }
+            } catch (Exception e) {
+                System.out.println("Unexpected error: " + e.getMessage());
             }
         }
     }

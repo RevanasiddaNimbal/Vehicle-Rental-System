@@ -2,6 +2,7 @@ package application;
 
 import UI.UserRoleMenu;
 import authentication.model.UserRole;
+import rental.service.RentalService;
 import util.InputUtil;
 
 import java.util.Scanner;
@@ -10,11 +11,13 @@ public class Application {
     private final Scanner input;
     private final UserRoleMenu documentation;
     private final UserRoleMenu authMenu;
+    private final RentalService rentalService;
 
-    public Application(Scanner input, UserRoleMenu documentation, UserRoleMenu authMenu) {
+    public Application(Scanner input, UserRoleMenu documentation, UserRoleMenu authMenu, RentalService rentalService) {
         this.input = input;
         this.documentation = documentation;
         this.authMenu = authMenu;
+        this.rentalService = rentalService;
     }
 
     public void start() {
@@ -39,6 +42,8 @@ public class Application {
                     authMenu.show(UserRole.CUSTOMER);
                     break;
                 case 0:
+                    System.out.println("Shutting down from the code...");
+                    rentalService.shutdownAsyncExecutor();
                     System.exit(0);
                 default:
                     System.out.println("Invalid choice. Try again");

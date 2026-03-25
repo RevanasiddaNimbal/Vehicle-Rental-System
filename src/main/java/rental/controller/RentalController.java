@@ -4,6 +4,7 @@ import UI.UserPrinter;
 import cancellation.service.CancellationService;
 import customer.model.Customer;
 import customer.service.CustomerService;
+import exception.ResourceNotFoundException;
 import invoice.model.Invoice;
 import invoice.service.InvoiceService;
 import penalty.model.Penalty;
@@ -56,11 +57,11 @@ public class RentalController {
         List<Rental> rentals = new ArrayList<>();
         Customer customer = customerService.getCustomerById(customerId);
         if (customer == null) {
-            System.out.println("Customer not found");
+            System.out.println("Customer not found.");
             return;
         }
-        boolean choice = true;
 
+        boolean choice = true;
         while (choice) {
             String vehicleId = InputUtil.readString(input, "Enter Vehicle ID");
             Vehicle vehicle = vehicleService.getVehiclesById(vehicleId);
@@ -69,12 +70,8 @@ public class RentalController {
                 System.out.println("Invalid Vehicle ID. Please try again.");
                 continue;
             }
-            if (vehicle.getStatus() == Status.RENTED) {
-                System.out.println("Vehicle has been already renting. Please choose a different vehicle.");
-                continue;
-            }
-            if (vehicle.getStatus() == Status.MAINTENANCE) {
-                System.out.println("Vehicle is in maintenance. Please select different vehicle.");
+            if (vehicle.getStatus() != Status.AVAILABLE) {
+                System.out.println("Vehicle is not available (Status: " + vehicle.getStatus() + "). Please choose a different vehicle.");
                 continue;
             }
 
@@ -85,8 +82,9 @@ public class RentalController {
                 System.out.println("End Date must be after Start Date.");
                 continue;
             }
-            LocalTime startTime = InputUtil.readValidTime(input, "Enter Pickup Time(in 24 Hours) (HH:MM)");
-            LocalTime endTime = InputUtil.readValidTime(input, "Enter Return Time(in 24 Hours) (HH:MM)");
+
+            LocalTime startTime = InputUtil.readValidTime(input, "Enter Pickup Time (in 24 Hours) (HH:MM)");
+            LocalTime endTime = InputUtil.readValidTime(input, "Enter Return Time (in 24 Hours) (HH:MM)");
             if (startDate.equals(endDate) && !endTime.isAfter(startTime)) {
                 System.out.println("Return time should be greater than start time. Please try again.");
                 continue;
@@ -97,12 +95,11 @@ public class RentalController {
             rentalService.calculateTotalRent(rental);
             rentals.add(rental);
 
-            System.out.println("Vehicle added successfully!");
+            System.out.println("Vehicle added to booking list successfully!");
             String response = InputUtil.readString(input, "Add another vehicle? (Y/N)");
-            if (!response.equalsIgnoreCase("Y")) {
-                choice = false;
-            }
+            choice = response.equalsIgnoreCase("Y");
         }
+
         if (rentals.isEmpty()) {
             System.out.println("No vehicles selected.");
             return;
@@ -112,20 +109,42 @@ public class RentalController {
         invoiceService.printInvoice(invoice);
 
         String confirm = InputUtil.readString(input, "Confirm Booking? (Y/N)");
-        if (confirm.equalsIgnoreCase("Y")) {
-            for (Rental rental : rentals) {
-                rentalService.updateRentalStatus(rental.getId(), RentalStatus.BOOKED);
-                rentalService.addRental(rental);
-                vehicleService.updateStatusById(rental.getVehicleId(), Status.RENTED);
-            }
-            System.out.println("Booking successfully!");
-        } else {
+        if (!confirm.equalsIgnoreCase("Y")) {
             System.out.println("Booking cancelled!");
+            return;
         }
+        rentalService.bookRentalsAsync(rentals)
+                .thenAccept(result -> {
+                    System.out.println("Your vehicles have been successfully booked.");
+                })
+                .exceptionally(ex -> {
+                    System.out.println(" Booking Failed! Reason: " + ex.getCause().getMessage());
+                    return null;
+                });
+
+        System.out.println("Your booking is processing...");
     }
 
     public void returnVehicle(Scanner input, String customerId) {
-        List<Rental> rentalsToReturn = rentalService.collectRentalsForReturn(input, customerId);
+        List<Rental> rentalsToReturn = new ArrayList<>();
+        boolean addMore = true;
+
+        while (addMore) {
+            int rentalId = InputUtil.readPositiveInt(input, "Enter Rental ID to return");
+            try {
+                Rental rental = rentalService.processReturnValidation(rentalId, customerId);
+                rentalsToReturn.add(rental);
+                System.out.println("Rental added for return.");
+            } catch (ResourceNotFoundException | IllegalArgumentException | IllegalStateException e) {
+                System.out.println("Validation Failed: " + e.getMessage());
+            } catch (Exception e) {
+                System.out.println("System Error: Could not validate rental.");
+            }
+
+            String choice = InputUtil.readString(input, "Return another vehicle? (Y/N)");
+            addMore = choice.equalsIgnoreCase("Y");
+        }
+
         if (rentalsToReturn.isEmpty()) {
             System.out.println("No rentals to return.");
             return;
@@ -139,74 +158,66 @@ public class RentalController {
             penaltyPrinter.print(penalties);
         }
 
-        String message = !penalties.isEmpty() ? "Penalties apply. Pay and return vehicles? (Y/N)" : "No penalties. Confirm return? (Y/N)";
+        String message = !penalties.isEmpty() ? "Penalties apply. Confirm return? (Y/N)" : "No penalties. Confirm return? (Y/N)";
         String choice = InputUtil.readString(input, message);
+
         if (!choice.equalsIgnoreCase("Y")) {
             System.out.println("Return cancelled.");
             return;
         }
 
-        rentalService.completeRentals(rentalsToReturn);
-        vehicleService.updateStatus(rentalsToReturn, Status.AVAILABLE);
-        System.out.println("Vehicle returned successfully!");
+        try {
+            rentalService.completeRentals(rentalsToReturn);
+            vehicleService.updateStatus(rentalsToReturn, Status.AVAILABLE);
+            System.out.println("Vehicle(s) returned successfully!");
+        } catch (Exception e) {
+            System.out.println("Failed to complete return: " + e.getMessage());
+        }
     }
 
     public void cancelRental(Scanner input, String customerId) {
+        System.out.println("\n--- Cancel Rental ---");
         List<Rental> rentalsToCancel = new ArrayList<>();
         boolean addMore = true;
 
         while (addMore) {
-
             int rentalId = InputUtil.readPositiveInt(input, "Enter Rental ID to cancel");
-
-            Rental rental = rentalService.getRentalById(rentalId);
-
-            if (rental == null || !rental.getCustomerId().equals(customerId)) {
-                System.out.println("Invalid rental or does not belong to you.");
-                continue;
+            try {
+                Rental rental = rentalService.processCancelValidation(rentalId, customerId);
+                rentalsToCancel.add(rental);
+                System.out.println("Rental added for cancellation.");
+            } catch (ResourceNotFoundException | IllegalArgumentException | IllegalStateException e) {
+                System.out.println("Validation Failed: " + e.getMessage());
+            } catch (Exception e) {
+                System.out.println("System Error: Could not validate cancellation.");
             }
-
-            if (rental.getStatus().equals(RentalStatus.CANCELLED)) {
-                System.out.println("Rental is already cancelled.");
-                continue;
-            }
-
-            if (rental.getStatus().equals(RentalStatus.COMPLETED)) {
-                System.out.println("Cannot cancel completed rental.");
-                continue;
-            }
-
-            if (rental.getStartDate().isBefore(LocalDate.now()) ||
-                    (rental.getStartDate().isEqual(LocalDate.now()) &&
-                            rental.getStartTime().isBefore(LocalTime.now()))) {
-
-                System.out.println("Cannot cancel after rental has started.");
-                continue;
-            }
-
-            rentalsToCancel.add(rental);
-            System.out.println("Added Rental for cancellation.");
 
             String choice = InputUtil.readString(input, "Cancel another rental? (Y/N)");
             addMore = choice.equalsIgnoreCase("Y");
         }
+
         if (rentalsToCancel.isEmpty()) {
             System.out.println("No rentals to cancel.");
             return;
         }
+
         rentalPrinter.print(rentalsToCancel);
         String choice = InputUtil.readString(input, "Confirm cancellation? (Y/N)");
 
         if (!choice.equalsIgnoreCase("Y")) {
-            System.out.println("Failed to cancel Rental.");
+            System.out.println("Cancellation aborted.");
             return;
         }
-        for (Rental rental : rentalsToCancel) {
-            cancellationService.cancelRentalByRentalId(rental.getId());
-        }
-        vehicleService.updateStatus(rentalsToCancel, Status.AVAILABLE);
-        System.out.println("Cancellation successfully!");
 
+        try {
+            for (Rental rental : rentalsToCancel) {
+                cancellationService.cancelRentalByRentalId(rental.getId());
+            }
+            vehicleService.updateStatus(rentalsToCancel, Status.AVAILABLE);
+            System.out.println("Cancellation processed successfully!");
+        } catch (Exception e) {
+            System.out.println("Failed to process cancellation: " + e.getMessage());
+        }
     }
 
     public void viewActiveRentalsByCustomerId(String customerId) {
