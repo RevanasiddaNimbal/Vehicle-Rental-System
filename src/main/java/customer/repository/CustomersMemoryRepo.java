@@ -1,6 +1,7 @@
 package customer.repository;
 
 import customer.model.Customer;
+import exception.DuplicateResourceException;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -12,13 +13,21 @@ public class CustomersMemoryRepo implements CustomerRepo {
 
     @Override
     public boolean save(Customer customer) {
+        if (Storage.containsKey(customer.getId())) {
+            return false;
+        }
+        
+        if (findByEmail(customer.getEmail()) != null) {
+            throw new DuplicateResourceException("Database rejected registration: Email already exists.");
+        }
+
         Storage.put(customer.getId(), customer);
         return true;
     }
 
     @Override
     public boolean update(Customer customer) {
-        if (Storage.get(customer.getId()) == null) {
+        if (!Storage.containsKey(customer.getId())) {
             return false;
         }
         Storage.put(customer.getId(), customer);
@@ -54,17 +63,16 @@ public class CustomersMemoryRepo implements CustomerRepo {
 
     @Override
     public List<Customer> findAll() {
-        return new ArrayList<Customer>(Storage.values());
+        return new ArrayList<>(Storage.values());
     }
 
     @Override
     public Customer findByEmail(String email) {
         for (Customer customer : Storage.values()) {
-            if (customer.getEmail().equalsIgnoreCase(email)) {
+            if (customer.getEmail().equalsIgnoreCase(email) && customer.isActive()) {
                 return customer;
             }
         }
-
         return null;
     }
 }

@@ -4,10 +4,9 @@ import authentication.model.AuthUser;
 import authentication.service.OtpService;
 import customer.model.Customer;
 import customer.service.CustomerService;
-import util.IdGeneratorUtil;
-import util.InputUtil;
-import util.OtpUtil;
-import util.PasswordUtil;
+import exception.DuplicateResourceException;
+import exception.InactiveUserException;
+import util.*;
 
 import java.util.Scanner;
 
@@ -25,60 +24,69 @@ public class CustomerAuthStretegy implements AuthLoginStretegy, AuthRegisterStre
 
     @Override
     public AuthUser register() {
-
-        String id = IdGeneratorUtil.generateCustomerId();
-        String name = InputUtil.readString(input, "Enter Full Name");
         String email = InputUtil.readValidEmail(input, "Enter Email Address");
+        try {
+            if (service.getCustomerByEmail(email) != null) {
+                System.out.println("Registration Failed: A customer with this email already exists.");
+                return null;
+            }
+        } catch (InactiveUserException e) {
+            System.out.println("Registration Failed: " + e.getMessage());
+            return null;
+        }
+
+        String name = InputUtil.readString(input, "Enter Full Name");
         String phone = InputUtil.readValidPhone(input, "Enter Phone Number");
         String address = InputUtil.readString(input, "Enter Address");
         String license = InputUtil.readString(input, "Enter Driving License Number");
         String password = InputUtil.readValidPassword(input, "Enter Password");
 
-        if (service.getCustomerByEmail(email) != null) {
-            System.out.println("Customer Already Exists");
+        if (!OtpUtil.isVerifiedOtp(input, otpService, email)) {
+            System.out.println("Registration Failed: OTP Verification was unsuccessful.");
             return null;
         }
-        Customer customer = new Customer(id, name, email, phone, address, license, PasswordUtil.getHashPassword(password), false);
 
-        if (OtpUtil.isVerifiedOtp(input, otpService, email)) {
-            customer.activate();
 
+        String id = IdGeneratorUtil.generate(IdPrefix.CUS);
+
+        Customer customer = new Customer(id, name, email, phone, address, license, PasswordUtil.getHashPassword(password));
+
+        try {
             if (service.addCustomer(customer)) {
-                System.out.println("Customer Registered Successfully");
+                System.out.println("Customer Registered Successfully. Welcome, " + customer.getName() + "!");
+                return customer;
             } else {
                 System.out.println("Failed to Register Customer");
+                return null;
             }
-            return customer;
-        } else {
-            System.out.println("Registration Failed.");
+        } catch (DuplicateResourceException e) {
+            System.out.println("Registration Failed: " + e.getMessage());
             return null;
         }
     }
 
     @Override
     public AuthUser login() {
-
         String email = InputUtil.readValidEmail(input, "Enter Email Address");
         String password = InputUtil.readString(input, "Enter Password");
 
-        Customer customer = service.getCustomerByEmail(email);
+        try {
+            Customer customer = service.getCustomerByEmail(email);
 
-        if (customer != null &&
-                PasswordUtil.verify(password, customer.getPassword())) {
-
-            if (customer.isActive()) {
-                System.out.println("Login Successful.");
-                return customer;
-            } else {
-                System.out.println("This account is no longer active. Please contact support.");
+            if (customer == null) {
+                System.out.println("Login Failed: Customer not found. Please register.");
                 return null;
             }
 
-        } else if (customer == null) {
-            System.out.println("Customer not found. Please register.");
-            return null;
-        } else {
-            System.out.println("Invalid email and password.");
+            if (PasswordUtil.verify(password, customer.getPassword())) {
+                System.out.println("Login Successful. Welcome back, " + customer.getName() + "!");
+                return customer;
+            } else {
+                System.out.println("Login Failed: Invalid email or password.");
+                return null;
+            }
+        } catch (InactiveUserException e) {
+            System.out.println("Login Failed: " + e.getMessage());
             return null;
         }
     }
@@ -86,22 +94,29 @@ public class CustomerAuthStretegy implements AuthLoginStretegy, AuthRegisterStre
     @Override
     public void forgotPassword() {
         String email = InputUtil.readValidEmail(input, "Enter Email Address");
-        Customer customer = service.getCustomerByEmail(email);
-        if (customer == null) {
-            System.out.println("Customer not found. Please register.");
-            return;
-        }
-        String password = InputUtil.readValidPassword(input, "Enter Password");
-        if (OtpUtil.isVerifiedOtp(input, otpService, email)) {
-            customer.setPassword(PasswordUtil.getHashPassword(password));
-            if (service.updateCustomer(customer)) {
-                System.out.println("Password resent successfully.Please login.");
-            } else {
-                System.out.println("Failed to Resent Password.Please try again.");
+
+        try {
+            Customer customer = service.getCustomerByEmail(email);
+            if (customer == null) {
+                System.out.println("Customer not found. Please register.");
+                return;
             }
-        } else {
-            System.out.println("Failed to resent Password. Please try again.");
+
+            String password = InputUtil.readValidPassword(input, "Enter new Password");
+
+            if (OtpUtil.isVerifiedOtp(input, otpService, email)) {
+                customer.setPassword(PasswordUtil.getHashPassword(password));
+
+                if (service.updateCustomer(customer)) {
+                    System.out.println("Password Reset Successfully. Please login.");
+                } else {
+                    System.out.println("Failed to Reset Password. Please try again.");
+                }
+            } else {
+                System.out.println("Failed to verify OTP. Please try again.");
+            }
+        } catch (InactiveUserException e) {
+            System.out.println("Failed to reset password: " + e.getMessage());
         }
     }
-
 }

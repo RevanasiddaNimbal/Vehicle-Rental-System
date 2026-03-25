@@ -2,6 +2,8 @@ package customer.model;
 
 import authentication.model.AuthUser;
 
+import java.util.Objects;
+
 public class Customer implements AuthUser {
     private String id;
     private String name;
@@ -12,7 +14,7 @@ public class Customer implements AuthUser {
     private String password;
     private boolean active;
 
-    public Customer(String id, String name, String email, String phone, String address, String drivingLicenseNumber, String password, boolean active) {
+    public Customer(String id, String name, String email, String phone, String address, String drivingLicenseNumber, String password) {
         this.id = id;
         this.name = name;
         this.email = email;
@@ -20,7 +22,7 @@ public class Customer implements AuthUser {
         this.address = address;
         this.drivingLicenseNumber = drivingLicenseNumber;
         this.password = password;
-        this.active = active;
+        this.active = true;
     }
 
     public void setId(String id) {
@@ -94,4 +96,16 @@ public class Customer implements AuthUser {
         return drivingLicenseNumber;
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (!(obj instanceof Customer)) return false;
+        Customer customer = (Customer) obj;
+        return Objects.equals(id, customer.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
 }

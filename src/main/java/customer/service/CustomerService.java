@@ -2,11 +2,12 @@ package customer.service;
 
 import customer.model.Customer;
 import customer.repository.CustomerRepo;
-import util.InputUtil;
+import exception.DuplicateResourceException;
+import exception.InactiveUserException;
+import exception.ResourceNotFoundException;
 import util.PasswordUtil;
 
 import java.util.List;
-import java.util.Scanner;
 
 public class CustomerService {
     private final CustomerRepo repository;
@@ -17,46 +18,34 @@ public class CustomerService {
 
     public boolean addCustomer(Customer customer) {
         if (repository.findByEmail(customer.getEmail()) != null) {
-            System.out.println("Customer already exists");
-            return false;
+            throw new DuplicateResourceException("Customer with this email already exists.");
         }
         return repository.save(customer);
     }
 
     public boolean updateCustomer(Customer customer) {
-        if (repository.findById(customer.getId()) == null) {
-            return false;
+        Customer existing = getCustomerById(customer.getId());
+        if (!existing.isActive()) {
+            throw new InactiveUserException("Cannot update an inactive customer.");
         }
-        return repository.update(customer);
-    }
 
-    public boolean resetPassword(Scanner input, String customerId) {
-        Customer customer = repository.findById(customerId);
-        if (customer == null) {
-            System.out.println("Customer not found");
-            return false;
+        Customer emailOwner = repository.findByEmail(customer.getEmail());
+        if (emailOwner != null && !emailOwner.getId().equals(customer.getId())) {
+            throw new DuplicateResourceException("Update failed: The email is already registered to another account.");
         }
-        String oldPassword = InputUtil.readValidPassword(input, "Enter your old password");
-        String newPassword = InputUtil.readValidPassword(input, "Enter your new password");
-        if (!PasswordUtil.verify(oldPassword, customer.getPassword())) {
-            System.out.println("oldPasswords do not match");
-            return false;
-        }
-        customer.setPassword(newPassword);
+
         return repository.update(customer);
     }
 
     public boolean deactivateCustomerById(String id) {
-        if (repository.findById(id) == null) {
-            return false;
-        }
+        Customer existing = getCustomerById(id);
+        if (!existing.isActive()) return false;
         return repository.deactivateById(id);
     }
 
     public boolean activateCustomerById(String id) {
-        if (repository.findById(id) == null) {
-            return false;
-        }
+        Customer existing = getCustomerById(id);
+        if (existing.isActive()) return false;
         return repository.activateById(id);
     }
 
@@ -65,10 +54,25 @@ public class CustomerService {
     }
 
     public Customer getCustomerById(String id) {
-        return repository.findById(id);
+        Customer customer = repository.findById(id);
+        if (customer == null) {
+            throw new ResourceNotFoundException("Customer not found.");
+        }
+        return customer;
     }
 
     public Customer getCustomerByEmail(String email) {
         return repository.findByEmail(email);
+    }
+
+    public boolean resetPassword(String customerId, String oldPassword, String newPassword) {
+        Customer customer = getCustomerById(customerId);
+
+        if (!PasswordUtil.verify(oldPassword, customer.getPassword())) {
+            throw new IllegalArgumentException("Incorrect current password.");
+        }
+
+        customer.setPassword(PasswordUtil.getHashPassword(newPassword));
+        return repository.update(customer);
     }
 }

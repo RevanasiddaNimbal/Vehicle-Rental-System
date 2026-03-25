@@ -3,6 +3,9 @@ package customer.controller;
 import UI.UserPrinter;
 import customer.model.Customer;
 import customer.service.CustomerService;
+import exception.DuplicateResourceException;
+import exception.InactiveUserException;
+import exception.ResourceNotFoundException;
 import util.InputUtil;
 
 import java.util.List;
@@ -20,101 +23,100 @@ public class CustomerController {
 
     public void deactivateCustomer(Scanner input) {
         String id = InputUtil.readString(input, "Enter Customer ID");
-
-        if (service.getCustomerById(id) == null) {
-            System.out.println("Customer ID Not Found");
-            return;
-        }
-
-        if (service.deactivateCustomerById(id)) {
-            System.out.println("Blocked Customer Successfully.");
-        } else {
-            System.out.println("Failed to block Customer.");
+        try {
+            if (service.deactivateCustomerById(id)) {
+                System.out.println("Blocked Customer Successfully.");
+            } else {
+                System.out.println("Customer is already deactivated.");
+            }
+        } catch (ResourceNotFoundException e) {
+            System.out.println("Error: " + e.getMessage());
         }
     }
 
     public void activateCustomer(Scanner input) {
         String id = InputUtil.readString(input, "Enter Customer ID");
-
-        if (service.getCustomerById(id) == null) {
-            System.out.println("Customer ID Not Found");
-            return;
+        try {
+            if (service.activateCustomerById(id)) {
+                System.out.println("Activated Customer Successfully.");
+            } else {
+                System.out.println("Customer is already active.");
+            }
+        } catch (ResourceNotFoundException e) {
+            System.out.println("Error: " + e.getMessage());
         }
+    }
 
-        if (service.activateCustomerById(id)) {
-            System.out.println("Activated Customer Successfully.");
-        } else {
-            System.out.println("Failed to activate Customer.");
+    public void updateCustomer(Scanner input, String id) {
+        try {
+            Customer customer = service.getCustomerById(id);
+            boolean updating = true;
+            boolean hasChanges = false;
+
+            while (updating) {
+                System.out.println("\n---- Update Customer ----");
+                System.out.println("1. Name");
+                System.out.println("2. Email address");
+                System.out.println("3. Phone number");
+                System.out.println("4. Address");
+                System.out.println("5. Driving License Number");
+                System.out.println("0. Save and Back");
+
+                int choice = InputUtil.readPositiveInt(input, "Enter choice");
+
+                switch (choice) {
+                    case 1:
+                        customer.setName(InputUtil.readString(input, "Enter new full name"));
+                        hasChanges = true;
+                        break;
+                    case 2:
+                        customer.setEmail(InputUtil.readValidEmail(input, "Enter new email address"));
+                        hasChanges = true;
+                        break;
+                    case 3:
+                        customer.setPhone(InputUtil.readValidPhone(input, "Enter new phone number"));
+                        hasChanges = true;
+                        break;
+                    case 4:
+                        customer.setAddress(InputUtil.readString(input, "Enter new address"));
+                        hasChanges = true;
+                        break;
+                    case 5:
+                        customer.setDrivingLicenseNumber(InputUtil.readString(input, "Enter new Driving License Number"));
+                        hasChanges = true;
+                        break;
+                    case 0:
+                        updating = false;
+                        break;
+                    default:
+                        System.out.println("Invalid choice. Try again.");
+                }
+            }
+
+            if (hasChanges) {
+                service.updateCustomer(customer);
+                System.out.println("Customer Updated Successfully.");
+            } else {
+                System.out.println("No changes were made.");
+            }
+
+        } catch (InactiveUserException | ResourceNotFoundException | DuplicateResourceException e) {
+            System.out.println("Error: " + e.getMessage());
         }
     }
 
     public void resetPassword(Scanner input, String customerId) {
-        if (customerId == null) {
-            System.out.println("Customer Id is required");
-            return;
-        }
-        if (service.resetPassword(input, customerId)) {
-            System.out.println("Reset Password Successfully.");
-        } else {
-            System.out.println("Failed to reset Password.Please try again");
-        }
-    }
+        String oldPassword = InputUtil.readString(input, "Enter your CURRENT password");
+        String newPassword = InputUtil.readValidPassword(input, "Enter your NEW password");
 
-    public void updateCustomer(Scanner input, String Id) {
-        Customer customer = service.getCustomerById(Id);
-
-        if (customer == null) {
-            System.out.println("Customer ID Not Found");
-            return;
-        }
-
-        System.out.println("----Update Customer----");
-        System.out.println("1. Name");
-        System.out.println("2. Email address");
-        System.out.println("3. Phone number");
-        System.out.println("4. Address");
-        System.out.println("5. Driving License Number");
-        System.out.println("0. Back");
-
-        int choice = InputUtil.readPositiveInt(input, "Enter choice");
-
-        switch (choice) {
-            case 1:
-                String name = InputUtil.readString(input, "Enter new full name");
-                customer.setName(name);
-                break;
-
-            case 2:
-                String email = InputUtil.readString(input, "Enter new email address");
-                customer.setEmail(email);
-                break;
-
-            case 3:
-                String phone = InputUtil.readString(input, "Enter new phone number");
-                customer.setPhone(phone);
-                break;
-
-            case 4:
-                String address = InputUtil.readString(input, "Enter new address");
-                customer.setAddress(address);
-                break;
-
-            case 5:
-                String license = InputUtil.readString(input, "Enter new Driving License Number");
-                customer.setDrivingLicenseNumber(license);
-                break;
-            case 0:
-                return;
-
-            default:
-                System.out.println("Invalid choice");
-                return;
-        }
-
-        if (service.updateCustomer(customer)) {
-            System.out.println("Customer Updated Successfully");
-        } else {
-            System.out.println("Failed to update Customer.");
+        try {
+            if (service.resetPassword(customerId, oldPassword, newPassword)) {
+                System.out.println("Password updated successfully.");
+            } else {
+                System.out.println("Failed to update password. Please try again later.");
+            }
+        } catch (IllegalArgumentException | InactiveUserException | ResourceNotFoundException e) {
+            System.out.println("Error: " + e.getMessage());
         }
     }
 

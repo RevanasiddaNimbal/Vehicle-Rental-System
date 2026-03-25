@@ -8,15 +8,10 @@ public class IdGeneratorUtil {
     private static final char[] BASE62 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ".toCharArray();
     private static final SecureRandom RAND = new SecureRandom();
 
-    private static int customerCounter = 1;
     private static int rentalCounter = 1;
     private static int penaltyCounter = 1;
     private static int cancellationCounter = 1;
     private static int walletCounter = 1;
-    
-    public static String generateCustomerId() {
-        return String.format("CUST-%03d", customerCounter++);
-    }
 
     public static int generateRentalId() {
         return rentalCounter++;
