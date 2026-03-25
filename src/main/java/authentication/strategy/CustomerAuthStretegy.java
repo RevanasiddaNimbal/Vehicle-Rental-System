@@ -1,11 +1,11 @@
 package authentication.strategy;
 
 import authentication.model.AuthUser;
-import authentication.service.OtpService;
 import customer.model.Customer;
 import customer.service.CustomerService;
 import exception.DuplicateResourceException;
 import exception.InactiveUserException;
+import otp.service.OtpService;
 import util.*;
 
 import java.util.Scanner;

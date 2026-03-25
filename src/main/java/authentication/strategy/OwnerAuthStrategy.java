@@ -1,10 +1,10 @@
 package authentication.strategy;
 
 import authentication.model.AuthUser;
-import authentication.service.OtpService;
 import exception.DuplicateResourceException;
 import exception.InactiveUserException;
 import exception.ResourceNotFoundException;
+import otp.service.OtpService;
 import util.*;
 import vehicleowner.models.VehicleOwner;
 import vehicleowner.service.VehicleOwnerService;

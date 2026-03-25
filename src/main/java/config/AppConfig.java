@@ -58,7 +58,7 @@ public class AppConfig {
 
     public NotificationConfig getNotificationConfig() {
         if (notificationConfig == null) {
-            notificationConfig = new NotificationConfig();
+            notificationConfig = new NotificationConfig(databaseConfig);
         }
         return notificationConfig;
     }

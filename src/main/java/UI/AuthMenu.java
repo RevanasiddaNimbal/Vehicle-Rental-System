@@ -26,7 +26,7 @@ public class AuthMenu implements UserRoleMenu {
                 System.out.println("3. Register");
             System.out.println("0. back");
             int choice = InputUtil.readPositiveInt(input, "Enter you choice");
-            if (role.name().equals("ADMIN") && choice == 3) {
+            if (role == UserRole.ADMIN && choice == 3) {
                 System.out.println("Invalid choice.");
                 continue;
             }

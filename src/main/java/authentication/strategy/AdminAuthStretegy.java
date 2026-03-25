@@ -3,7 +3,7 @@ package authentication.strategy;
 import admin.model.Admin;
 import admin.service.AdminService;
 import authentication.model.AuthUser;
-import authentication.service.OtpService;
+import otp.service.OtpService;
 import util.InputUtil;
 import util.OtpUtil;
 import util.PasswordUtil;

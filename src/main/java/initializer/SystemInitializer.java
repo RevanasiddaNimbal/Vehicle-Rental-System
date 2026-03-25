@@ -20,13 +20,25 @@ public class SystemInitializer {
     }
 
     public void initialize() {
-        adminService.createDefaultAdmins();
-        System.out.println("default admins creation checked...");
-        Wallet wallet = walletService.createSystemWallet();
-        System.out.println("default wallet creation checked...");
-        credentialService.defaultWalletCredential(wallet.getWalletId());
-        System.out.println("default wallet credential creation checked...");
+        try {
+            System.out.println("Initializing default admins... ");
+            adminService.createDefaultAdmins();
 
-        System.out.println("System initialized successfully");
+            System.out.println("Initializing system wallet... ");
+            Wallet wallet = walletService.createSystemWallet();
+
+            if (wallet == null) {
+                throw new IllegalStateException("System wallet creation returned null.");
+            }
+
+            System.out.println("Initializing default wallet credentials... ");
+
+            credentialService.defaultWalletCredential(wallet.getWalletId());
+
+            System.out.println("System Initialized Successfully.\n");
+
+        } catch (Exception e) {
+            System.err.println("Reason: " + e.getMessage());
+        }
     }
 }

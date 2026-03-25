@@ -1,6 +1,7 @@
 package util;
 
-import authentication.service.OtpService;
+import exception.OtpVerificationException;
+import otp.service.OtpService;
 
 import java.util.Random;
 import java.util.Scanner;
@@ -17,15 +18,20 @@ public class OtpUtil {
     }
 
     public static boolean isVerifiedOtp(Scanner input, OtpService otpService, String email) {
-        otpService.sendOtp(email);
-        for (int i = 0; i < 3; i++) {
-            String userOtp = InputUtil.readString(input, "Enter OTP");
-            if (otpService.verifyOtp(email, userOtp)) {
-                return true;
-            } else {
-                System.out.println("Invalid OTP. Please try again.");
-            }
+        try {
+            otpService.sendOtp(email);
+            System.out.println("OTP has been sent to " + email + " successfully. (Valid for 5 mins)");
+
+            String code = InputUtil.readString(input, "Enter OTP");
+
+            otpService.verifyOtp(email, code);
+
+            System.out.println("OTP verified successfully.");
+            return true;
+
+        } catch (OtpVerificationException e) {
+            System.out.println("OTP Error: " + e.getMessage());
+            return false;
         }
-        return false;
     }
 }
