@@ -5,7 +5,6 @@ import UI.Documentation;
 import UI.UserRoleMenu;
 import application.Application;
 import initializer.SystemInitializer;
-import rental.service.RentalService;
 
 import java.util.Scanner;
 
@@ -87,20 +86,14 @@ public class AppConfig {
 
     public SystemInitializer getSystemInitializer() {
         if (systemInitializer == null) {
-            systemInitializer = new SystemInitializer(
-                    getServiceConfig().getAdminService(),
-                    getServiceConfig().getWalletService(),
-                    getServiceConfig().getWalletCredentialService()
-            );
+            systemInitializer = new SystemInitializer(getServiceConfig());
         }
         return systemInitializer;
     }
 
     public Application createApplication(Scanner input) {
-        getSystemInitializer().initialize();
         UserRoleMenu documentation = new Documentation();
-        UserRoleMenu authMenu = new AuthMenu(input, getAuthConfig(input).getAuthController());
-        RentalService rentalService = getServiceConfig().getRentalService();
-        return new Application(input, documentation, authMenu, rentalService);
+        UserRoleMenu authMenu = new AuthMenu(input, getAuthConfig(input));
+        return new Application(input, documentation, authMenu, getSystemInitializer(), getServiceConfig());
     }
 }

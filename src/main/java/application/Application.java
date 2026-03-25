@@ -2,7 +2,8 @@ package application;
 
 import UI.UserRoleMenu;
 import authentication.model.UserRole;
-import rental.service.RentalService;
+import config.ServiceConfig;
+import initializer.SystemInitializer;
 import util.InputUtil;
 
 import java.util.Scanner;
@@ -11,13 +12,15 @@ public class Application {
     private final Scanner input;
     private final UserRoleMenu documentation;
     private final UserRoleMenu authMenu;
-    private final RentalService rentalService;
+    private final SystemInitializer systemInitializer;
+    private final ServiceConfig serviceConfig;
 
-    public Application(Scanner input, UserRoleMenu documentation, UserRoleMenu authMenu, RentalService rentalService) {
+    public Application(Scanner input, UserRoleMenu documentation, UserRoleMenu authMenu, SystemInitializer systemInitializer, ServiceConfig serviceConfig) {
         this.input = input;
         this.documentation = documentation;
         this.authMenu = authMenu;
-        this.rentalService = rentalService;
+        this.systemInitializer = systemInitializer;
+        this.serviceConfig = serviceConfig;
     }
 
     public void start() {
@@ -33,17 +36,20 @@ public class Application {
                     documentation.show(null);
                     break;
                 case 2:
+                    systemInitializer.initialize();
                     authMenu.show(UserRole.ADMIN);
                     break;
                 case 3:
+                    systemInitializer.initialize();
                     authMenu.show(UserRole.OWNER);
                     break;
                 case 4:
+                    systemInitializer.initialize();
                     authMenu.show(UserRole.CUSTOMER);
                     break;
                 case 0:
                     System.out.println("Shutting down from the code...");
-                    rentalService.shutdownAsyncExecutor();
+                    serviceConfig.shutdownBackgroundTasks();
                     System.exit(0);
                 default:
                     System.out.println("Invalid choice. Try again");

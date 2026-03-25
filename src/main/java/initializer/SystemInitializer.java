@@ -1,41 +1,37 @@
 package initializer;
 
-import admin.service.AdminService;
+import config.ServiceConfig;
 import wallet.model.Wallet;
-import wallet.service.WalletCredentialService;
-import wallet.service.WalletService;
 
 public class SystemInitializer {
 
-    private final AdminService adminService;
-    private final WalletService walletService;
-    private final WalletCredentialService credentialService;
+    private final ServiceConfig serviceConfig;
+    private boolean isInitialized = false;
 
-    public SystemInitializer(AdminService adminService,
-                             WalletService walletService,
-                             WalletCredentialService credentialService) {
-        this.adminService = adminService;
-        this.walletService = walletService;
-        this.credentialService = credentialService;
+    public SystemInitializer(ServiceConfig serviceConfig) {
+        this.serviceConfig = serviceConfig;
     }
 
     public void initialize() {
+        if (isInitialized) return;
+
         try {
             System.out.println("Initializing default admins... ");
-            adminService.createDefaultAdmins();
+            serviceConfig.getAdminService().createDefaultAdmins();
 
             System.out.println("Initializing system wallet... ");
-            Wallet wallet = walletService.createSystemWallet();
+            Wallet wallet = serviceConfig.getWalletService().createSystemWallet();
 
             if (wallet == null) {
                 throw new IllegalStateException("System wallet creation returned null.");
             }
 
             System.out.println("Initializing default wallet credentials... ");
-
-            credentialService.defaultWalletCredential(wallet.getWalletId());
+            serviceConfig.getWalletCredentialService().defaultWalletCredential(wallet.getWalletId());
 
             System.out.println("System Initialized Successfully.\n");
+
+            isInitialized = true;
 
         } catch (Exception e) {
             System.err.println("Reason: " + e.getMessage());

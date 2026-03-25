@@ -30,9 +30,7 @@ public class AuthConfig {
         if (authStrategyFactory == null) {
             authStrategyFactory = new AuthStrategyFactory(
                     input,
-                    serviceConfig.getVehicleOwnerService(),
-                    serviceConfig.getAdminService(),
-                    serviceConfig.getCustomerService(),
+                    serviceConfig,
                     notificationConfig.getOtpService()
             );
         }
@@ -41,7 +39,7 @@ public class AuthConfig {
 
     public AuthService getAuthService() {
         if (authService == null) {
-            authService = new AuthService(getAuthStrategyFactory(), strategyConfig.getWalletStrategy());
+            authService = new AuthService(getAuthStrategyFactory(), strategyConfig);
         }
         return authService;
     }

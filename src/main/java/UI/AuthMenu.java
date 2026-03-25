@@ -1,23 +1,23 @@
 package UI;
 
-import authentication.controller.AuthController;
 import authentication.model.UserRole;
+import config.AuthConfig;
 import util.InputUtil;
 
 import java.util.Scanner;
 
 public class AuthMenu implements UserRoleMenu {
-    private final AuthController controller;
+    private final AuthConfig authConfig; // Store the config
     private final Scanner input;
 
-    public AuthMenu(Scanner input, AuthController controller) {
+    public AuthMenu(Scanner input, AuthConfig authConfig) {
         this.input = input;
-        this.controller = controller;
-
+        this.authConfig = authConfig;
     }
 
     @Override
     public void show(UserRole role) {
+        var controller = authConfig.getAuthController();
         while (true) {
             try {
                 System.out.println("----- Authentication -----");

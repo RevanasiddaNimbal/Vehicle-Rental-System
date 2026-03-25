@@ -123,22 +123,7 @@ public class MenuConfig {
 
     public MenuFactory getMenuFactory() {
         if (menuFactory == null) {
-            menuFactory = new MenuFactory(
-                    input,
-                    getWalletManagementMenu(),
-                    getCustomerHistoryMenu(),
-                    getCustomerRentalsMenu(),
-                    getCustomerAccountMenu(),
-                    getVehicleOwnerAccountMenu(),
-                    getVehicleOwnerRentalsMenu(),
-                    getVehicleOwnerHistoryMenu(),
-                    getAdminAccountMenu(),
-                    getAdminsVehicleMenu(),
-                    getAdminsCustomerMenu(),
-                    getAdminOwnersManu(),
-                    getAdminRentalMenu(),
-                    getVehicleOwnerVehiclesMenu()
-            );
+            menuFactory = new MenuFactory(input, this);
         }
         return menuFactory;
     }

@@ -151,4 +151,10 @@ public class ServiceConfig {
         }
         return cancellationService;
     }
+
+    public void shutdownBackgroundTasks() {
+        if (rentalService != null) {
+            rentalService.shutdownAsyncExecutor();
+        }
+    }
 }

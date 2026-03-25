@@ -5,16 +5,16 @@ import authentication.model.AuthUser;
 import authentication.model.UserRole;
 import authentication.strategy.AuthLoginStretegy;
 import authentication.strategy.AuthRegisterStretegy;
-import wallet.stretegy.PostRegisterationStrategy;
+import config.StrategyConfig;
 
 public class AuthService {
-    private AuthStrategyFactory factory;
-    private PostRegisterationStrategy walletStrategy;
+    private final AuthStrategyFactory factory;
+    private final StrategyConfig strategyConfig;
 
 
-    public AuthService(AuthStrategyFactory factory, PostRegisterationStrategy walletStrategy) {
+    public AuthService(AuthStrategyFactory factory, StrategyConfig strategyConfig) {
         this.factory = factory;
-        this.walletStrategy = walletStrategy;
+        this.strategyConfig = strategyConfig;
     }
 
     public void register(UserRole role) {
@@ -23,7 +23,7 @@ public class AuthService {
         if (user == null) {
             return;
         }
-        walletStrategy.create(user.getId());
+        strategyConfig.getWalletStrategy().create(user.getId());
     }
 
     public AuthUser login(UserRole role) {
