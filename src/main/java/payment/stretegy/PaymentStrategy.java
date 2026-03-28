@@ -1,7 +1,9 @@
 package payment.stretegy;
 
-import java.util.Scanner;
+import payment.dto.PaymentDetails;
 
-public interface PaymentStrategy {
-    boolean pay(Scanner input, String customerId, double amount);
+public interface PaymentStrategy<T extends PaymentDetails> {
+
+    boolean pay(String customerId, double amount, T details);
+
 }

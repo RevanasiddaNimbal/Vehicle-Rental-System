@@ -100,14 +100,15 @@ public class ControllerConfig {
                     serviceConfig.getInvoiceService(),
                     serviceConfig.getCustomerService(),
                     serviceConfig.getPenaltyService(),
-                    serviceConfig.getCancellationService(),
-                    serviceConfig.getPaymentFacade(),
-                    serviceConfig.getPaymentStrategyFactory(),
                     printerConfig.getRentalPrinter(),
                     printerConfig.getCustomerPrinter(),
                     printerConfig.getOwnerPrinter(),
                     printerConfig.getVehiclePrinter(),
-                    printerConfig.getPenaltyPrinter()
+                    printerConfig.getPenaltyPrinter(),
+                    serviceConfig.getCancellationService(),
+                    serviceConfig.getPaymentFacade(),
+                    serviceConfig.getPaymentStrategyFactory(),
+                    serviceConfig.getReservationTimeoutManager()
             );
         }
         return rentalController;

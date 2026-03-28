@@ -8,7 +8,7 @@ public class Transaction {
     private final String destinationWalletId;
     private final double amount;
     private final TransactionType type;
-    private final TransactionStatus status;
+    private TransactionStatus status;
     private final String referenceId;
     private final String description;
     private final LocalDateTime timestamp;
@@ -49,6 +49,10 @@ public class Transaction {
 
     public TransactionStatus getStatus() {
         return status;
+    }
+
+    public void setStatus(TransactionStatus status) {
+        this.status = status;
     }
 
     public String getReferenceId() {

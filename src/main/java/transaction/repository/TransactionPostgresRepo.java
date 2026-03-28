@@ -41,6 +41,19 @@ public class TransactionPostgresRepo implements TransactionRepo {
     }
 
     @Override
+    public boolean updateStatus(String transactionId, TransactionStatus status) {
+        String query = "UPDATE transactions SET status = ? WHERE transaction_id = ?";
+        try (Connection connection = databaseConnection.getConnection();
+             PreparedStatement ps = connection.prepareStatement(query)) {
+            ps.setString(1, status.name());
+            ps.setString(2, transactionId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            throw new DataAccessException("Failed to update transaction status.", e);
+        }
+    }
+
+    @Override
     public List<Transaction> findByWalletId(String walletId) {
         String query = "SELECT * FROM transactions WHERE source_wallet_id = ? OR destination_wallet_id = ? ORDER BY timestamp DESC";
         List<Transaction> transactions = new ArrayList<>();

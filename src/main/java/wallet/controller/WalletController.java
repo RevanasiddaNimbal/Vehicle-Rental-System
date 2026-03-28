@@ -18,7 +18,8 @@ public class WalletController {
 
     public void checkBalanceByUserId(Scanner input, String userId) {
         try {
-            double balance = walletService.getBalanceByUserId(input, userId);
+            String pin = InputUtil.readValidPassword(input, "Enter Your Wallet PIN");
+            double balance = walletService.getBalanceByUserId(userId, pin);
             System.out.println("Wallet Balance Amount: Rs. " + balance);
         } catch (ResourceNotFoundException | InvalidCredentialsException e) {
             System.out.println("Error: " + e.getMessage());
@@ -36,8 +37,9 @@ public class WalletController {
             }
 
             double amount = InputUtil.readDouble(input, "Enter Amount to deposit");
+            String pin = InputUtil.readValidPassword(input, "Enter Your Wallet PIN");
 
-            walletService.creditAmountByWalletId(input, wallet.getWalletId(), amount);
+            walletService.creditAmountByWalletId(pin, wallet.getWalletId(), amount);
             System.out.println("Amount deposited successfully!");
 
         } catch (InvalidCredentialsException | IllegalArgumentException | ResourceNotFoundException e) {
@@ -56,8 +58,9 @@ public class WalletController {
             }
 
             double amount = InputUtil.readDouble(input, "Enter Amount to withdraw");
+            String pin = InputUtil.readValidPassword(input, "Enter Your Wallet PIN");
 
-            walletService.withdrawAmountByWalletId(input, wallet.getWalletId(), amount, false);
+            walletService.withdrawAmountByWalletId(pin, wallet.getWalletId(), amount, false);
             System.out.println("Amount withdrawn successfully!");
 
         } catch (InsufficientFundsException | InvalidCredentialsException | IllegalArgumentException |

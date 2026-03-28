@@ -38,14 +38,19 @@ public class TransactionService {
         transactionRepo.save(transaction);
     }
 
-    public void logTransfer(String sourceWalletId, String destinationWalletId, double amount,
-                            TransactionType type, TransactionStatus status, String referenceId, String description) {
+    public String logTransfer(String sourceWalletId, String destinationWalletId, double amount,
+                              TransactionType type, TransactionStatus status, String referenceId, String description) {
         String txId = IdGeneratorUtil.generate(IdPrefix.TRX);
         Transaction transaction = new Transaction(
                 txId, sourceWalletId, destinationWalletId, amount,
                 type, status, referenceId, description, LocalDateTime.now()
         );
         transactionRepo.save(transaction);
+        return txId;
+    }
+
+    public void updateTransactionStatus(String transactionId, TransactionStatus status) {
+        transactionRepo.updateStatus(transactionId, status);
     }
 
     public void logFailedPayout(String escrowWalletId, String ownerWalletId, double amount, String rentalId, String reason) {

@@ -1,24 +1,24 @@
 package payment.factory;
 
-
 import payment.model.PaymentMethod;
 import payment.stretegy.PaymentStrategy;
 import payment.stretegy.WalletPaymentStrategy;
+import transaction.service.TransactionService;
 import wallet.service.WalletService;
 
 public class PaymentStrategyFactory {
     private final WalletService walletService;
+    private final TransactionService transactionService;
 
-    public PaymentStrategyFactory(WalletService walletService) {
+    public PaymentStrategyFactory(WalletService walletService, TransactionService transactionService) {
         this.walletService = walletService;
+        this.transactionService = transactionService;
     }
 
     public PaymentStrategy getStrategy(PaymentMethod method) {
-        switch (method) {
-            case WALLET:
-                return new WalletPaymentStrategy(walletService);
-            default:
-                throw new IllegalArgumentException("Payment method not supported yet.");
+        if (method == PaymentMethod.WALLET) {
+            return new WalletPaymentStrategy(walletService, transactionService);
         }
+        throw new IllegalArgumentException("Payment method not supported yet.");
     }
 }

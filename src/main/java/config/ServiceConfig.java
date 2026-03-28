@@ -12,6 +12,7 @@ import penalty.factory.PenaltyStrategyFactory;
 import penalty.service.PenaltyService;
 import rental.billing.RentalPriceCalculator;
 import rental.billing.RentalTimeCalculator;
+import rental.scheduler.ReservationTimeoutManager;
 import rental.service.RentalService;
 import rental.stretegy.*;
 import transaction.service.TransactionService;
@@ -44,6 +45,7 @@ public class ServiceConfig {
     private PaymentStrategyFactory paymentStrategyFactory;
     private PaymentFacade paymentFacade;
     private SecurityDepositStrategy depositStrategy;
+    private ReservationTimeoutManager reservationTimeoutManager;
 
     public ServiceConfig(RepositoryConfig repositoryConfig) {
         this.repositoryConfig = repositoryConfig;
@@ -161,7 +163,7 @@ public class ServiceConfig {
 
     public PaymentStrategyFactory getPaymentStrategyFactory() {
         if (paymentStrategyFactory == null) {
-            paymentStrategyFactory = new PaymentStrategyFactory(getWalletService());
+            paymentStrategyFactory = new PaymentStrategyFactory(getWalletService(), getTransactionService());
         }
         return paymentStrategyFactory;
     }
@@ -185,9 +187,19 @@ public class ServiceConfig {
         return cancellationService;
     }
 
+    public ReservationTimeoutManager getReservationTimeoutManager() {
+        if (reservationTimeoutManager == null) {
+            reservationTimeoutManager = new ReservationTimeoutManager(getVehicleService());
+        }
+        return reservationTimeoutManager;
+    }
+
     public void shutdownBackgroundTasks() {
         if (rentalService != null) {
             rentalService.shutdownAsyncExecutor();
+        }
+        if (reservationTimeoutManager != null) {
+            reservationTimeoutManager.shutdown();
         }
     }
 }

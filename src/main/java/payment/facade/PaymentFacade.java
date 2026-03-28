@@ -1,6 +1,6 @@
 package payment.facade;
 
-
+import payment.dto.PaymentDetails;
 import payment.stretegy.PaymentStrategy;
 import penalty.model.Penalty;
 import rental.model.Rental;
@@ -13,7 +13,7 @@ import wallet.model.Wallet;
 import wallet.service.WalletService;
 
 import java.util.List;
-import java.util.Scanner;
+import java.util.concurrent.CompletableFuture;
 
 public class PaymentFacade {
     private final WalletService walletService;
@@ -30,29 +30,42 @@ public class PaymentFacade {
         this.vehicleService = vehicleService;
     }
 
-    public boolean processBookingPayments(Scanner input, String customerId, List<Rental> rentals, PaymentStrategy paymentStrategy) {
+    public <T extends PaymentDetails> boolean processBookingPayments(String customerId, List<Rental> rentals, PaymentStrategy<T> paymentStrategy, T details) {
         double grandTotal = 0.0;
         for (Rental rental : rentals) {
             grandTotal += rental.getTotalPrice() + rental.getSecurityDeposit();
         }
 
-        boolean isPaid = paymentStrategy.pay(input, customerId, grandTotal);
+        boolean isPaid = paymentStrategy.pay(customerId, grandTotal, details);
         if (!isPaid) {
             return false;
         }
 
         Wallet customerWallet = walletService.getWalletByUserId(customerId);
 
-        for (Rental rental : rentals) {
-            String rentalId = String.valueOf(rental.getId());
+        CompletableFuture.runAsync(() -> {
+            for (Rental rental : rentals) {
+                String rentalId = String.valueOf(rental.getId());
+                transactionService.logTransfer(customerWallet.getWalletId(), ESCROW_WALLET, rental.getTotalPrice(),
+                        TransactionType.RENTAL_FARE, TransactionStatus.SUCCESS, rentalId, "Rental Fare held in Escrow");
+                transactionService.logTransfer(customerWallet.getWalletId(), ESCROW_WALLET, rental.getSecurityDeposit(),
+                        TransactionType.SECURITY_DEPOSIT, TransactionStatus.SUCCESS, rentalId, "Security Deposit held in Escrow");
+            }
+        });
 
-            executeAndLog(customerWallet.getWalletId(), ESCROW_WALLET, rental.getTotalPrice(),
-                    TransactionType.RENTAL_FARE, rentalId, "Rental Fare held in Escrow");
-
-            executeAndLog(customerWallet.getWalletId(), ESCROW_WALLET, rental.getSecurityDeposit(),
-                    TransactionType.SECURITY_DEPOSIT, rentalId, "Security Deposit held in Escrow");
-        }
         return true;
+    }
+
+    public void refundFailedBooking(String customerId, List<Rental> rentals) {
+        double grandTotal = rentals.stream().mapToDouble(rental -> rental.getTotalPrice() + rental.getSecurityDeposit()).sum();
+
+        Wallet customerWallet = walletService.getWalletByUserId(customerId);
+        walletService.executeSystemTransfer(ESCROW_WALLET, customerWallet.getWalletId(), grandTotal);
+
+        CompletableFuture.runAsync(() -> {
+            transactionService.logTransfer(ESCROW_WALLET, customerWallet.getWalletId(), grandTotal,
+                    TransactionType.REFUND, TransactionStatus.SUCCESS, "N/A", "System Rollback: Booking Failed");
+        });
     }
 
     public void processReturnPayouts(String customerId, List<Rental> rentals, List<Penalty> penalties) {
@@ -67,13 +80,13 @@ public class PaymentFacade {
             double ownerPayout = rental.getTotalPrice() - commission;
 
             try {
-                executeAndLog(ESCROW_WALLET, ownerWallet.getWalletId(), ownerPayout,
+                executeAndLogAsync(ESCROW_WALLET, ownerWallet.getWalletId(), ownerPayout,
                         TransactionType.OWNER_PAYOUT, rentalIdStr, "Trip completed payout");
             } catch (Exception e) {
                 sweepFailedPayoutToSystem(ESCROW_WALLET, REVENUE_WALLET, ownerPayout, rentalIdStr);
             }
 
-            executeAndLog(ESCROW_WALLET, REVENUE_WALLET, commission,
+            executeAndLogAsync(ESCROW_WALLET, REVENUE_WALLET, commission,
                     TransactionType.SYSTEM_COMMISSION, rentalIdStr, "Platform commission");
 
             double totalPenalty = 0.0;
@@ -89,12 +102,12 @@ public class PaymentFacade {
             double refundAmount = rental.getSecurityDeposit() - actualPenaltyDeducted;
 
             if (actualPenaltyDeducted > 0) {
-                executeAndLog(ESCROW_WALLET, REVENUE_WALLET, actualPenaltyDeducted,
+                executeAndLogAsync(ESCROW_WALLET, REVENUE_WALLET, actualPenaltyDeducted,
                         TransactionType.PENALTY_CHARGE, rentalIdStr, "Penalty deducted from deposit");
             }
 
             if (refundAmount > 0) {
-                executeAndLog(ESCROW_WALLET, customerWallet.getWalletId(), refundAmount,
+                executeAndLogAsync(ESCROW_WALLET, customerWallet.getWalletId(), refundAmount,
                         TransactionType.REFUND, rentalIdStr, "Remaining Deposit Refunded");
             }
         }
@@ -108,28 +121,30 @@ public class PaymentFacade {
         double cancellationFee = totalHeldInEscrow - refundAmount;
 
         if (refundAmount > 0) {
-            executeAndLog(ESCROW_WALLET, customerWallet.getWalletId(), refundAmount,
+            executeAndLogAsync(ESCROW_WALLET, customerWallet.getWalletId(), refundAmount,
                     TransactionType.REFUND, rentalId, "Cancellation Refund");
         }
 
         if (cancellationFee > 0) {
-            executeAndLog(ESCROW_WALLET, REVENUE_WALLET, cancellationFee,
+            executeAndLogAsync(ESCROW_WALLET, REVENUE_WALLET, cancellationFee,
                     TransactionType.SYSTEM_COMMISSION, rentalId, "Cancellation Fee retained");
         }
     }
 
     public void sweepFailedPayoutToSystem(String escrowWalletId, String revenueWalletId, double amount, String rentalId) {
-        executeAndLog(escrowWalletId, revenueWalletId, amount,
+        executeAndLogAsync(escrowWalletId, revenueWalletId, amount,
                 TransactionType.FAILED_PAYOUT_HOLD, rentalId, "SWEPT TO ADMIN: Payout Failed. Holding.");
     }
 
     public void resolveSweptPayout(String revenueWalletId, String ownerWalletId, double amount, String rentalId) {
-        executeAndLog(revenueWalletId, ownerWalletId, amount,
+        executeAndLogAsync(revenueWalletId, ownerWalletId, amount,
                 TransactionType.MANUAL_RESOLUTION_PAYOUT, rentalId, "Admin Manually Resolved and Paid Owner");
     }
 
-    private void executeAndLog(String fromWallet, String toWallet, double amount, TransactionType type, String rentalId, String description) {
+    private void executeAndLogAsync(String fromWallet, String toWallet, double amount, TransactionType type, String rentalId, String description) {
         walletService.executeSystemTransfer(fromWallet, toWallet, amount);
-        transactionService.logTransfer(fromWallet, toWallet, amount, type, TransactionStatus.SUCCESS, rentalId, description);
+        CompletableFuture.runAsync(() -> {
+            transactionService.logTransfer(fromWallet, toWallet, amount, type, TransactionStatus.SUCCESS, rentalId, description);
+        });
     }
 }

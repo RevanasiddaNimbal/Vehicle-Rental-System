@@ -6,11 +6,9 @@ import exception.ResourceNotFoundException;
 import transaction.service.TransactionService;
 import util.IdGeneratorUtil;
 import util.IdPrefix;
-import util.InputUtil;
 import wallet.model.Wallet;
 import wallet.repository.WalletRepo;
 
-import java.util.Scanner;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -40,9 +38,9 @@ public class WalletService {
         return walletRepo.findByUserId(userId);
     }
 
-    public double getBalanceByUserId(Scanner input, String userId) {
+    public double getBalanceByUserId(String userId, String pin) {
         Wallet wallet = getValidWalletByUserId(userId);
-        if (validatePassword(input, wallet.getWalletId())) {
+        if (validatePassword(pin, wallet.getWalletId())) {
             throw new InvalidCredentialsException("Invalid wallet PIN. Access denied.");
         }
         return wallet.getBalance();
@@ -88,10 +86,9 @@ public class WalletService {
         return newWallet;
     }
 
-
-    public void creditAmountByWalletId(Scanner input, String walletId, double amount) {
+    public void creditAmountByWalletId(String pin, String walletId, double amount) {
         validateAmount(amount);
-        if (validatePassword(input, walletId)) {
+        if (validatePassword(pin, walletId)) {
             throw new InvalidCredentialsException("Invalid Wallet PIN. Deposit denied.");
         }
 
@@ -107,7 +104,6 @@ public class WalletService {
             } catch (Exception e) {
                 wallet.debit(amount);
                 walletRepo.update(wallet);
-                e.printStackTrace();
                 throw new RuntimeException("System error during deposit. Transaction rolled back.", e);
             }
         } finally {
@@ -115,7 +111,7 @@ public class WalletService {
         }
     }
 
-    public void withdrawAmountByWalletId(Scanner input, String walletId, double amount, boolean isPayment) {
+    public void withdrawAmountByWalletId(String pin, String walletId, double amount, boolean isPayment) {
         validateAmount(amount);
 
         Lock lock = getWalletLock(walletId);
@@ -123,12 +119,12 @@ public class WalletService {
         try {
             Wallet wallet = getValidWallet(walletId);
 
-            if (validatePassword(input, wallet.getWalletId())) {
+            if (validatePassword(pin, wallet.getWalletId())) {
                 throw new InvalidCredentialsException("Invalid Wallet PIN. Withdrawal denied.");
             }
 
             if ((!isPayment) && (wallet.getBalance() - amount) < MIN_BALANCE_FOR_WITHDRAWAL) {
-                throw new InsufficientFundsException(" Minimum $1000 balance is requirement in wallet.");
+                throw new InsufficientFundsException("Minimum $1000 balance is requirement in wallet.");
             }
 
             if (isPayment && (wallet.getBalance() - amount) < 0) {
@@ -205,17 +201,14 @@ public class WalletService {
 
     public Wallet getRevenueWallet() {
         return walletRepo.findByUserId("SYSTEM-REVENUE");
-
     }
 
     private void validateAmount(double amount) {
         if (amount <= 0) throw new IllegalArgumentException("Amount must be greater than zero.");
     }
 
-    private boolean validatePassword(Scanner input, String walletId) {
-        if ("SYSTEM-ESCROW".equals(walletId)) return false;
-
-        String password = InputUtil.readValidPassword(input, "Enter Your Wallet PIN");
-        return !walletCredentialService.verifyWalletPassword(walletId, password);
+    private boolean validatePassword(String pin, String walletId) {
+        if ("SYSTEM-ESCROW".equals(walletId) || "SYSTEM-REVENUE".equals(walletId)) return false;
+        return !walletCredentialService.verifyWalletPassword(walletId, pin);
     }
 }

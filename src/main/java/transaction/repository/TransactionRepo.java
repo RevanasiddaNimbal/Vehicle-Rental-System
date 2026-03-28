@@ -8,6 +8,8 @@ import java.util.List;
 public interface TransactionRepo {
     boolean save(Transaction transaction);
 
+    boolean updateStatus(String transactionId, TransactionStatus status);
+
     List<Transaction> findByWalletId(String walletId);
 
     List<Transaction> findByStatus(TransactionStatus status);

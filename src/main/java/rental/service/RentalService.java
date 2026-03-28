@@ -3,13 +3,11 @@ package rental.service;
 import customer.model.Customer;
 import customer.service.CustomerService;
 import exception.ResourceNotFoundException;
-import exception.VehicleNotAvailableException;
 import rental.billing.RentalPriceCalculator;
 import rental.billing.RentalTimeCalculator;
 import rental.model.Rental;
 import rental.model.RentalStatus;
 import rental.repository.RentalRepo;
-import vehicle.models.Status;
 import vehicle.models.Vehicle;
 import vehicle.service.VehicleService;
 import vehicleowner.models.VehicleOwner;
@@ -48,35 +46,15 @@ public class RentalService {
         }
 
         return CompletableFuture.runAsync(() -> {
-            List<Vehicle> lockedVehicles = new ArrayList<>();
             try {
                 for (Rental rental : rentals) {
-                    Vehicle vehicle = vehicleService.getVehiclesById(rental.getVehicleId());
-                    if (vehicle == null) {
-                        throw new ResourceNotFoundException("Vehicle not found: " + rental.getVehicleId());
-                    }
-                    if (vehicle.getStatus() != Status.AVAILABLE) {
-                        throw new VehicleNotAvailableException("Vehicle " + vehicle.getId() + " is no longer available.");
-                    }
-
-                    boolean isLocked = vehicleService.updateStatusById(vehicle.getId(), Status.RESERVED);
-                    if (!isLocked) {
-                        throw new VehicleNotAvailableException("Failed to lock vehicle " + vehicle.getId());
-                    }
-                    lockedVehicles.add(vehicle);
-
                     rental.setStatus(RentalStatus.BOOKED);
                     boolean isSaved = repository.save(rental);
                     if (!isSaved) {
-                        throw new RuntimeException("Database error: Could not save rental for vehicle " + vehicle.getId());
+                        throw new RuntimeException("Database error: Could not save rental for vehicle " + rental.getVehicleId());
                     }
-
-                    vehicleService.updateStatusById(vehicle.getId(), Status.RENTED);
                 }
             } catch (Exception e) {
-                for (Vehicle lockedVehicle : lockedVehicles) {
-                    vehicleService.updateStatusById(lockedVehicle.getId(), Status.AVAILABLE);
-                }
                 throw new RuntimeException(e.getMessage(), e);
             }
         }, asyncExecutor);

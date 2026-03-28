@@ -19,6 +19,17 @@ public class TransactionMemoryRepo implements TransactionRepo {
     }
 
     @Override
+    public boolean updateStatus(String transactionId, TransactionStatus status) {
+        Transaction existing = storage.get(transactionId);
+        if (existing == null) {
+            return false;
+        }
+        existing.setStatus(status);
+        storage.put(transactionId, existing);
+        return true;
+    }
+
+    @Override
     public List<Transaction> findByWalletId(String walletId) {
         return storage.values().stream()
                 .filter(t -> t.getSourceWalletId().equals(walletId) || t.getDestinationWalletId().equals(walletId))
