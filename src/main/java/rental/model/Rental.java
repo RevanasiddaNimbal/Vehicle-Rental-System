@@ -16,9 +16,10 @@ public class Rental {
     private double totalPrice;
     private double weekendCharge;
     private double discount;
+    private double securityDeposit;
     private RentalStatus status;
 
-    public Rental(int id, String customerId, String vehicleId, LocalDate startDate, LocalDate endDate, LocalTime startTime, LocalTime endTime, int days, double basePrice, double totalPrice, double weekendCharge, double discount, RentalStatus status) {
+    public Rental(int id, String customerId, String vehicleId, LocalDate startDate, LocalDate endDate, LocalTime startTime, LocalTime endTime, int days, double basePrice, double totalPrice, double weekendCharge, double discount, double securityDeposit, RentalStatus status) {
         if (customerId == null || vehicleId == null || startDate == null || endDate == null || startTime == null || endTime == null || status == null) {
             throw new IllegalArgumentException("Rental properties cannot be null.");
         }
@@ -34,6 +35,7 @@ public class Rental {
         this.totalPrice = totalPrice;
         this.weekendCharge = weekendCharge;
         this.discount = discount;
+        this.securityDeposit = securityDeposit;
         this.status = status;
     }
 
@@ -104,6 +106,14 @@ public class Rental {
 
     public void setDiscount(double discount) {
         this.discount = discount;
+    }
+
+    public double getSecurityDeposit() {
+        return securityDeposit;
+    }
+
+    public void setSecurityDeposit(double securityDeposit) {
+        this.securityDeposit = securityDeposit;
     }
 
     public RentalStatus getStatus() {

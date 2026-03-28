@@ -27,7 +27,8 @@ public class MenuFactory {
                     menuConfig.getAdminsCustomerMenu(),
                     menuConfig.getAdminRentalMenu(),
                     menuConfig.getAdminAccountMenu(),
-                    menuConfig.getWalletManagementMenu()
+                    menuConfig.getWalletManagementMenu(),
+                    menuConfig.getTransactionMenu()
             );
             case OWNER -> new VehicleOwnerMenu(
                     input,
@@ -35,14 +36,16 @@ public class MenuFactory {
                     menuConfig.getVehicleOwnerAccountMenu(),
                     menuConfig.getVehicleOwnerHistoryMenu(),
                     menuConfig.getWalletManagementMenu(),
-                    menuConfig.getVehicleOwnerVehiclesMenu()
+                    menuConfig.getVehicleOwnerVehiclesMenu(),
+                    menuConfig.getTransactionMenu()
             );
             case CUSTOMER -> new CustomerMenu(
                     input,
                     menuConfig.getCustomerRentalsMenu(),
                     menuConfig.getWalletManagementMenu(),
                     menuConfig.getCustomerHistoryMenu(),
-                    menuConfig.getCustomerAccountMenu()
+                    menuConfig.getCustomerAccountMenu(),
+                    menuConfig.getTransactionMenu()
             );
         };
         menu.show(userId);

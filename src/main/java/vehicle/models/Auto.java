@@ -6,7 +6,7 @@ public class Auto extends Vehicle {
     public Auto(String id, String brand, Category category, double pricePerDay, int seatingCapacity, Status status, String ownerId) {
         super(id, brand, category, pricePerDay, status, ownerId);
         this.seatingCapacity = seatingCapacity;
-        vehicle_type = "Auto";
+        vehicle_type = VehicleType.AUTO.name();
     }
 
     public void setSeatingCapacity(int seatingCapacity) {

@@ -32,7 +32,7 @@ public class RentalTimeCalculator {
         long totalHours = totalMinutes / 60;
         long remainderMinutes = totalMinutes % 60;
 
-        if (remainderMinutes > 15) {
+        if (remainderMinutes > 0) {
             totalHours += 1;
         }
         return totalHours;

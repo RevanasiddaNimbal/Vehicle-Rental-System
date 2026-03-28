@@ -6,15 +6,15 @@ import customer.service.CustomerService;
 import invoice.renders.InvoiceConsoleRender;
 import invoice.renders.InvoiceRender;
 import invoice.service.InvoiceService;
+import payment.facade.PaymentFacade;
+import payment.factory.PaymentStrategyFactory;
 import penalty.factory.PenaltyStrategyFactory;
 import penalty.service.PenaltyService;
 import rental.billing.RentalPriceCalculator;
 import rental.billing.RentalTimeCalculator;
 import rental.service.RentalService;
-import rental.stretegy.BasePriceStrategy;
-import rental.stretegy.DiscountStrategy;
-import rental.stretegy.PricingStrategy;
-import rental.stretegy.WeekendStrategy;
+import rental.stretegy.*;
+import transaction.service.TransactionService;
 import vehicle.service.VehicleService;
 import vehicleowner.service.VehicleOwnerService;
 import wallet.service.WalletCredentialService;
@@ -40,6 +40,10 @@ public class ServiceConfig {
     private WalletService walletService;
     private RentalService rentalService;
     private CancellationService cancellationService;
+    private TransactionService transactionService;
+    private PaymentStrategyFactory paymentStrategyFactory;
+    private PaymentFacade paymentFacade;
+    private SecurityDepositStrategy depositStrategy;
 
     public ServiceConfig(RepositoryConfig repositoryConfig) {
         this.repositoryConfig = repositoryConfig;
@@ -88,13 +92,20 @@ public class ServiceConfig {
         return rentalTimeCalculator;
     }
 
+    public SecurityDepositStrategy getSecurityDepositStrategy() {
+        if (depositStrategy == null) {
+            depositStrategy = new DynamicDepositStrategy();
+        }
+        return depositStrategy;
+    }
+
     public RentalPriceCalculator getRentalPriceCalculator() {
         if (rentalPriceCalculator == null) {
             Map<Integer, PricingStrategy> pricingStrategies = new HashMap<>();
             pricingStrategies.put(1, new BasePriceStrategy());
             pricingStrategies.put(2, new WeekendStrategy());
             pricingStrategies.put(3, new DiscountStrategy());
-            rentalPriceCalculator = new RentalPriceCalculator(pricingStrategies);
+            rentalPriceCalculator = new RentalPriceCalculator(pricingStrategies, getSecurityDepositStrategy());
         }
         return rentalPriceCalculator;
     }
@@ -120,9 +131,16 @@ public class ServiceConfig {
         return walletCredentialService;
     }
 
+    public TransactionService getTransactionService() {
+        if (transactionService == null) {
+            transactionService = new TransactionService(repositoryConfig.getTransactionRepo());
+        }
+        return transactionService;
+    }
+
     public WalletService getWalletService() {
         if (walletService == null) {
-            walletService = new WalletService(repositoryConfig.getWalletRepo(), getWalletCredentialService());
+            walletService = new WalletService(repositoryConfig.getWalletRepo(), getWalletCredentialService(), getTransactionService());
         }
         return walletService;
     }
@@ -139,6 +157,21 @@ public class ServiceConfig {
             );
         }
         return rentalService;
+    }
+
+    public PaymentStrategyFactory getPaymentStrategyFactory() {
+        if (paymentStrategyFactory == null) {
+            paymentStrategyFactory = new PaymentStrategyFactory(getWalletService());
+        }
+        return paymentStrategyFactory;
+    }
+
+    public PaymentFacade getPaymentFacade() {
+        if (paymentFacade == null) {
+            paymentFacade = new PaymentFacade(getWalletService(), getTransactionService(), getVehicleService()
+            );
+        }
+        return paymentFacade;
     }
 
     public CancellationService getCancellationService() {

@@ -1,6 +1,5 @@
 package wallet.service;
 
-import exception.InvalidCredentialsException;
 import exception.ResourceNotFoundException;
 import util.PasswordUtil;
 import wallet.model.WalletCredential;
@@ -49,15 +48,11 @@ public class WalletCredentialService {
         return PasswordUtil.verify(password, credential.getPasswordHash());
     }
 
-    public void changePassword(String walletId, String oldPassword, String newPassword) {
+    public void forgotPassword(String walletId, String newPassword) {
         WalletCredential credential = walletCredentialRepo.findByWalletId(walletId);
 
         if (credential == null) {
             throw new ResourceNotFoundException("Wallet credentials not found.");
-        }
-
-        if (!PasswordUtil.verify(oldPassword, credential.getPasswordHash())) {
-            throw new InvalidCredentialsException("Old password does not match.");
         }
 
         String newHash = PasswordUtil.getHashPassword(newPassword);

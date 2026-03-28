@@ -1,0 +1,14 @@
+package transaction.model;
+
+public enum TransactionType {
+    WALLET_DEPOSIT,
+    WALLET_WITHDRAWAL,
+    SECURITY_DEPOSIT,
+    RENTAL_FARE,
+    REFUND,
+    OWNER_PAYOUT,
+    SYSTEM_COMMISSION,
+    PENALTY_CHARGE,
+    FAILED_PAYOUT_HOLD,
+    MANUAL_RESOLUTION_PAYOUT
+}

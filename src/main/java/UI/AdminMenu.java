@@ -12,8 +12,9 @@ public class AdminMenu implements UsersMenu {
     private final WalletManagementMenu walletManagementMenu;
     private final AdminOwnersManu ownerMenu;
     private final AdminsVehicleMenu vehicleMenu;
+    private final TransactionMenu transactionMenu;
 
-    public AdminMenu(Scanner input, AdminOwnersManu ownerMenu, AdminsVehicleMenu vehicleMenu, AdminsCustomerMenu customerMenu, AdminRentalMenu rentalMenu, AdminAccountMenu accountManagementMenu, WalletManagementMenu walletManagementMenu) {
+    public AdminMenu(Scanner input, AdminOwnersManu ownerMenu, AdminsVehicleMenu vehicleMenu, AdminsCustomerMenu customerMenu, AdminRentalMenu rentalMenu, AdminAccountMenu accountManagementMenu, WalletManagementMenu walletManagementMenu, TransactionMenu transactionMenu) {
         this.input = input;
         this.ownerMenu = ownerMenu;
         this.vehicleMenu = vehicleMenu;
@@ -21,6 +22,7 @@ public class AdminMenu implements UsersMenu {
         this.rentalMenu = rentalMenu;
         this.accountManagementMenu = accountManagementMenu;
         this.walletManagementMenu = walletManagementMenu;
+        this.transactionMenu = transactionMenu;
     }
 
     @Override
@@ -34,8 +36,9 @@ public class AdminMenu implements UsersMenu {
                 System.out.println("3. Vehicle Owners Management");
                 System.out.println("4. Customers Management");
                 System.out.println("5. Vehicle Management");
-                System.out.println("6. Account Management");
-                System.out.println("0.  Logout");
+                System.out.println("6. Transaction Management");
+                System.out.println("7. Account Management");
+                System.out.println("0. Logout");
 
                 choice = InputUtil.readPositiveInt(input, "Enter your choice");
 
@@ -44,7 +47,7 @@ public class AdminMenu implements UsersMenu {
                         rentalMenu.show(adminId);
                         break;
                     case 2:
-                        walletManagementMenu.show("SYSTEM");
+                        walletManagementMenu.show("SYSTEM-REVENUE");
                         break;
                     case 3:
                         ownerMenu.show(adminId);
@@ -56,6 +59,9 @@ public class AdminMenu implements UsersMenu {
                         vehicleMenu.show(adminId);
                         break;
                     case 6:
+                        transactionMenu.show("SYSTEM-REVENUE");
+                        break;
+                    case 7:
                         accountManagementMenu.show(adminId);
                         break;
                     case 0:

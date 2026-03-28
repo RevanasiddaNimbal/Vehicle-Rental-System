@@ -19,22 +19,17 @@ public class WalletPostgresRepo implements WalletRepo {
 
     @Override
     public boolean save(Wallet wallet) {
-        String query = "INSERT INTO wallets (user_id, balance) VALUES (?, ?)";
+        // 1. Add wallet_id to the insert query and values
+        String query = "INSERT INTO wallets (wallet_id, user_id, balance) VALUES (?, ?, ?)";
 
         try (Connection connection = databaseConnection.getConnection();
-             PreparedStatement ps = connection.prepareStatement(query, new String[]{"wallet_id"})) {
+             PreparedStatement ps = connection.prepareStatement(query)) {
 
-            ps.setString(1, wallet.getUserId());
-            ps.setDouble(2, wallet.getBalance());
+            ps.setString(1, wallet.getWalletId());
+            ps.setString(2, wallet.getUserId());
+            ps.setDouble(3, wallet.getBalance());
 
             int rows = ps.executeUpdate();
-            if (rows > 0) {
-                try (ResultSet id = ps.getGeneratedKeys()) {
-                    if (id.next()) {
-                        wallet.setWalletId(id.getString(1));
-                    }
-                }
-            }
             return rows > 0;
 
         } catch (SQLException e) {
@@ -83,7 +78,7 @@ public class WalletPostgresRepo implements WalletRepo {
 
     @Override
     public Wallet findByUserId(String userId) {
-        String query = "SELECT wallet_id, user_id, balance FROM wallets WHERE user_id=?";
+        String query = "SELECT * FROM wallets WHERE user_id=?";
 
         try (Connection connection = databaseConnection.getConnection();
              PreparedStatement ps = connection.prepareStatement(query)) {

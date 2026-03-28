@@ -24,6 +24,7 @@ public class MenuConfig {
     private AdminOwnersManu adminOwnersManu;
     private AdminRentalMenu adminRentalMenu;
     private MenuFactory menuFactory;
+    private TransactionMenu transactionMenu;
 
     public MenuConfig(ControllerConfig controllerConfig, Scanner input) {
         this.controllerConfig = controllerConfig;
@@ -126,5 +127,12 @@ public class MenuConfig {
             menuFactory = new MenuFactory(input, this);
         }
         return menuFactory;
+    }
+
+    public TransactionMenu getTransactionMenu() {
+        if (transactionMenu == null) {
+            transactionMenu = new TransactionMenu(input, controllerConfig.getTransactionController());
+        }
+        return transactionMenu;
     }
 }

@@ -74,7 +74,7 @@ public class PenaltyPostgresRepo implements PenaltyRepo {
         ps.setInt(2, penalty.getRentalId());
         ps.setString(3, penalty.getVehicleId());
         ps.setString(4, penalty.getCustomerId());
-        ps.setDouble(5, penalty.getAmount());
+        ps.setDouble(5, penalty.getPenaltyAmount());
         ps.setString(6, penalty.getType().name());
         ps.setString(7, penalty.getReason().name());
         ps.setDate(8, Date.valueOf(penalty.getIssuedDate()));

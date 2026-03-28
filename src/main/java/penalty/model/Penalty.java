@@ -44,7 +44,7 @@ public class Penalty {
         return customerId;
     }
 
-    public double getAmount() {
+    public double getPenaltyAmount() {
         return amount;
     }
 

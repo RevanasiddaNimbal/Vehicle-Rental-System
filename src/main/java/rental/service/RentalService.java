@@ -147,6 +147,10 @@ public class RentalService {
         rentalPriceCalculator.calculateTotalRent(rental);
     }
 
+    public void calculateSecurityAmount(String vehicleType, Rental rental) {
+        rentalPriceCalculator.calculateTotalDeposit(rental, vehicleType);
+    }
+
     public int getDays(Rental rental) {
         return rentalTimeCalculator.calculateRentalDays(rental.getStartDate(), rental.getEndDate());
     }

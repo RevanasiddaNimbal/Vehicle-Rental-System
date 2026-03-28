@@ -3,7 +3,6 @@ package application;
 import UI.UserRoleMenu;
 import authentication.model.UserRole;
 import config.ServiceConfig;
-import initializer.SystemInitializer;
 import util.InputUtil;
 
 import java.util.Scanner;
@@ -12,14 +11,12 @@ public class Application {
     private final Scanner input;
     private final UserRoleMenu documentation;
     private final UserRoleMenu authMenu;
-    private final SystemInitializer systemInitializer;
     private final ServiceConfig serviceConfig;
 
-    public Application(Scanner input, UserRoleMenu documentation, UserRoleMenu authMenu, SystemInitializer systemInitializer, ServiceConfig serviceConfig) {
+    public Application(Scanner input, UserRoleMenu documentation, UserRoleMenu authMenu, ServiceConfig serviceConfig) {
         this.input = input;
         this.documentation = documentation;
         this.authMenu = authMenu;
-        this.systemInitializer = systemInitializer;
         this.serviceConfig = serviceConfig;
     }
 
@@ -29,30 +26,31 @@ public class Application {
         System.out.println("========================================================================");
 
         while (true) {
-            showMainMenu();
-            int choice = InputUtil.readPositiveInt(input, "Enter your choice");
-            switch (choice) {
-                case 1:
-                    documentation.show(null);
-                    break;
-                case 2:
-                    systemInitializer.initialize();
-                    authMenu.show(UserRole.ADMIN);
-                    break;
-                case 3:
-                    systemInitializer.initialize();
-                    authMenu.show(UserRole.OWNER);
-                    break;
-                case 4:
-                    systemInitializer.initialize();
-                    authMenu.show(UserRole.CUSTOMER);
-                    break;
-                case 0:
-                    System.out.println("Shutting down from the code...");
-                    serviceConfig.shutdownBackgroundTasks();
-                    System.exit(0);
-                default:
-                    System.out.println("Invalid choice. Try again");
+            try {
+                showMainMenu();
+                int choice = InputUtil.readPositiveInt(input, "Enter your choice");
+                switch (choice) {
+                    case 1:
+                        documentation.show(null);
+                        break;
+                    case 2:
+                        authMenu.show(UserRole.ADMIN);
+                        break;
+                    case 3:
+                        authMenu.show(UserRole.OWNER);
+                        break;
+                    case 4:
+                        authMenu.show(UserRole.CUSTOMER);
+                        break;
+                    case 0:
+                        System.out.println("Shutting down ...");
+                        serviceConfig.shutdownBackgroundTasks();
+                        System.exit(0);
+                    default:
+                        System.out.println("Invalid choice. Try again");
+                }
+            } catch (Exception e) {
+                System.out.println("Failed to Start : " + e.getMessage());
             }
         }
     }

@@ -7,6 +7,10 @@ import customer.service.CustomerService;
 import exception.ResourceNotFoundException;
 import invoice.model.Invoice;
 import invoice.service.InvoiceService;
+import payment.facade.PaymentFacade;
+import payment.factory.PaymentStrategyFactory;
+import payment.model.PaymentMethod;
+import payment.stretegy.PaymentStrategy;
 import penalty.model.Penalty;
 import penalty.model.PenaltyType;
 import penalty.service.PenaltyService;
@@ -33,24 +37,28 @@ public class RentalController {
     private final CustomerService customerService;
     private final PenaltyService penaltyService;
     private final CancellationService cancellationService;
+    private final PaymentFacade paymentFacade;
+    private final PaymentStrategyFactory paymentFactory;
     private final UserPrinter<Rental> rentalPrinter;
     private final UserPrinter<Customer> customerPrinter;
     private final UserPrinter<VehicleOwner> ownerPrinter;
     private final UserPrinter<Vehicle> vehiclePrinter;
     private final UserPrinter<Penalty> penaltyPrinter;
 
-    public RentalController(RentalService rentalService, VehicleService vehicleService, InvoiceService invoiceService, CustomerService customerService, PenaltyService penaltyService, UserPrinter<Rental> rentalPrinter, UserPrinter<Customer> customerPrinter, UserPrinter<VehicleOwner> ownerPrinter, UserPrinter<Vehicle> vehiclePrinter, UserPrinter<Penalty> penaltyPrinter, CancellationService cancellationService) {
+    public RentalController(RentalService rentalService, VehicleService vehicleService, InvoiceService invoiceService, CustomerService customerService, PenaltyService penaltyService, CancellationService cancellationService, PaymentFacade paymentFacade, PaymentStrategyFactory paymentFactory, UserPrinter<Rental> rentalPrinter, UserPrinter<Customer> customerPrinter, UserPrinter<VehicleOwner> ownerPrinter, UserPrinter<Vehicle> vehiclePrinter, UserPrinter<Penalty> penaltyPrinter) {
         this.rentalService = rentalService;
         this.vehicleService = vehicleService;
         this.invoiceService = invoiceService;
         this.customerService = customerService;
         this.penaltyService = penaltyService;
+        this.cancellationService = cancellationService;
+        this.paymentFacade = paymentFacade;
+        this.paymentFactory = paymentFactory;
         this.rentalPrinter = rentalPrinter;
         this.customerPrinter = customerPrinter;
         this.ownerPrinter = ownerPrinter;
         this.vehiclePrinter = vehiclePrinter;
         this.penaltyPrinter = penaltyPrinter;
-        this.cancellationService = cancellationService;
     }
 
     public void rentVehicle(Scanner input, String customerId) {
@@ -62,14 +70,18 @@ public class RentalController {
         }
 
         boolean choice = true;
-        while (choice) {
+        int count = 1;
+        while (choice && count <= 3) {
+
             String vehicleId = InputUtil.readString(input, "Enter Vehicle ID");
             Vehicle vehicle = vehicleService.getVehiclesById(vehicleId);
 
             if (vehicle == null) {
                 System.out.println("Invalid Vehicle ID. Please try again.");
+                count++;
                 continue;
             }
+
             if (vehicle.getStatus() != Status.AVAILABLE) {
                 System.out.println("Vehicle is not available (Status: " + vehicle.getStatus() + "). Please choose a different vehicle.");
                 continue;
@@ -86,13 +98,14 @@ public class RentalController {
             LocalTime startTime = InputUtil.readValidTime(input, "Enter Pickup Time (in 24 Hours) (HH:MM)");
             LocalTime endTime = InputUtil.readValidTime(input, "Enter Return Time (in 24 Hours) (HH:MM)");
             if (startDate.equals(endDate) && !endTime.isAfter(startTime)) {
-                System.out.println("Return time should be greater than start time. Please try again.");
+                System.out.println("Return time should be less than start time. Please try again.");
                 continue;
             }
 
-            Rental rental = new Rental(rentalId, customerId, vehicleId, startDate, endDate, startTime, endTime, 0, vehicle.getPricePerDay(), 0, 0, 0, RentalStatus.BOOKED);
+            Rental rental = new Rental(rentalId, customerId, vehicleId, startDate, endDate, startTime, endTime, 0, vehicle.getPricePerDay(), 0, 0, 0, 0, RentalStatus.BOOKED);
             rental.setDays(rentalService.getDays(rental));
             rentalService.calculateTotalRent(rental);
+            rentalService.calculateSecurityAmount(vehicle.getVehicle_type(), rental);
             rentals.add(rental);
 
             System.out.println("Vehicle added to booking list successfully!");
@@ -113,12 +126,29 @@ public class RentalController {
             System.out.println("Booking cancelled!");
             return;
         }
+
+        System.out.println("Select Payment Method:");
+        System.out.println("1. Wallet");
+        System.out.println("2. Credit Card (Coming Soon)");
+        int payChoice = InputUtil.readPositiveInt(input, "Enter choice");
+        PaymentMethod method = (payChoice == 1) ? PaymentMethod.WALLET : PaymentMethod.WALLET;
+
+        PaymentStrategy strategy = paymentFactory.getStrategy(method);
+
+        System.out.println("Processing Payment...");
+        boolean paymentSuccess = paymentFacade.processBookingPayments(input, customerId, rentals, strategy);
+
+        if (!paymentSuccess) {
+            System.out.println("Booking Failed due to payment error.");
+            return;
+        }
+
         rentalService.bookRentalsAsync(rentals)
                 .thenAccept(result -> {
                     System.out.println("Your vehicles have been successfully booked.");
                 })
                 .exceptionally(ex -> {
-                    System.out.println(" Booking Failed! Reason: " + ex.getCause().getMessage());
+                    System.out.println(" Booking Failed internally! Reason: " + ex.getCause().getMessage());
                     return null;
                 });
 
@@ -166,12 +196,15 @@ public class RentalController {
             return;
         }
 
+        System.out.println("Processing Escrow Payouts & Refunds...");
+        paymentFacade.processReturnPayouts(customerId, rentalsToReturn, penalties);
+
         try {
             rentalService.completeRentals(rentalsToReturn);
             vehicleService.updateStatus(rentalsToReturn, Status.AVAILABLE);
-            System.out.println("Vehicle(s) returned successfully!");
+            System.out.println("Vehicle(s) returned successfully! Payouts and refunds processed.");
         } catch (Exception e) {
-            System.out.println("Failed to complete return: " + e.getMessage());
+            System.out.println("Failed to complete return status: " + e.getMessage());
         }
     }
 
@@ -209,6 +242,12 @@ public class RentalController {
             return;
         }
 
+        System.out.println("Processing Refunds...");
+        for (Rental rental : rentalsToCancel) {
+            double refundAmount = rental.getTotalPrice() + rental.getSecurityDeposit();
+            paymentFacade.processCancellationRefund(customerId, rental, refundAmount);
+        }
+
         try {
             for (Rental rental : rentalsToCancel) {
                 cancellationService.cancelRentalByRentalId(rental.getId());
@@ -216,7 +255,7 @@ public class RentalController {
             vehicleService.updateStatus(rentalsToCancel, Status.AVAILABLE);
             System.out.println("Cancellation processed successfully!");
         } catch (Exception e) {
-            System.out.println("Failed to process cancellation: " + e.getMessage());
+            System.out.println("Failed to update status for cancellation: " + e.getMessage());
         }
     }
 

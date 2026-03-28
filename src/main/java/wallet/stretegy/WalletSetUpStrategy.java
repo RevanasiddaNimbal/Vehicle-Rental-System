@@ -1,7 +1,6 @@
 package wallet.stretegy;
 
 import util.InputUtil;
-import util.PasswordUtil;
 import wallet.model.Wallet;
 import wallet.service.WalletCredentialService;
 import wallet.service.WalletService;
@@ -26,9 +25,10 @@ public class WalletSetUpStrategy implements PostRegisterationStrategy {
             System.out.println("Wallet created successfully! You received a sign-up bonus of Rs. 2000.");
 
             String pin = InputUtil.readValidPassword(input, "Set a secure Wallet PIN");
-            credentialService.createWalletCredential(wallet.getWalletId(), PasswordUtil.getHashPassword(pin));
+            credentialService.createWalletCredential(wallet.getWalletId(), pin);
 
-            System.out.println("Wallet secured successfully.");
+            System.out.println("Wallet created successfully.");
+
         } catch (IllegalStateException | IllegalArgumentException e) {
             System.out.println("Wallet Setup Failed: " + e.getMessage());
         } catch (Exception e) {

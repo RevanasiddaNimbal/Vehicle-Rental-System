@@ -5,6 +5,7 @@ import cancellation.model.CancellationRecord;
 import customer.model.Customer;
 import penalty.model.Penalty;
 import rental.model.Rental;
+import transaction.model.Transaction;
 import vehicle.models.Vehicle;
 import vehicleowner.models.VehicleOwner;
 
@@ -16,6 +17,7 @@ public class PrinterConfig {
     private UserPrinter<Rental> rentalPrinter;
     private UserPrinter<Penalty> penaltyPrinter;
     private UserPrinter<CancellationRecord> cancellationPrinter;
+    private UserPrinter<Transaction> transactionPrinter;
 
     public UserPrinter<Customer> getCustomerPrinter() {
         if (customerPrinter == null) {
@@ -57,5 +59,12 @@ public class PrinterConfig {
             cancellationPrinter = new CancellationPrinter();
         }
         return cancellationPrinter;
+    }
+
+    public UserPrinter<Transaction> getTransactionPrinter() {
+        if (transactionPrinter == null) {
+            transactionPrinter = new TransactionPrinter();
+        }
+        return transactionPrinter;
     }
 }

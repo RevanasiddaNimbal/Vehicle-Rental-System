@@ -43,7 +43,7 @@ public class WalletController {
         } catch (InvalidCredentialsException | IllegalArgumentException | ResourceNotFoundException e) {
             System.out.println("Deposit Failed: " + e.getMessage());
         } catch (Exception e) {
-            System.out.println("System Error: An unexpected error occurred during deposit.");
+            System.out.println("System Error: " + e.getMessage());
         }
     }
 
@@ -57,7 +57,7 @@ public class WalletController {
 
             double amount = InputUtil.readDouble(input, "Enter Amount to withdraw");
 
-            walletService.withdrawAmountByWalletId(input, wallet.getWalletId(), amount);
+            walletService.withdrawAmountByWalletId(input, wallet.getWalletId(), amount, false);
             System.out.println("Amount withdrawn successfully!");
 
         } catch (InsufficientFundsException | InvalidCredentialsException | IllegalArgumentException |

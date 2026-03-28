@@ -20,10 +20,14 @@ public class SystemInitializer {
             serviceConfig.getAdminService().createDefaultAdmins();
 
             System.out.println("Initializing system wallet... ");
-            Wallet wallet = serviceConfig.getWalletService().createSystemWallet();
+            Wallet wallet = serviceConfig.getWalletService().createSystemRevenueWallet();
 
+            Wallet escarowWallet = serviceConfig.getWalletService().createSystemEscrowWallet();
             if (wallet == null) {
                 throw new IllegalStateException("System wallet creation returned null.");
+            }
+            if (escarowWallet == null) {
+                throw new IllegalStateException("System escrow wallet creation returned null.");
             }
 
             System.out.println("Initializing default wallet credentials... ");

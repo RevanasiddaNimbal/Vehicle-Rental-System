@@ -84,6 +84,7 @@ public class AppConfig {
         return authConfig;
     }
 
+    // for in memory use getSystemInitializer.
     public SystemInitializer getSystemInitializer() {
         if (systemInitializer == null) {
             systemInitializer = new SystemInitializer(getServiceConfig());
@@ -94,6 +95,6 @@ public class AppConfig {
     public Application createApplication(Scanner input) {
         UserRoleMenu documentation = new Documentation();
         UserRoleMenu authMenu = new AuthMenu(input, getAuthConfig(input));
-        return new Application(input, documentation, authMenu, getSystemInitializer(), getServiceConfig());
+        return new Application(input, documentation, authMenu, getServiceConfig());
     }
 }

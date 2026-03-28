@@ -19,8 +19,8 @@ public class RentalsPostgresRepo implements RentalRepo {
     @Override
     public boolean save(Rental rental) {
         if (rental == null) throw new IllegalArgumentException("Cannot save a null rental.");
-
-        String query = "INSERT INTO rentals (customer_id, vehicle_id, start_date, end_date, pickup_time, return_time, days, base_price, total_price, weekend_charge, discount, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        
+        String query = "INSERT INTO rentals (customer_id, vehicle_id, start_date, end_date, pickup_time, return_time, days, base_price, total_price, weekend_charge, discount, security_deposit, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection connection = databaseConnection.getConnection();
              PreparedStatement ps = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
@@ -46,13 +46,13 @@ public class RentalsPostgresRepo implements RentalRepo {
     public boolean update(Rental rental) {
         if (rental == null) throw new IllegalArgumentException("Cannot update a null rental.");
 
-        String query = "UPDATE rentals SET customer_id = ?, vehicle_id = ?, start_date = ?, end_date = ?, pickup_time = ?, return_time = ?, days = ?, base_price = ?, total_price = ?, weekend_charge = ?, discount = ?, status = ? WHERE id = ?";
+        String query = "UPDATE rentals SET customer_id = ?, vehicle_id = ?, start_date = ?, end_date = ?, pickup_time = ?, return_time = ?, days = ?, base_price = ?, total_price = ?, weekend_charge = ?, discount = ?, security_deposit = ?, status = ? WHERE id = ?";
 
         try (Connection connection = databaseConnection.getConnection();
              PreparedStatement ps = connection.prepareStatement(query)) {
 
             setDbData(ps, rental);
-            ps.setInt(13, rental.getId());
+            ps.setInt(14, rental.getId());
             return ps.executeUpdate() > 0;
 
         } catch (SQLException e) {
@@ -157,7 +157,8 @@ public class RentalsPostgresRepo implements RentalRepo {
         ps.setDouble(9, rental.getTotalPrice());
         ps.setDouble(10, rental.getWeekendCharge());
         ps.setDouble(11, rental.getDiscount());
-        ps.setString(12, rental.getStatus().name());
+        ps.setDouble(12, rental.getSecurityDeposit()); // NEW FIELD
+        ps.setString(13, rental.getStatus().name());   // Shifted to 13
     }
 
     private Rental readDbData(ResultSet rs) throws SQLException {
@@ -174,6 +175,7 @@ public class RentalsPostgresRepo implements RentalRepo {
                 rs.getDouble("total_price"),
                 rs.getDouble("weekend_charge"),
                 rs.getDouble("discount"),
+                rs.getDouble("security_deposit"), // NEW FIELD
                 RentalStatus.valueOf(rs.getString("status"))
         );
     }

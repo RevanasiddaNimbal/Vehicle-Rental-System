@@ -3,6 +3,7 @@ package wallet.service;
 import exception.InsufficientFundsException;
 import exception.InvalidCredentialsException;
 import exception.ResourceNotFoundException;
+import transaction.service.TransactionService;
 import util.IdGeneratorUtil;
 import util.IdPrefix;
 import util.InputUtil;
@@ -10,114 +11,210 @@ import wallet.model.Wallet;
 import wallet.repository.WalletRepo;
 
 import java.util.Scanner;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class WalletService {
     private final WalletRepo walletRepo;
     private final WalletCredentialService walletCredentialService;
+    private final TransactionService transactionService;
+
+    private final ConcurrentHashMap<String, Lock> walletLocks = new ConcurrentHashMap<>();
 
     private static final double INITIAL_BALANCE = 2000.0;
     private static final double MIN_BALANCE_FOR_WITHDRAWAL = 1000.0;
 
-    public WalletService(WalletRepo walletRepo, WalletCredentialService walletCredentialService) {
+    public WalletService(WalletRepo walletRepo, WalletCredentialService walletCredentialService, TransactionService transactionService) {
         this.walletRepo = walletRepo;
         this.walletCredentialService = walletCredentialService;
+        this.transactionService = transactionService;
+    }
+
+    private Lock getWalletLock(String walletId) {
+        return walletLocks.computeIfAbsent(walletId, k -> new ReentrantLock());
     }
 
     public Wallet getWalletByUserId(String userId) {
-        if (userId == null) {
-            throw new IllegalArgumentException("User ID cannot be null.");
-        }
+        if (userId == null) throw new IllegalArgumentException("User ID cannot be null.");
         return walletRepo.findByUserId(userId);
     }
 
     public double getBalanceByUserId(Scanner input, String userId) {
         Wallet wallet = getValidWalletByUserId(userId);
-
         if (validatePassword(input, wallet.getWalletId())) {
             throw new InvalidCredentialsException("Invalid wallet PIN. Access denied.");
         }
         return wallet.getBalance();
     }
 
-    public Wallet createSystemWallet() {
-        Wallet wallet = walletRepo.findByUserId("SYSTEM");
-        if (wallet == null) {
-            Wallet newWallet = new Wallet("SYSTEM-WALLET", "SYSTEM", INITIAL_BALANCE);
-            walletRepo.save(newWallet);
-            return newWallet;
+    public Wallet createSystemRevenueWallet() {
+        Wallet revenueWallet = getRevenueWallet();
+        if (revenueWallet == null) {
+            Wallet newRevenue = new Wallet("SYSTEM-REVENUE", "SYSTEM-REVENUE", 0.0);
+            walletRepo.save(newRevenue);
+            return newRevenue;
         }
-        return wallet;
+        return revenueWallet;
+    }
+
+    public Wallet createSystemEscrowWallet() {
+        Wallet escrowWallet = getEscrowWallet();
+        if (escrowWallet == null) {
+            Wallet newEscrow = new Wallet("SYSTEM-ESCROW", "SYSTEM-ESCROW", 0.0);
+            walletRepo.save(newEscrow);
+            return newEscrow;
+        }
+        return escrowWallet;
     }
 
     public Wallet createWallet(String userId) {
-        if (userId == null) {
-            throw new IllegalArgumentException("UserId cannot be null.");
-        }
-
+        if (userId == null) throw new IllegalArgumentException("UserId cannot be null.");
         Wallet existingWallet = walletRepo.findByUserId(userId);
         if (existingWallet != null) {
             throw new IllegalStateException("Wallet already exists for this user.");
         }
 
         String walletId = IdGeneratorUtil.generate(IdPrefix.WAL);
-
         Wallet newWallet = new Wallet(walletId, userId, INITIAL_BALANCE);
         walletRepo.save(newWallet);
+
+        try {
+            transactionService.logDeposit(walletId, INITIAL_BALANCE, "Initial Sign-up Bonus");
+        } catch (Exception e) {
+            System.err.println("Warning: Failed to log initial bonus transaction.");
+        }
+
         return newWallet;
     }
 
-    public void creditAmountByWalletId(Scanner input, String walletId, double amount) {
-        Wallet wallet = getValidWallet(walletId);
-        validateAmount(amount);
 
+    public void creditAmountByWalletId(Scanner input, String walletId, double amount) {
+        validateAmount(amount);
         if (validatePassword(input, walletId)) {
             throw new InvalidCredentialsException("Invalid Wallet PIN. Deposit denied.");
         }
 
-        wallet.credit(amount);
-        walletRepo.update(wallet);
+        Lock lock = getWalletLock(walletId);
+        lock.lock();
+        try {
+            Wallet wallet = getValidWallet(walletId);
+            wallet.credit(amount);
+            walletRepo.update(wallet);
+
+            try {
+                transactionService.logDeposit(walletId, amount, "Deposit from Bank to Wallet");
+            } catch (Exception e) {
+                wallet.debit(amount);
+                walletRepo.update(wallet);
+                e.printStackTrace();
+                throw new RuntimeException("System error during deposit. Transaction rolled back.", e);
+            }
+        } finally {
+            lock.unlock();
+        }
     }
 
-    public void withdrawAmountByWalletId(Scanner input, String walletId, double amount) {
-        Wallet wallet = getValidWallet(walletId);
+    public void withdrawAmountByWalletId(Scanner input, String walletId, double amount, boolean isPayment) {
         validateAmount(amount);
 
-        if (validatePassword(input, wallet.getWalletId())) {
-            throw new InvalidCredentialsException("Invalid Wallet PIN. Withdrawal denied.");
-        }
+        Lock lock = getWalletLock(walletId);
+        lock.lock();
+        try {
+            Wallet wallet = getValidWallet(walletId);
 
-        if ((wallet.getBalance() - amount) < MIN_BALANCE_FOR_WITHDRAWAL) {
-            throw new InsufficientFundsException("Withdrawal Denied: You must maintain a minimum balance of Rs. "
-                    + MIN_BALANCE_FOR_WITHDRAWAL + " in your wallet.");
-        }
+            if (validatePassword(input, wallet.getWalletId())) {
+                throw new InvalidCredentialsException("Invalid Wallet PIN. Withdrawal denied.");
+            }
 
-        wallet.debit(amount);
-        walletRepo.update(wallet);
+            if ((!isPayment) && (wallet.getBalance() - amount) < MIN_BALANCE_FOR_WITHDRAWAL) {
+                throw new InsufficientFundsException(" Minimum $1000 balance is requirement in wallet.");
+            }
+
+            if (isPayment && (wallet.getBalance() - amount) < 0) {
+                throw new InsufficientFundsException("Insufficient amount in wallet.");
+            }
+
+            wallet.debit(amount);
+            walletRepo.update(wallet);
+
+            try {
+                transactionService.logWithdrawal(walletId, amount, "Withdrawal from Wallet to Bank");
+            } catch (Exception e) {
+                wallet.credit(amount);
+                walletRepo.update(wallet);
+                throw new RuntimeException("System error during withdrawal. Money refunded to wallet.", e);
+            }
+        } finally {
+            lock.unlock();
+        }
     }
-    
+
+    public void executeSystemTransfer(String sourceWalletId, String destinationWalletId, double amount) {
+        validateAmount(amount);
+
+        String firstLockId = sourceWalletId.compareTo(destinationWalletId) < 0 ? sourceWalletId : destinationWalletId;
+        String secondLockId = sourceWalletId.compareTo(destinationWalletId) < 0 ? destinationWalletId : sourceWalletId;
+
+        Lock lock1 = getWalletLock(firstLockId);
+        Lock lock2 = getWalletLock(secondLockId);
+
+        lock1.lock();
+        lock2.lock();
+        try {
+            Wallet source = getValidWallet(sourceWalletId);
+            Wallet destination = getValidWallet(destinationWalletId);
+
+            if (source.getBalance() < amount) {
+                throw new InsufficientFundsException("Insufficient funds in source wallet for transfer.");
+            }
+
+            source.debit(amount);
+            walletRepo.update(source);
+
+            try {
+                destination.credit(amount);
+                walletRepo.update(destination);
+            } catch (Exception e) {
+                source.credit(amount);
+                walletRepo.update(source);
+                throw new RuntimeException("Transfer failed at destination. Source wallet refunded.", e);
+            }
+
+        } finally {
+            lock2.unlock();
+            lock1.unlock();
+        }
+    }
+
     private Wallet getValidWallet(String walletId) {
         Wallet wallet = walletRepo.findByWalletId(walletId);
-        if (wallet == null) {
-            throw new ResourceNotFoundException("Wallet does not exist.");
-        }
+        if (wallet == null) throw new ResourceNotFoundException("Wallet does not exist.");
         return wallet;
     }
 
     private Wallet getValidWalletByUserId(String userId) {
         Wallet wallet = walletRepo.findByUserId(userId);
-        if (wallet == null) {
-            throw new ResourceNotFoundException("User does not have a wallet.");
-        }
+        if (wallet == null) throw new ResourceNotFoundException("User does not have a wallet.");
         return wallet;
     }
 
+    public Wallet getEscrowWallet() {
+        return walletRepo.findByUserId("SYSTEM-ESCROW");
+    }
+
+    public Wallet getRevenueWallet() {
+        return walletRepo.findByUserId("SYSTEM-REVENUE");
+
+    }
+
     private void validateAmount(double amount) {
-        if (amount <= 0) {
-            throw new IllegalArgumentException("Amount must be greater than zero.");
-        }
+        if (amount <= 0) throw new IllegalArgumentException("Amount must be greater than zero.");
     }
 
     private boolean validatePassword(Scanner input, String walletId) {
+        if ("SYSTEM-ESCROW".equals(walletId)) return false;
+
         String password = InputUtil.readValidPassword(input, "Enter Your Wallet PIN");
         return !walletCredentialService.verifyWalletPassword(walletId, password);
     }

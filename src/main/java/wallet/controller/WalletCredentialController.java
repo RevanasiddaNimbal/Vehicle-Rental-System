@@ -1,6 +1,5 @@
 package wallet.controller;
 
-import exception.InvalidCredentialsException;
 import exception.ResourceNotFoundException;
 import util.InputUtil;
 import wallet.model.Wallet;
@@ -20,7 +19,7 @@ public class WalletCredentialController {
         this.walletService = walletService;
     }
 
-    public void resetPassword(String userId) {
+    public void forgotPassword(String userId) {
         if (userId == null) {
             System.out.println("User ID is required.");
             return;
@@ -33,14 +32,19 @@ public class WalletCredentialController {
                 return;
             }
 
-            String oldPassword = InputUtil.readValidPassword(input, "Enter old PIN");
             String newPassword = InputUtil.readValidPassword(input, "Enter new PIN");
+            String confirmPassword = InputUtil.readValidPassword(input, "Confirm new PIN");
 
-            service.changePassword(wallet.getWalletId(), oldPassword, newPassword);
-            System.out.println("Wallet PIN reset successfully.");
+            if (!newPassword.equals(confirmPassword)) {
+                System.out.println("PINs do not match. Please try again.");
+                return;
+            }
 
-        } catch (InvalidCredentialsException | ResourceNotFoundException | IllegalStateException e) {
-            System.out.println("Failed to Reset PIN: " + e.getMessage());
+            service.forgotPassword(wallet.getWalletId(), newPassword);
+            System.out.println("Wallet PIN successfully recovered and updated.");
+
+        } catch (ResourceNotFoundException | IllegalStateException e) {
+            System.out.println("Failed to update PIN: " + e.getMessage());
         } catch (Exception e) {
             System.out.println("System Error: An unexpected error occurred.");
         }

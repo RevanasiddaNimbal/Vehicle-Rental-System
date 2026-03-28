@@ -10,6 +10,8 @@ import penalty.repository.PenaltyPostgresRepo;
 import penalty.repository.PenaltyRepo;
 import rental.repository.RentalRepo;
 import rental.repository.RentalsPostgresRepo;
+import transaction.repository.TransactionPostgresRepo;
+import transaction.repository.TransactionRepo;
 import vehicle.repository.VehicleRepo;
 import vehicle.repository.VehiclesPostgresRepo;
 import vehicleowner.repository.VehicleOwnerRepo;
@@ -32,6 +34,7 @@ public class RepositoryConfig {
     private CancellationRepo cancellationRepo;
     private WalletRepo walletRepo;
     private WalletCredentialRepo walletCredentialRepo;
+    private TransactionRepo transactionRepo;
 
     public RepositoryConfig(DatabaseConfig databaseConfig) {
         this.databaseConfig = databaseConfig;
@@ -98,5 +101,12 @@ public class RepositoryConfig {
             walletCredentialRepo = new WalletCredentialPostgresRepo(databaseConfig.getPostgresConnection());
         }
         return walletCredentialRepo;
+    }
+
+    public TransactionRepo getTransactionRepo() {
+        if (transactionRepo == null) {
+            transactionRepo = new TransactionPostgresRepo(databaseConfig.getPostgresConnection());
+        }
+        return transactionRepo;
     }
 }

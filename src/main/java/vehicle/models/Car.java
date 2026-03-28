@@ -8,7 +8,7 @@ public class Car extends Vehicle {
         super(id, brand, category, pricePerDay, status, ownerId);
         this.fuel = fuel;
         this.seatingCapacity = seatingCapacity;
-        vehicle_type = "Car";
+        vehicle_type = VehicleType.CAR.name();
     }
 
     public void setFuel(FuelType fuel) {

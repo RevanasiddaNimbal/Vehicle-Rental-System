@@ -11,13 +11,15 @@ public class CustomerMenu implements UsersMenu {
     private final CustomerHistoryMenu customerHistoryMenu;
     private final WalletManagementMenu customerWalletMenu;
     private final CustomerAccountMenu accountManagementMenu;
+    private final TransactionMenu transactionMenu;
 
-    public CustomerMenu(Scanner input, CustomerRentalsMenu customerRentalsMenu, WalletManagementMenu customerWalletMenu, CustomerHistoryMenu customerHistoryMenu, CustomerAccountMenu accountManagementMenu) {
+    public CustomerMenu(Scanner input, CustomerRentalsMenu customerRentalsMenu, WalletManagementMenu customerWalletMenu, CustomerHistoryMenu customerHistoryMenu, CustomerAccountMenu accountManagementMenu, TransactionMenu transactionMenu) {
         this.input = input;
         this.customerRentalsMenu = customerRentalsMenu;
         this.customerWalletMenu = customerWalletMenu;
         this.customerHistoryMenu = customerHistoryMenu;
         this.accountManagementMenu = accountManagementMenu;
+        this.transactionMenu = transactionMenu;
     }
 
     @Override
@@ -29,7 +31,8 @@ public class CustomerMenu implements UsersMenu {
                 System.out.println("1. Rental Management");
                 System.out.println("2. Wallet Management");
                 System.out.println("3. History Management");
-                System.out.println("4. Account Management");
+                System.out.println("4. Transaction Management");
+                System.out.println("5. Account Management");
                 System.out.println("0. Logout");
                 choice = InputUtil.readPositiveInt(input, "Enter your choice");
                 switch (choice) {
@@ -43,6 +46,9 @@ public class CustomerMenu implements UsersMenu {
                         customerHistoryMenu.show(customerId);
                         break;
                     case 4:
+                        transactionMenu.show(customerId);
+                        break;
+                    case 5:
                         accountManagementMenu.show(customerId);
                         break;
                     case 0:

@@ -12,6 +12,7 @@ public class Invoice {
     private double totalWeekendPrice;
     private double totalDiscountPrice;
     private double totalNetPrice;
+    private double totalSecurityDeposit;
 
     public Invoice(Customer customer, List<Rental> rentals) {
         this.customer = customer;
@@ -24,6 +25,7 @@ public class Invoice {
         totalWeekendPrice = 0;
         totalDiscountPrice = 0;
         totalNetPrice = 0;
+        totalSecurityDeposit = 0;
 
         if (rentals != null) {
             for (Rental rental : rentals) {
@@ -31,6 +33,7 @@ public class Invoice {
                 totalWeekendPrice += rental.getWeekendCharge();
                 totalDiscountPrice += rental.getDiscount();
                 totalNetPrice += rental.getTotalPrice();
+                totalSecurityDeposit += rental.getSecurityDeposit();
             }
         }
     }
@@ -57,5 +60,13 @@ public class Invoice {
 
     public double getTotalNetPrice() {
         return totalNetPrice;
+    }
+
+    public double getTotalSecurityDeposit() {
+        return totalSecurityDeposit;
+    }
+
+    public double getGrandTotalPayable() {
+        return totalNetPrice + totalSecurityDeposit;
     }
 }

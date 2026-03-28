@@ -5,6 +5,7 @@ import cancellation.controller.CancellationController;
 import customer.controller.CustomerController;
 import penalty.controller.PenaltyController;
 import rental.controller.RentalController;
+import transaction.controller.TransactionController;
 import vehicle.controller.VehicleController;
 import vehicleowner.controller.VehicleOwnerController;
 import wallet.controller.WalletController;
@@ -28,6 +29,7 @@ public class ControllerConfig {
     private WalletCredentialController walletCredentialController;
     private RentalController rentalController;
     private CancellationController cancellationController;
+    private TransactionController transactionController;
 
     public ControllerConfig(ServiceConfig serviceConfig, PrinterConfig printerConfig, StrategyConfig strategyConfig, Scanner input) {
         this.serviceConfig = serviceConfig;
@@ -98,12 +100,14 @@ public class ControllerConfig {
                     serviceConfig.getInvoiceService(),
                     serviceConfig.getCustomerService(),
                     serviceConfig.getPenaltyService(),
+                    serviceConfig.getCancellationService(),
+                    serviceConfig.getPaymentFacade(),
+                    serviceConfig.getPaymentStrategyFactory(),
                     printerConfig.getRentalPrinter(),
                     printerConfig.getCustomerPrinter(),
                     printerConfig.getOwnerPrinter(),
                     printerConfig.getVehiclePrinter(),
-                    printerConfig.getPenaltyPrinter(),
-                    serviceConfig.getCancellationService()
+                    printerConfig.getPenaltyPrinter()
             );
         }
         return rentalController;
@@ -114,5 +118,12 @@ public class ControllerConfig {
             cancellationController = new CancellationController(serviceConfig.getCancellationService(), printerConfig.getCancellationPrinter());
         }
         return cancellationController;
+    }
+
+    public TransactionController getTransactionController() {
+        if (transactionController == null) {
+            transactionController = new TransactionController(serviceConfig.getTransactionService(), serviceConfig.getWalletService(), printerConfig.getTransactionPrinter());
+        }
+        return transactionController;
     }
 }

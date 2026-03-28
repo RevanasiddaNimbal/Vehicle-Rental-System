@@ -22,7 +22,7 @@ public class PenaltyPrinter implements UserPrinter<Penalty> {
                     penalty.getRentalId(),
                     penalty.getVehicleId(),
                     penalty.getCustomerId(),
-                    penalty.getAmount(),
+                    penalty.getPenaltyAmount(),
                     penalty.getType(),
                     penalty.getReason(),
                     penalty.getIssuedDate()

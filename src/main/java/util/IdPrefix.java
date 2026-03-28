@@ -7,7 +7,8 @@ public enum IdPrefix {
     CAN("CAN"),
     PEN("PEN"),
     INV("INV"),
-    WAL("WAL");
+    WAL("WAL"),
+    TRX("TRX");
 
     private final String value;
 
