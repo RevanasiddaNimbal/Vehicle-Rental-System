@@ -18,19 +18,54 @@ public class OtpUtil {
     }
 
     public static boolean isVerifiedOtp(Scanner input, OtpService otpService, String email) {
+
+        if (email == null || email.isBlank()) {
+            System.out.println("Invalid email.");
+            return false;
+        }
+
         try {
             otpService.sendOtp(email);
-            System.out.println("OTP has been sent to " + email + " successfully. (Valid for 5 mins)");
 
-            String code = InputUtil.readString(input, "Enter OTP");
+            System.out.println("Sending OTP to " + email + "...");
 
-            otpService.verifyOtp(email, code);
+            int retries = 10;
+            while (retries-- > 0) {
+                if (otpService.isOtpGenerated(email)) {
+                    break;
+                }
+                Thread.sleep(500);
+            }
 
-            System.out.println("OTP verified successfully.");
-            return true;
+            if (!otpService.isOtpGenerated(email)) {
+                System.out.println("Failed to generate OTP. Please try again.");
+                return false;
+            }
 
+            System.out.println("OTP has been sent successfully. (Valid for 5 mins)");
+            int count = 1;
+            while (count <= 3) {
+                String code = InputUtil.readString(input, "Enter OTP");
+                if (otpService.verifyOtp(email, code)) {
+                    System.out.println("OTP verified successfully.");
+                    return true;
+                } else {
+                    System.out.println("Invalid Otp. Please try again.");
+                    count++;
+                }
+            }
+            return false;
         } catch (OtpVerificationException e) {
             System.out.println("OTP Error: " + e.getMessage());
+            return false;
+
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            System.out.println("Process interrupted.");
+            return false;
+
+        } catch (Exception e) {
+            System.out.println("Unexpected error occurred.");
             return false;
         }
     }

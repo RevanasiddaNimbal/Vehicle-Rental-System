@@ -28,19 +28,23 @@ public class WalletPaymentStrategy implements PaymentStrategy<WalletPaymentDetai
         }
 
         String pin = details.getPin();
-        walletService.getBalanceByUserId(customerId, pin);
+        double currentBalance = walletService.getBalanceByUserId(customerId, pin);
+        if (currentBalance < amount) {
+            throw new RuntimeException("Insufficient wallet balance.");
+        }
 
         String txId = transactionService.logTransfer(customerWallet.getWalletId(), "SYSTEM-ESCROW", amount,
                 TransactionType.RENTAL_FARE, TransactionStatus.PENDING, "BULK-PAYMENT", "Initiating Wallet Payment");
 
         try {
-            walletService.withdrawAmountByWalletId(pin, customerWallet.getWalletId(), amount, true);
             walletService.executeSystemTransfer(customerWallet.getWalletId(), "SYSTEM-ESCROW", amount);
 
             CompletableFuture.runAsync(() -> {
                 transactionService.updateTransactionStatus(txId, TransactionStatus.SUCCESS);
             });
+
             return true;
+
         } catch (Exception e) {
             transactionService.updateTransactionStatus(txId, TransactionStatus.FAILED);
             throw new RuntimeException("Payment Authorization Failed: " + e.getMessage());

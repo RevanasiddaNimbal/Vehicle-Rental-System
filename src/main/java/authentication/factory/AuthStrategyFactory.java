@@ -1,31 +1,28 @@
 package authentication.factory;
 
-import authentication.model.UserRole;
 import authentication.strategy.*;
 import config.ServiceConfig;
-import otp.service.OtpService;
+import user.model.UserRole;
 
 import java.util.Scanner;
 
 public class AuthStrategyFactory {
     private final Scanner input;
     private final ServiceConfig serviceConfig;
-    private final OtpService optService;
 
-    public AuthStrategyFactory(Scanner input, ServiceConfig serviceConfig, OtpService optService) {
+    public AuthStrategyFactory(Scanner input, ServiceConfig serviceConfig) {
         this.input = input;
         this.serviceConfig = serviceConfig;
-        this.optService = optService;
     }
 
     public AuthLoginStretegy getLoginStrategy(UserRole role) {
         switch (role) {
             case ADMIN:
-                return new AdminAuthStretegy(input, serviceConfig.getAdminService(), optService);
+                return new AdminAuthStretegy(input, serviceConfig.getAdminService(), serviceConfig.getOtpService());
             case OWNER:
-                return new OwnerAuthStrategy(input, serviceConfig.getVehicleOwnerService(), optService);
+                return new OwnerAuthStrategy(input, serviceConfig.getVehicleOwnerService(), serviceConfig.getOtpService());
             case CUSTOMER:
-                return new CustomerAuthStretegy(input, serviceConfig.getCustomerService(), optService);
+                return new CustomerAuthStretegy(input, serviceConfig.getCustomerService(), serviceConfig.getOtpService());
             default:
                 System.out.println("Invalid role");
                 return null;
@@ -35,9 +32,9 @@ public class AuthStrategyFactory {
     public AuthRegisterStretegy getRegisterStrategy(UserRole role) {
         switch (role) {
             case OWNER:
-                return new OwnerAuthStrategy(input, serviceConfig.getVehicleOwnerService(), optService);
+                return new OwnerAuthStrategy(input, serviceConfig.getVehicleOwnerService(), serviceConfig.getOtpService());
             case CUSTOMER:
-                return new CustomerAuthStretegy(input, serviceConfig.getCustomerService(), optService);
+                return new CustomerAuthStretegy(input, serviceConfig.getCustomerService(), serviceConfig.getOtpService());
             default:
                 System.out.println("Invalid role");
                 return null;

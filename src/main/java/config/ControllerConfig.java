@@ -85,9 +85,10 @@ public class ControllerConfig {
         return walletController;
     }
 
+
     public WalletCredentialController getWalletCredentialController() {
         if (walletCredentialController == null) {
-            walletCredentialController = new WalletCredentialController(input, serviceConfig.getWalletCredentialService(), serviceConfig.getWalletService());
+            walletCredentialController = new WalletCredentialController(input, serviceConfig.getPinRecoveryService(input));
         }
         return walletCredentialController;
     }

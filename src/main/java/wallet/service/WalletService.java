@@ -33,6 +33,11 @@ public class WalletService {
         return walletLocks.computeIfAbsent(walletId, k -> new ReentrantLock());
     }
 
+    public Wallet getWalletByWalletId(String walletId) {
+        if (walletId == null) throw new InvalidCredentialsException("Wallet Id cannot be null.");
+        return walletRepo.findByWalletId(walletId);
+    }
+
     public Wallet getWalletByUserId(String userId) {
         if (userId == null) throw new IllegalArgumentException("User ID cannot be null.");
         return walletRepo.findByUserId(userId);
@@ -49,7 +54,7 @@ public class WalletService {
     public Wallet createSystemRevenueWallet() {
         Wallet revenueWallet = getRevenueWallet();
         if (revenueWallet == null) {
-            Wallet newRevenue = new Wallet("SYSTEM-REVENUE", "SYSTEM-REVENUE", 0.0);
+            Wallet newRevenue = new Wallet("SYSTEM-REVENUE", "ADM-002", 0.0);
             walletRepo.save(newRevenue);
             return newRevenue;
         }
@@ -59,7 +64,7 @@ public class WalletService {
     public Wallet createSystemEscrowWallet() {
         Wallet escrowWallet = getEscrowWallet();
         if (escrowWallet == null) {
-            Wallet newEscrow = new Wallet("SYSTEM-ESCROW", "SYSTEM-ESCROW", 0.0);
+            Wallet newEscrow = new Wallet("SYSTEM-ESCROW", "ADM-002", 0.0);
             walletRepo.save(newEscrow);
             return newEscrow;
         }
@@ -196,11 +201,11 @@ public class WalletService {
     }
 
     public Wallet getEscrowWallet() {
-        return walletRepo.findByUserId("SYSTEM-ESCROW");
+        return walletRepo.findByUserId("ADM-002");
     }
 
     public Wallet getRevenueWallet() {
-        return walletRepo.findByUserId("SYSTEM-REVENUE");
+        return walletRepo.findByUserId("ADM-002");
     }
 
     private void validateAmount(double amount) {
@@ -208,7 +213,7 @@ public class WalletService {
     }
 
     private boolean validatePassword(String pin, String walletId) {
-        if ("SYSTEM-ESCROW".equals(walletId) || "SYSTEM-REVENUE".equals(walletId)) return false;
+        if ("SYSTEM-ESCROW".equals(walletId)) return false;
         return !walletCredentialService.verifyWalletPassword(walletId, pin);
     }
 }

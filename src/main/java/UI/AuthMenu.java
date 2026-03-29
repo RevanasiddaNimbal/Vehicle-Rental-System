@@ -1,7 +1,7 @@
 package UI;
 
-import authentication.model.UserRole;
 import config.AuthConfig;
+import user.model.UserRole;
 import util.InputUtil;
 
 import java.util.Scanner;

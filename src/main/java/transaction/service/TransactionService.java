@@ -7,6 +7,7 @@ import transaction.repository.TransactionRepo;
 import util.IdGeneratorUtil;
 import util.IdPrefix;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -72,7 +73,8 @@ public class TransactionService {
     }
 
     public List<Transaction> getTransactionsByWalletIdAndDays(String walletId, int daysToLookBack) {
-        LocalDateTime cutoffDate = LocalDateTime.now().minusDays(daysToLookBack);
+        int daysOffset = daysToLookBack - 1;
+        LocalDateTime cutoffDate = LocalDate.now().minusDays(daysOffset).atStartOfDay();
 
         List<Transaction> allTransactions = transactionRepo.findByWalletId(walletId);
         return allTransactions.stream()

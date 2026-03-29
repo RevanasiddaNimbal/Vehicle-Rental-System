@@ -4,8 +4,8 @@ import UI.AdminMenu;
 import UI.CustomerMenu;
 import UI.UsersMenu;
 import UI.VehicleOwnerMenu;
-import authentication.model.UserRole;
 import config.MenuConfig;
+import user.model.UserRole;
 
 import java.util.Scanner;
 

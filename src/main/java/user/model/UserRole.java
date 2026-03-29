@@ -1,4 +1,4 @@
-package authentication.model;
+package user.model;
 
 public enum UserRole {
     OWNER,

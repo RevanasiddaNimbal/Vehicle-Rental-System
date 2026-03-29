@@ -2,8 +2,8 @@ package authentication.controller;
 
 import authentication.factory.MenuFactory;
 import authentication.model.AuthUser;
-import authentication.model.UserRole;
 import authentication.service.AuthService;
+import user.model.UserRole;
 
 public class AuthController {
     private final AuthService service;

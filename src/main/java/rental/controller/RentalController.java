@@ -8,6 +8,7 @@ import exception.ResourceNotFoundException;
 import invoice.model.Invoice;
 import invoice.service.InvoiceService;
 import payment.dto.PaymentDetails;
+import payment.dto.WalletPaymentDetails;
 import payment.facade.PaymentFacade;
 import payment.factory.PaymentStrategyFactory;
 import payment.model.PaymentMethod;
@@ -94,7 +95,7 @@ public class RentalController {
                 continue;
             }
             if (vehicle.getStatus() != Status.AVAILABLE) {
-                System.out.println("Vehicle is not available (Status: " + vehicle.getStatus() + "). Please choose a different vehicle.");
+                System.out.println("Vehicle is not available. Please choose a different vehicle.");
                 continue;
             }
 
@@ -123,13 +124,10 @@ public class RentalController {
 
             System.out.println("Vehicle added to booking list successfully!");
 
-            if (count < 3) {
-                String response = InputUtil.readString(input, "Add another vehicle? (Y/N)");
-                choice = response.equalsIgnoreCase("Y");
-            } else {
+            String response = InputUtil.readString(input, "Add another vehicle? (Y/N)");
+            if (!response.trim().equalsIgnoreCase("Y")) {
                 choice = false;
             }
-            count++;
         }
 
         if (rentals.isEmpty()) {
@@ -140,9 +138,9 @@ public class RentalController {
         Invoice invoice = new Invoice(customer, rentals);
         invoiceService.printInvoice(invoice);
 
-        String confirm = InputUtil.readString(input, "Confirm Booking? (Y/N)");
-        if (!confirm.equalsIgnoreCase("Y")) {
-            System.out.println("Booking cancelled!");
+        String confirm = InputUtil.readString(input, "Confirm Booking? (y/n)").trim();
+        if (confirm.equalsIgnoreCase("n") || confirm.equalsIgnoreCase("No")) {
+            System.out.println("Booking cancelled.");
             return;
         }
 
@@ -150,15 +148,14 @@ public class RentalController {
             vehicleService.updateStatus(rentals, Status.RESERVED);
         } catch (Exception e) {
             System.out.println("Error: Could not reserve vehicles. Someone else may have booked them. " + e.getMessage());
-
             CompletableFuture.runAsync(() -> vehicleService.updateStatus(rentals, Status.AVAILABLE));
             return;
         }
 
         for (Rental r : rentals) {
-            timeouts.add(reservationTimeoutManager.scheduleUnlock(r.getVehicleId(), 15));
+            timeouts.add(reservationTimeoutManager.scheduleUnlock(r.getVehicleId(), 2));
         }
-        
+
         int payCount = 0;
         PaymentMethod method = null;
         while (payCount < 3 && method == null) {
@@ -166,6 +163,7 @@ public class RentalController {
             System.out.println("1. Wallet");
             System.out.println("2. UPI (coming  soon)");
             System.out.println("3. Credit Card (coming soon)");
+            System.out.println("0. Back");
             int payChoice = InputUtil.readPositiveInt(input, "Enter Payment choice");
             switch (payChoice) {
                 case 1:
@@ -176,6 +174,8 @@ public class RentalController {
                     System.out.println("Method coming soon. Please choose Wallet.");
                     payCount++;
                     break;
+                case 0:
+                    return;
                 default:
                     System.out.println("Invalid choice. Please try again.");
                     payCount++;
@@ -189,10 +189,8 @@ public class RentalController {
             return;
         }
 
-        PaymentDetails paymentDetails;
         String pin = InputUtil.readValidPassword(input, "Enter your Wallet PIN to confirm payment:");
-        paymentDetails = new payment.dto.WalletPaymentDetails(pin);
-
+        PaymentDetails paymentDetails = new WalletPaymentDetails(pin);
         PaymentStrategy strategy = paymentFactory.getStrategy(method);
 
         System.out.println("Processing Payment...");
@@ -254,6 +252,7 @@ public class RentalController {
         }
 
         rentalPrinter.print(rentalsToReturn);
+
         List<Penalty> penalties = penaltyService.calculatePenalties(rentalsToReturn, PenaltyType.LATE_RETURN);
 
         if (!penalties.isEmpty()) {
@@ -270,9 +269,13 @@ public class RentalController {
         }
 
         try {
+            CompletableFuture.runAsync(() -> {
+                paymentFacade.processReturnPayouts(customerId, rentalsToReturn, penalties);
+            });
+
             rentalService.completeRentals(rentalsToReturn);
             CompletableFuture.runAsync(() -> vehicleService.updateStatus(rentalsToReturn, Status.AVAILABLE));
-            System.out.println("Vehicle(s) returned successfully!");
+            System.out.println("Vehicle(s) returned successfully! Refunds/Payouts are processing.");
         } catch (Exception e) {
             System.out.println("Failed to complete return: " + e.getMessage());
         }
@@ -312,14 +315,29 @@ public class RentalController {
             return;
         }
 
-        try {
-            for (Rental rental : rentalsToCancel) {
-                cancellationService.cancelRentalByRentalId(rental.getId());
+        for (Rental rental : rentalsToCancel) {
+            try {
+                double refundAmount = cancellationService.cancelRentalByRentalId(rental.getId());
+
+                CompletableFuture.runAsync(() -> {
+                    try {
+                        paymentFacade.processCancellationRefund(customerId, rental, refundAmount);
+                    } catch (Exception ex) {
+                        System.out.println("Error: Refund failed.Funds held in System.");
+                    }
+                });
+                CompletableFuture.runAsync(() -> {
+                    try {
+                        vehicleService.updateStatusById(rental.getVehicleId(), Status.AVAILABLE);
+                    } catch (Exception ignored) {
+                    }
+                });
+
+                System.out.println("Cancelled successfully! Refund of $" + refundAmount + " is processing.");
+
+            } catch (Exception e) {
+                System.out.println("Failed to cancel Rental. Reason: " + e.getMessage());
             }
-            CompletableFuture.runAsync(() -> vehicleService.updateStatus(rentalsToCancel, Status.AVAILABLE));
-            System.out.println("Cancellation processed successfully!");
-        } catch (Exception e) {
-            System.out.println("Failed to process cancellation: " + e.getMessage());
         }
     }
 

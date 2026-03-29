@@ -6,6 +6,7 @@ import cancellation.model.PolicyType;
 import cancellation.repository.CancellationRepo;
 import cancellation.stretegy.CancellationStrategy;
 import exception.ResourceNotFoundException;
+import payment.facade.PaymentFacade;
 import rental.model.Rental;
 import rental.model.RentalStatus;
 import rental.service.RentalService;
@@ -21,14 +22,16 @@ public class CancellationService {
     private final RentalService rentalService;
     private final VehicleService vehicleService;
     private final CancellationRepo cancellationRepo;
+    private final PaymentFacade paymentFacade;
 
-    public CancellationService(RentalService rentalService, VehicleService vehicleService, CancellationRepo cancellationRepo) {
+    public CancellationService(RentalService rentalService, VehicleService vehicleService, CancellationRepo cancellationRepo, PaymentFacade paymentFacade) {
         this.rentalService = rentalService;
         this.vehicleService = vehicleService;
         this.cancellationRepo = cancellationRepo;
+        this.paymentFacade = paymentFacade;
     }
 
-    public void cancelRentalByRentalId(int rentalId) {
+    public double cancelRentalByRentalId(int rentalId) {
         Rental rental = rentalService.getRentalById(rentalId);
         if (rental == null) {
             throw new ResourceNotFoundException("Rental ID " + rentalId + " not found.");
@@ -53,6 +56,10 @@ public class CancellationService {
 
         CancellationRecord record = new CancellationRecord(IdGeneratorUtil.generate(IdPrefix.CAN), rentalId, rental.getCustomerId(), rental.getVehicleId(), vehicle.getOwnerId(), type, refundAmount, LocalDateTime.now());
         cancellationRepo.save(record);
+
+        paymentFacade.processCancellationRefund(rental.getCustomerId(), rental, refundAmount);
+
+        return refundAmount;
     }
 
     public List<CancellationRecord> getAllCancellationRecords() {

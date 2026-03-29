@@ -47,7 +47,7 @@ public class AdminMenu implements UsersMenu {
                         rentalMenu.show(adminId);
                         break;
                     case 2:
-                        walletManagementMenu.show("SYSTEM-REVENUE");
+                        walletManagementMenu.show("ADM-002");
                         break;
                     case 3:
                         ownerMenu.show(adminId);
@@ -59,7 +59,7 @@ public class AdminMenu implements UsersMenu {
                         vehicleMenu.show(adminId);
                         break;
                     case 6:
-                        transactionMenu.show("SYSTEM-REVENUE");
+                        transactionMenu.show("ADM-002");
                         break;
                     case 7:
                         accountManagementMenu.show(adminId);

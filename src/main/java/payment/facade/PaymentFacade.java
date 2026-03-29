@@ -56,6 +56,16 @@ public class PaymentFacade {
         return true;
     }
 
+    public <T extends PaymentDetails> boolean processPayment(String customerId, double amount, PaymentStrategy<T> paymentStrategy, T details) {
+        return paymentStrategy.pay(customerId, amount, details);
+    }
+
+    public void processRefund(String customerId, double amount) {
+        Wallet customerWallet = walletService.getWalletByUserId(customerId);
+        executeAndLogAsync(ESCROW_WALLET, customerWallet.getWalletId(), amount,
+                TransactionType.REFUND, "N/A", "System Refund");
+    }
+
     public void refundFailedBooking(String customerId, List<Rental> rentals) {
         double grandTotal = rentals.stream().mapToDouble(rental -> rental.getTotalPrice() + rental.getSecurityDeposit()).sum();
 

@@ -1,6 +1,6 @@
 package UI;
 
-import authentication.model.UserRole;
+import user.model.UserRole;
 
 public interface UserRoleMenu {
     void show(UserRole role);

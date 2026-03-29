@@ -2,10 +2,10 @@ package authentication.service;
 
 import authentication.factory.AuthStrategyFactory;
 import authentication.model.AuthUser;
-import authentication.model.UserRole;
 import authentication.strategy.AuthLoginStretegy;
 import authentication.strategy.AuthRegisterStretegy;
 import config.StrategyConfig;
+import user.model.UserRole;
 
 public class AuthService {
     private final AuthStrategyFactory factory;

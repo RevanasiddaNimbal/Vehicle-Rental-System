@@ -1,5 +1,11 @@
 package config;
 
+import admin.service.AdminService;
+import customer.service.CustomerService;
+import user.resolver.AdminUserResolver;
+import user.resolver.CustomerUserResolver;
+import user.resolver.OwnerUserResolver;
+import user.resolver.UserTypeResolver;
 import vehicle.creator.AutoCreator;
 import vehicle.creator.BikeCreator;
 import vehicle.creator.CarCreator;
@@ -12,6 +18,9 @@ import vehicle.updater.AutoUpdater;
 import vehicle.updater.BikeUpdater;
 import vehicle.updater.CarUpdater;
 import vehicle.updater.VehicleUpdater;
+import vehicleowner.service.VehicleOwnerService;
+import wallet.service.WalletCredentialService;
+import wallet.service.WalletService;
 import wallet.stretegy.PostRegisterationStrategy;
 import wallet.stretegy.WalletSetUpStrategy;
 
@@ -21,16 +30,26 @@ import java.util.Scanner;
 
 public class StrategyConfig {
 
-    private final ServiceConfig serviceConfig;
     private final Scanner input;
+    private final WalletService walletService;
+    private final WalletCredentialService walletCredentialService;
+    private final CustomerService customerService;
+    private final VehicleOwnerService ownerService;
+    private final AdminService adminService;
 
     private Map<Integer, VehicleCreator> vehicleCreators;
     private Map<Class<? extends Vehicle>, VehicleUpdater> vehicleUpdaters;
+    private Map<String, UserTypeResolver> resolverRegistries;
     private PostRegisterationStrategy walletStrategy;
 
-    public StrategyConfig(ServiceConfig serviceConfig, Scanner input) {
-        this.serviceConfig = serviceConfig;
+
+    public StrategyConfig(Scanner input, WalletService walletService, WalletCredentialService walletCredentialService, CustomerService customerService, VehicleOwnerService ownerService, AdminService adminService) {
         this.input = input;
+        this.walletService = walletService;
+        this.walletCredentialService = walletCredentialService;
+        this.customerService = customerService;
+        this.ownerService = ownerService;
+        this.adminService = adminService;
     }
 
     public Map<Integer, VehicleCreator> getVehicleCreators() {
@@ -55,8 +74,19 @@ public class StrategyConfig {
 
     public PostRegisterationStrategy getWalletStrategy() {
         if (walletStrategy == null) {
-            walletStrategy = new WalletSetUpStrategy(input, serviceConfig.getWalletService(), serviceConfig.getWalletCredentialService());
+            walletStrategy = new WalletSetUpStrategy(input, walletService, walletCredentialService);
         }
         return walletStrategy;
     }
+
+    public Map<String, UserTypeResolver> getResolverRegistries() {
+        if (resolverRegistries == null) {
+            resolverRegistries = new HashMap<>();
+            resolverRegistries.put("CUS", new CustomerUserResolver(customerService));
+            resolverRegistries.put("OWN", new OwnerUserResolver(ownerService));
+            resolverRegistries.put("ADM", new AdminUserResolver(adminService));
+        }
+        return resolverRegistries;
+    }
+
 }

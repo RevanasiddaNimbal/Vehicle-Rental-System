@@ -1,8 +1,8 @@
 package application;
 
 import UI.UserRoleMenu;
-import authentication.model.UserRole;
 import config.ServiceConfig;
+import user.model.UserRole;
 import util.InputUtil;
 
 import java.util.Scanner;

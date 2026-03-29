@@ -6,6 +6,9 @@ import customer.service.CustomerService;
 import invoice.renders.InvoiceConsoleRender;
 import invoice.renders.InvoiceRender;
 import invoice.service.InvoiceService;
+import notification.provider.BrevoEmailProvider;
+import notification.service.EmailService;
+import otp.service.OtpService;
 import payment.facade.PaymentFacade;
 import payment.factory.PaymentStrategyFactory;
 import penalty.factory.PenaltyStrategyFactory;
@@ -16,18 +19,22 @@ import rental.scheduler.ReservationTimeoutManager;
 import rental.service.RentalService;
 import rental.stretegy.*;
 import transaction.service.TransactionService;
+import user.factory.UserResolverFactory;
 import vehicle.service.VehicleService;
 import vehicleowner.service.VehicleOwnerService;
 import wallet.service.WalletCredentialService;
+import wallet.service.WalletPinRecoveryService;
 import wallet.service.WalletService;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Scanner;
 
 public class ServiceConfig {
 
     private final RepositoryConfig repositoryConfig;
 
+    private StrategyConfig strategyConfig;
     private AdminService adminService;
     private VehicleService vehicleService;
     private VehicleOwnerService vehicleOwnerService;
@@ -46,6 +53,10 @@ public class ServiceConfig {
     private PaymentFacade paymentFacade;
     private SecurityDepositStrategy depositStrategy;
     private ReservationTimeoutManager reservationTimeoutManager;
+    private OtpService otpService;
+    private EmailService emailService;
+    private WalletPinRecoveryService pinRecoveryService;
+    private UserResolverFactory resolverFactory;
 
     public ServiceConfig(RepositoryConfig repositoryConfig) {
         this.repositoryConfig = repositoryConfig;
@@ -181,7 +192,8 @@ public class ServiceConfig {
             cancellationService = new CancellationService(
                     getRentalService(),
                     getVehicleService(),
-                    repositoryConfig.getCancellationRepo()
+                    repositoryConfig.getCancellationRepo(),
+                    getPaymentFacade()
             );
         }
         return cancellationService;
@@ -194,12 +206,50 @@ public class ServiceConfig {
         return reservationTimeoutManager;
     }
 
+    public StrategyConfig getStrategyConfig(Scanner input) {
+        if (strategyConfig == null) {
+            strategyConfig = new StrategyConfig(input, getWalletService(), getWalletCredentialService(), getCustomerService(), getVehicleOwnerService(), getAdminService());
+        }
+        return strategyConfig;
+    }
+
+    public EmailService getEmailService() {
+        if (emailService == null) {
+            emailService = new BrevoEmailProvider(new EmailPropertiesConfig());
+        }
+        return emailService;
+    }
+
+    public OtpService getOtpService() {
+        if (otpService == null) {
+            otpService = new OtpService(repositoryConfig.getOtpRepo(), getEmailService());
+        }
+        return otpService;
+    }
+
+    public UserResolverFactory getResolverFactory(Scanner input) {
+        if (resolverFactory == null) {
+            resolverFactory = new UserResolverFactory(getStrategyConfig(input).getResolverRegistries());
+        }
+        return resolverFactory;
+    }
+
+    public WalletPinRecoveryService getPinRecoveryService(Scanner input) {
+        if (pinRecoveryService == null) {
+            pinRecoveryService = new WalletPinRecoveryService(getWalletService(), getWalletCredentialService(), getOtpService(), getResolverFactory(input));
+        }
+        return pinRecoveryService;
+    }
+
     public void shutdownBackgroundTasks() {
         if (rentalService != null) {
             rentalService.shutdownAsyncExecutor();
         }
         if (reservationTimeoutManager != null) {
             reservationTimeoutManager.shutdown();
+        }
+        if (otpService != null) {
+            otpService.shutdown();
         }
     }
 }

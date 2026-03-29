@@ -6,6 +6,8 @@ import cancellation.repository.CancellationPostgresRepo;
 import cancellation.repository.CancellationRepo;
 import customer.repository.CustomerRepo;
 import customer.repository.CustomersPostgresRepo;
+import otp.repository.OtpPostgresRepo;
+import otp.repository.OtpRepo;
 import penalty.repository.PenaltyPostgresRepo;
 import penalty.repository.PenaltyRepo;
 import rental.repository.RentalRepo;
@@ -35,6 +37,7 @@ public class RepositoryConfig {
     private WalletRepo walletRepo;
     private WalletCredentialRepo walletCredentialRepo;
     private TransactionRepo transactionRepo;
+    private OtpRepo otpRepo;
 
     public RepositoryConfig(DatabaseConfig databaseConfig) {
         this.databaseConfig = databaseConfig;
@@ -108,5 +111,12 @@ public class RepositoryConfig {
             transactionRepo = new TransactionPostgresRepo(databaseConfig.getPostgresConnection());
         }
         return transactionRepo;
+    }
+
+    public OtpRepo getOtpRepo() {
+        if (otpRepo == null) {
+            otpRepo = new OtpPostgresRepo(databaseConfig.getPostgresConnection());
+        }
+        return otpRepo;
     }
 }

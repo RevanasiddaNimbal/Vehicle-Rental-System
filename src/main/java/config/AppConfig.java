@@ -15,7 +15,6 @@ public class AppConfig {
     private ServiceConfig serviceConfig;
     private PrinterConfig printerConfig;
     private StrategyConfig strategyConfig;
-    private NotificationConfig notificationConfig;
     private ControllerConfig controllerConfig;
     private MenuConfig menuConfig;
     private AuthConfig authConfig;
@@ -51,16 +50,9 @@ public class AppConfig {
 
     public StrategyConfig getStrategyConfig(Scanner input) {
         if (strategyConfig == null) {
-            strategyConfig = new StrategyConfig(getServiceConfig(), input);
+            strategyConfig = serviceConfig.getStrategyConfig(input);
         }
         return strategyConfig;
-    }
-
-    public NotificationConfig getNotificationConfig() {
-        if (notificationConfig == null) {
-            notificationConfig = new NotificationConfig(databaseConfig);
-        }
-        return notificationConfig;
     }
 
     public ControllerConfig getControllerConfig(Scanner input) {
@@ -79,7 +71,7 @@ public class AppConfig {
 
     public AuthConfig getAuthConfig(Scanner input) {
         if (authConfig == null) {
-            authConfig = new AuthConfig(getServiceConfig(), getNotificationConfig(), getStrategyConfig(input), getMenuConfig(input), input);
+            authConfig = new AuthConfig(getServiceConfig(), getStrategyConfig(input), getMenuConfig(input), input);
         }
         return authConfig;
     }

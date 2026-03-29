@@ -1,52 +1,45 @@
 package wallet.controller;
 
-import exception.ResourceNotFoundException;
 import util.InputUtil;
-import wallet.model.Wallet;
-import wallet.service.WalletCredentialService;
-import wallet.service.WalletService;
+import wallet.service.WalletPinRecoveryService;
 
 import java.util.Scanner;
 
 public class WalletCredentialController {
-    private final WalletCredentialService service;
-    private final WalletService walletService;
+    private final WalletPinRecoveryService pinRecoveryService;
     private final Scanner input;
 
-    public WalletCredentialController(Scanner input, WalletCredentialService service, WalletService walletService) {
+    public WalletCredentialController(Scanner input, WalletPinRecoveryService pinRecoveryService) {
         this.input = input;
-        this.service = service;
-        this.walletService = walletService;
+        this.pinRecoveryService = pinRecoveryService;
     }
 
     public void forgotPassword(String userId) {
+
         if (userId == null) {
             System.out.println("User ID is required.");
             return;
         }
 
         try {
-            Wallet wallet = walletService.getWalletByUserId(userId);
-            if (wallet == null) {
-                System.out.println("User doesn't have a wallet.");
+            String newPin = InputUtil.readValidPassword(input, "Enter new PIN");
+            String confirmPin = InputUtil.readValidPassword(input, "Confirm new PIN");
+
+            if (!newPin.equals(confirmPin)) {
+                System.out.println("PINs do not match.");
                 return;
             }
 
-            String newPassword = InputUtil.readValidPassword(input, "Enter new PIN");
-            String confirmPassword = InputUtil.readValidPassword(input, "Confirm new PIN");
+            boolean success = pinRecoveryService.resetPinWithOtp(userId, newPin, input);
 
-            if (!newPassword.equals(confirmPassword)) {
-                System.out.println("PINs do not match. Please try again.");
-                return;
+            if (success) {
+                System.out.println("Wallet PIN successfully reset.");
+            } else {
+                System.out.println("Failed to reset PIN.");
             }
 
-            service.forgotPassword(wallet.getWalletId(), newPassword);
-            System.out.println("Wallet PIN successfully recovered and updated.");
-
-        } catch (ResourceNotFoundException | IllegalStateException e) {
-            System.out.println("Failed to update PIN: " + e.getMessage());
         } catch (Exception e) {
-            System.out.println("System Error: An unexpected error occurred.");
+            System.out.println("Unexpected error occurred.");
         }
     }
 }

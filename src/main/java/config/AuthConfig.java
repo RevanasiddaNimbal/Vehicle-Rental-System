@@ -9,7 +9,6 @@ import java.util.Scanner;
 public class AuthConfig {
 
     private final ServiceConfig serviceConfig;
-    private final NotificationConfig notificationConfig;
     private final StrategyConfig strategyConfig;
     private final MenuConfig menuConfig;
     private final Scanner input;
@@ -18,9 +17,8 @@ public class AuthConfig {
     private AuthService authService;
     private AuthController authController;
 
-    public AuthConfig(ServiceConfig serviceConfig, NotificationConfig notificationConfig, StrategyConfig strategyConfig, MenuConfig menuConfig, Scanner input) {
+    public AuthConfig(ServiceConfig serviceConfig, StrategyConfig strategyConfig, MenuConfig menuConfig, Scanner input) {
         this.serviceConfig = serviceConfig;
-        this.notificationConfig = notificationConfig;
         this.strategyConfig = strategyConfig;
         this.menuConfig = menuConfig;
         this.input = input;
@@ -30,8 +28,7 @@ public class AuthConfig {
         if (authStrategyFactory == null) {
             authStrategyFactory = new AuthStrategyFactory(
                     input,
-                    serviceConfig,
-                    notificationConfig.getOtpService()
+                    serviceConfig
             );
         }
         return authStrategyFactory;
