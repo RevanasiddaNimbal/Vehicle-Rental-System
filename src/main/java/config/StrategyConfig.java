@@ -1,7 +1,10 @@
 package config;
 
 import admin.service.AdminService;
+import authentication.strategy.*;
 import customer.service.CustomerService;
+import otp.service.OtpService;
+import user.model.UserRole;
 import user.resolver.AdminUserResolver;
 import user.resolver.CustomerUserResolver;
 import user.resolver.OwnerUserResolver;
@@ -36,20 +39,25 @@ public class StrategyConfig {
     private final CustomerService customerService;
     private final VehicleOwnerService ownerService;
     private final AdminService adminService;
+    private final OtpService otpService;
 
     private Map<Integer, VehicleCreator> vehicleCreators;
     private Map<Class<? extends Vehicle>, VehicleUpdater> vehicleUpdaters;
     private Map<String, UserTypeResolver> resolverRegistries;
     private PostRegisterationStrategy walletStrategy;
+    private Map<UserRole, AuthLoginStretegy> loginStrategies;
+    private Map<UserRole, AuthRegisterStrategy> registerStrategies;
+    private Map<UserRole, PasswordRecoveryStrategy> passwordRecoveryStrategies;
 
 
-    public StrategyConfig(Scanner input, WalletService walletService, WalletCredentialService walletCredentialService, CustomerService customerService, VehicleOwnerService ownerService, AdminService adminService) {
+    public StrategyConfig(Scanner input, WalletService walletService, WalletCredentialService walletCredentialService, CustomerService customerService, VehicleOwnerService ownerService, AdminService adminService, OtpService otpService) {
         this.input = input;
         this.walletService = walletService;
         this.walletCredentialService = walletCredentialService;
         this.customerService = customerService;
         this.ownerService = ownerService;
         this.adminService = adminService;
+        this.otpService = otpService;
     }
 
     public Map<Integer, VehicleCreator> getVehicleCreators() {
@@ -87,6 +95,35 @@ public class StrategyConfig {
             resolverRegistries.put("ADM", new AdminUserResolver(adminService));
         }
         return resolverRegistries;
+    }
+
+    public Map<UserRole, AuthLoginStretegy> getLoginStrategies() {
+        if (loginStrategies == null) {
+            loginStrategies = new HashMap<>();
+            loginStrategies.put(UserRole.ADMIN, new AdminAuthStretegy(input, adminService, otpService));
+            loginStrategies.put(UserRole.OWNER, new OwnerAuthStrategy(input, ownerService, otpService));
+            loginStrategies.put(UserRole.CUSTOMER, new CustomerAuthStretegy(input, customerService, otpService));
+        }
+        return loginStrategies;
+    }
+
+    public Map<UserRole, PasswordRecoveryStrategy> getPasswordRecoveryStrategies() {
+        if (passwordRecoveryStrategies == null) {
+            passwordRecoveryStrategies = new HashMap<>();
+            passwordRecoveryStrategies.put(UserRole.ADMIN, new AdminAuthStretegy(input, adminService, otpService));
+            passwordRecoveryStrategies.put(UserRole.OWNER, new OwnerAuthStrategy(input, ownerService, otpService));
+            passwordRecoveryStrategies.put(UserRole.CUSTOMER, new CustomerAuthStretegy(input, customerService, otpService));
+        }
+        return passwordRecoveryStrategies;
+    }
+
+    public Map<UserRole, AuthRegisterStrategy> getRegisterStrategies() {
+        if (registerStrategies == null) {
+            registerStrategies = new HashMap<>();
+            registerStrategies.put(UserRole.OWNER, new OwnerAuthStrategy(input, ownerService, otpService));
+            registerStrategies.put(UserRole.CUSTOMER, new CustomerAuthStretegy(input, customerService, otpService));
+        }
+        return registerStrategies;
     }
 
 }

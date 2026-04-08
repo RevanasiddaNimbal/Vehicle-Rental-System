@@ -39,10 +39,10 @@ public class AdminService {
         }
         String oldPassword = InputUtil.readValidPassword(input, "Enter old password");
         String newPassword = InputUtil.readValidPassword(input, "Enter new password");
-        if (oldPassword.equals(newPassword)) {
-            throw new IllegalArgumentException("Old passwords do not match with new password");
+        if (PasswordUtil.verify(oldPassword, PasswordUtil.getHashPassword(newPassword))) {
+            throw new IllegalArgumentException("New password must be different from old password");
         }
-        
+
         if (!PasswordUtil.verify(oldPassword, admin.getPassword())) {
             throw new IllegalArgumentException("Invalid old password");
         }

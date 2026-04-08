@@ -3,32 +3,28 @@ package config;
 import authentication.controller.AuthController;
 import authentication.factory.AuthStrategyFactory;
 import authentication.service.AuthService;
-
-import java.util.Scanner;
+import authentication.service.UserOnBoardingService;
 
 public class AuthConfig {
 
     private final ServiceConfig serviceConfig;
     private final StrategyConfig strategyConfig;
     private final MenuConfig menuConfig;
-    private final Scanner input;
 
     private AuthStrategyFactory authStrategyFactory;
     private AuthService authService;
     private AuthController authController;
+    private UserOnBoardingService userOnBoardingService;
 
-    public AuthConfig(ServiceConfig serviceConfig, StrategyConfig strategyConfig, MenuConfig menuConfig, Scanner input) {
+    public AuthConfig(ServiceConfig serviceConfig, StrategyConfig strategyConfig, MenuConfig menuConfig) {
         this.serviceConfig = serviceConfig;
         this.strategyConfig = strategyConfig;
         this.menuConfig = menuConfig;
-        this.input = input;
     }
 
     public AuthStrategyFactory getAuthStrategyFactory() {
         if (authStrategyFactory == null) {
-            authStrategyFactory = new AuthStrategyFactory(
-                    input,
-                    serviceConfig
+            authStrategyFactory = new AuthStrategyFactory(strategyConfig.getLoginStrategies(), strategyConfig.getRegisterStrategies(), strategyConfig.getPasswordRecoveryStrategies()
             );
         }
         return authStrategyFactory;
@@ -36,14 +32,21 @@ public class AuthConfig {
 
     public AuthService getAuthService() {
         if (authService == null) {
-            authService = new AuthService(getAuthStrategyFactory(), strategyConfig);
+            authService = new AuthService(getAuthStrategyFactory());
         }
         return authService;
     }
 
+    public UserOnBoardingService getUserOnBoardingService() {
+        if (userOnBoardingService == null) {
+            userOnBoardingService = new UserOnBoardingService(getAuthService(), strategyConfig.getWalletStrategy());
+        }
+        return userOnBoardingService;
+    }
+
     public AuthController getAuthController() {
         if (authController == null) {
-            authController = new AuthController(getAuthService(), menuConfig.getMenuFactory());
+            authController = new AuthController(getAuthService(), menuConfig.getMenuFactory(), getUserOnBoardingService());
         }
         return authController;
     }

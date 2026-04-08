@@ -11,7 +11,7 @@ import vehicleowner.service.VehicleOwnerService;
 
 import java.util.Scanner;
 
-public class OwnerAuthStrategy implements AuthLoginStretegy, AuthRegisterStretegy {
+public class OwnerAuthStrategy implements AuthLoginStretegy, AuthRegisterStrategy, PasswordRecoveryStrategy {
     private final VehicleOwnerService service;
     private final OtpService otpService;
     private final Scanner input;

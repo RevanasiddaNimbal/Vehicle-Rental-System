@@ -71,7 +71,7 @@ public class AppConfig {
 
     public AuthConfig getAuthConfig(Scanner input) {
         if (authConfig == null) {
-            authConfig = new AuthConfig(getServiceConfig(), getStrategyConfig(input), getMenuConfig(input), input);
+            authConfig = new AuthConfig(getServiceConfig(), getStrategyConfig(input), getMenuConfig(input));
         }
         return authConfig;
     }

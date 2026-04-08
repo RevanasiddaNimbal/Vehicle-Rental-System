@@ -10,7 +10,7 @@ import util.*;
 
 import java.util.Scanner;
 
-public class CustomerAuthStretegy implements AuthLoginStretegy, AuthRegisterStretegy {
+public class CustomerAuthStretegy implements AuthLoginStretegy, AuthRegisterStrategy, PasswordRecoveryStrategy {
 
     private final CustomerService service;
     private final OtpService otpService;

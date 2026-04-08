@@ -10,7 +10,7 @@ import util.PasswordUtil;
 
 import java.util.Scanner;
 
-public class AdminAuthStretegy implements AuthLoginStretegy {
+public class AdminAuthStretegy implements AuthLoginStretegy, PasswordRecoveryStrategy {
     private final Scanner input;
     private final AdminService adminService;
     private final OtpService otpService;

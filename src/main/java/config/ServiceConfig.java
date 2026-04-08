@@ -6,7 +6,7 @@ import customer.service.CustomerService;
 import invoice.renders.InvoiceConsoleRender;
 import invoice.renders.InvoiceRender;
 import invoice.service.InvoiceService;
-import notification.provider.BrevoEmailProvider;
+import notification.provider.BreveEmailProvider;
 import notification.service.EmailService;
 import otp.service.OtpService;
 import payment.facade.PaymentFacade;
@@ -208,14 +208,14 @@ public class ServiceConfig {
 
     public StrategyConfig getStrategyConfig(Scanner input) {
         if (strategyConfig == null) {
-            strategyConfig = new StrategyConfig(input, getWalletService(), getWalletCredentialService(), getCustomerService(), getVehicleOwnerService(), getAdminService());
+            strategyConfig = new StrategyConfig(input, getWalletService(), getWalletCredentialService(), getCustomerService(), getVehicleOwnerService(), getAdminService(), getOtpService());
         }
         return strategyConfig;
     }
 
     public EmailService getEmailService() {
         if (emailService == null) {
-            emailService = new BrevoEmailProvider(new EmailPropertiesConfig());
+            emailService = new BreveEmailProvider(new EmailPropertiesConfig());
         }
         return emailService;
     }

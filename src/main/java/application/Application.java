@@ -43,7 +43,7 @@ public class Application {
                         authMenu.show(UserRole.CUSTOMER);
                         break;
                     case 0:
-                        System.out.println("Shutting down ...");
+                        System.out.println("Shutting down the application...");
                         serviceConfig.shutdownBackgroundTasks();
                         System.exit(0);
                     default:

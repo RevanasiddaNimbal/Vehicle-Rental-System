@@ -10,13 +10,13 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
-public class BrevoEmailProvider implements EmailService {
+public class BreveEmailProvider implements EmailService {
     private final String apiKey;
     private final String senderEmail;
     private final String senderName;
     private final String apiUrl;
 
-    public BrevoEmailProvider(EmailPropertiesConfig config) {
+    public BreveEmailProvider(EmailPropertiesConfig config) {
         this.apiKey = config.getApiKey();
         this.senderEmail = config.getSenderEmail();
         this.senderName = config.getSenderName();
