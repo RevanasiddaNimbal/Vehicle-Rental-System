@@ -1,6 +1,7 @@
 package config;
 
 import admin.service.AdminService;
+import cancellation.factory.CancellationStrategyFactory;
 import cancellation.service.CancellationService;
 import customer.service.CustomerService;
 import invoice.renders.InvoiceConsoleRender;
@@ -57,6 +58,7 @@ public class ServiceConfig {
     private EmailService emailService;
     private WalletPinRecoveryService pinRecoveryService;
     private UserResolverFactory resolverFactory;
+    private CancellationStrategyFactory cancelStrategyFactory;
 
     public ServiceConfig(RepositoryConfig repositoryConfig) {
         this.repositoryConfig = repositoryConfig;
@@ -187,13 +189,21 @@ public class ServiceConfig {
         return paymentFacade;
     }
 
+    public CancellationStrategyFactory getCancellationStrategyFactory() {
+        if (cancelStrategyFactory == null) {
+            cancelStrategyFactory = new CancellationStrategyFactory(strategyConfig.getCancellationStrategies());
+        }
+        return cancelStrategyFactory;
+    }
+
     public CancellationService getCancellationService() {
         if (cancellationService == null) {
             cancellationService = new CancellationService(
                     getRentalService(),
                     getVehicleService(),
                     repositoryConfig.getCancellationRepo(),
-                    getPaymentFacade()
+                    getPaymentFacade(),
+                    getCancellationStrategyFactory()
             );
         }
         return cancellationService;

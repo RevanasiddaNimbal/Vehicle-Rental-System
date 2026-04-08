@@ -4,7 +4,7 @@ import cancellation.factory.CancellationStrategyFactory;
 import cancellation.model.CancellationRecord;
 import cancellation.model.PolicyType;
 import cancellation.repository.CancellationRepo;
-import cancellation.stretegy.CancellationStrategy;
+import cancellation.strategy.CancellationStrategy;
 import exception.ResourceNotFoundException;
 import payment.facade.PaymentFacade;
 import rental.model.Rental;
@@ -23,12 +23,14 @@ public class CancellationService {
     private final VehicleService vehicleService;
     private final CancellationRepo cancellationRepo;
     private final PaymentFacade paymentFacade;
+    private final CancellationStrategyFactory cancellationStrategyFactory;
 
-    public CancellationService(RentalService rentalService, VehicleService vehicleService, CancellationRepo cancellationRepo, PaymentFacade paymentFacade) {
+    public CancellationService(RentalService rentalService, VehicleService vehicleService, CancellationRepo cancellationRepo, PaymentFacade paymentFacade, CancellationStrategyFactory cancellationStrategyFactory) {
         this.rentalService = rentalService;
         this.vehicleService = vehicleService;
         this.cancellationRepo = cancellationRepo;
         this.paymentFacade = paymentFacade;
+        this.cancellationStrategyFactory = cancellationStrategyFactory;
     }
 
     public double cancelRentalByRentalId(int rentalId) {
@@ -48,7 +50,7 @@ public class CancellationService {
             throw new ResourceNotFoundException("Associated vehicle not found.");
         }
 
-        CancellationStrategy strategy = CancellationStrategyFactory.getStrategy(rental);
+        CancellationStrategy strategy = cancellationStrategyFactory.getStrategy(rental);
         double refundAmount = strategy.calculateRefund(rental);
         PolicyType type = strategy.getPolicyName();
 

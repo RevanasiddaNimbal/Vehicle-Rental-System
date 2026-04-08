@@ -1,4 +1,4 @@
-package cancellation.stretegy;
+package cancellation.strategy;
 
 import cancellation.model.PolicyType;
 import rental.model.Rental;

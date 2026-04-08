@@ -72,6 +72,10 @@ public class CustomerService {
             throw new IllegalArgumentException("Incorrect current password.");
         }
 
+        if (PasswordUtil.verify(newPassword, customer.getPassword())) {
+            throw new IllegalArgumentException("New password must be different from current password.");
+        }
+        
         customer.setPassword(PasswordUtil.getHashPassword(newPassword));
         return repository.update(customer);
     }

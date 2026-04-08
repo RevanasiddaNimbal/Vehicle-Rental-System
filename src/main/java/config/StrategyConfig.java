@@ -2,6 +2,9 @@ package config;
 
 import admin.service.AdminService;
 import authentication.strategy.*;
+import cancellation.model.PolicyType;
+import cancellation.strategy.CancellationStrategy;
+import cancellation.strategy.FullRefundStrategy;
 import customer.service.CustomerService;
 import otp.service.OtpService;
 import user.model.UserRole;
@@ -48,6 +51,7 @@ public class StrategyConfig {
     private Map<UserRole, AuthLoginStretegy> loginStrategies;
     private Map<UserRole, AuthRegisterStrategy> registerStrategies;
     private Map<UserRole, PasswordRecoveryStrategy> passwordRecoveryStrategies;
+    private Map<PolicyType, CancellationStrategy> cancellationStrategies;
 
 
     public StrategyConfig(Scanner input, WalletService walletService, WalletCredentialService walletCredentialService, CustomerService customerService, VehicleOwnerService ownerService, AdminService adminService, OtpService otpService) {
@@ -124,6 +128,16 @@ public class StrategyConfig {
             registerStrategies.put(UserRole.CUSTOMER, new CustomerAuthStretegy(input, customerService, otpService));
         }
         return registerStrategies;
+    }
+
+    public Map<PolicyType, CancellationStrategy> getCancellationStrategies() {
+        if (cancellationStrategies == null) {
+            cancellationStrategies = new HashMap<>();
+            cancellationStrategies.put(PolicyType.FULL_REFUND, new FullRefundStrategy());
+            cancellationStrategies.put(PolicyType.PARTIAL_REFUND, new cancellation.strategy.PartialRefundStrategy());
+            cancellationStrategies.put(PolicyType.NO_REFUND, new cancellation.strategy.NoRefundStrategy());
+        }
+        return cancellationStrategies;
     }
 
 }
