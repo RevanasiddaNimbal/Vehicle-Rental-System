@@ -27,8 +27,8 @@ import vehicle.updater.VehicleUpdater;
 import vehicleowner.service.VehicleOwnerService;
 import wallet.service.WalletCredentialService;
 import wallet.service.WalletService;
-import wallet.stretegy.PostRegisterationStrategy;
-import wallet.stretegy.WalletSetUpStrategy;
+import wallet.strategy.PostRegisterationStrategy;
+import wallet.strategy.WalletSetUpStrategy;
 
 import java.util.HashMap;
 import java.util.Map;

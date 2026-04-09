@@ -1,4 +1,4 @@
-package payment.stretegy;
+package payment.strategy;
 
 import payment.dto.PaymentDetails;
 

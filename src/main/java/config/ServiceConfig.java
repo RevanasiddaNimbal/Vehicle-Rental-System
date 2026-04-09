@@ -16,9 +16,10 @@ import penalty.factory.PenaltyStrategyFactory;
 import penalty.service.PenaltyService;
 import rental.billing.RentalPriceCalculator;
 import rental.billing.RentalTimeCalculator;
+import rental.facade.RentalFacade;
 import rental.scheduler.ReservationTimeoutManager;
 import rental.service.RentalService;
-import rental.stretegy.*;
+import rental.strategy.*;
 import transaction.service.TransactionService;
 import user.factory.UserResolverFactory;
 import vehicle.service.VehicleService;
@@ -59,6 +60,7 @@ public class ServiceConfig {
     private WalletPinRecoveryService pinRecoveryService;
     private UserResolverFactory resolverFactory;
     private CancellationStrategyFactory cancelStrategyFactory;
+    private RentalFacade rentalFacade;
 
     public ServiceConfig(RepositoryConfig repositoryConfig) {
         this.repositoryConfig = repositoryConfig;
@@ -249,6 +251,20 @@ public class ServiceConfig {
             pinRecoveryService = new WalletPinRecoveryService(getWalletService(), getWalletCredentialService(), getOtpService(), getResolverFactory(input));
         }
         return pinRecoveryService;
+    }
+
+    public RentalFacade getRentalFacade() {
+        if (rentalFacade == null) {
+            rentalFacade = new RentalFacade(
+                    getRentalService(),
+                    getVehicleService(),
+                    getPaymentFacade(),
+                    getPenaltyService(),
+                    getCancellationService(),
+                    getReservationTimeoutManager()
+            );
+        }
+        return rentalFacade;
     }
 
     public void shutdownBackgroundTasks() {

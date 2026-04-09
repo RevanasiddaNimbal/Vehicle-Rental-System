@@ -8,6 +8,8 @@ import java.util.Scanner;
 public class TransactionMenu implements UsersMenu {
     private final Scanner input;
     private final TransactionController transactionController;
+    private final String SYSTEM_ESCROW_ID = "ADM-001";
+    private final String SYSTEM_REVENUE_ID = "ADM-002";
 
     public TransactionMenu(Scanner input, TransactionController transactionController) {
         this.input = input;
@@ -16,7 +18,7 @@ public class TransactionMenu implements UsersMenu {
 
     @Override
     public void show(String userId) {
-        boolean isAdmin = userId.equals("ADMIN") || userId.startsWith("SYSTEM");
+        boolean isAdmin = userId.equals(SYSTEM_REVENUE_ID) || userId.startsWith(SYSTEM_ESCROW_ID);
         int choice;
 
         while (true) {
@@ -49,7 +51,7 @@ public class TransactionMenu implements UsersMenu {
                             transactionController.viewRevenueTransactions();
                             break;
                         case 4:
-                            transactionController.viewUserTransactionsByDays(input, "SYSTEM-ESCROW");
+                            transactionController.viewUserTransactionsByDays(input, SYSTEM_ESCROW_ID);
                             break;
                         case 5:
                             transactionController.viewEscrowTransactions();

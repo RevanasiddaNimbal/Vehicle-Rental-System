@@ -19,6 +19,7 @@ public class AppConfig {
     private MenuConfig menuConfig;
     private AuthConfig authConfig;
     private SystemInitializer systemInitializer;
+    private CommandConfig commandConfig;
 
     public DatabaseConfig getDatabaseConfig() {
         if (databaseConfig == null) {
@@ -55,9 +56,16 @@ public class AppConfig {
         return strategyConfig;
     }
 
+    public CommandConfig getCommandConfig() {
+        if (commandConfig == null) {
+            commandConfig = new CommandConfig(getPrinterConfig(), getServiceConfig());
+        }
+        return commandConfig;
+    }
+
     public ControllerConfig getControllerConfig(Scanner input) {
         if (controllerConfig == null) {
-            controllerConfig = new ControllerConfig(getServiceConfig(), getPrinterConfig(), getStrategyConfig(input), input);
+            controllerConfig = new ControllerConfig(getServiceConfig(), getPrinterConfig(), getStrategyConfig(input), getCommandConfig(), input);
         }
         return controllerConfig;
     }

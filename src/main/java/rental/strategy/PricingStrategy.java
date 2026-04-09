@@ -1,7 +1,7 @@
-package penalty.stretegy;
+package rental.strategy;
 
 import rental.model.Rental;
 
-public interface PenaltyStrategy {
+public interface PricingStrategy {
     double calculate(Rental rental);
 }

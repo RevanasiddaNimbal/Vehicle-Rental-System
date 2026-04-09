@@ -1,8 +1,8 @@
 package payment.factory;
 
 import payment.model.PaymentMethod;
-import payment.stretegy.PaymentStrategy;
-import payment.stretegy.WalletPaymentStrategy;
+import payment.strategy.PaymentStrategy;
+import payment.strategy.WalletPaymentStrategy;
 import transaction.service.TransactionService;
 import wallet.service.WalletService;
 

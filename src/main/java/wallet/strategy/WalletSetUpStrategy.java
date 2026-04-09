@@ -1,4 +1,4 @@
-package wallet.stretegy;
+package wallet.strategy;
 
 import util.InputUtil;
 import wallet.model.Wallet;

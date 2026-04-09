@@ -1,344 +1,62 @@
 package rental.controller;
 
 import UI.UserPrinter;
-import cancellation.service.CancellationService;
 import customer.model.Customer;
-import customer.service.CustomerService;
-import exception.ResourceNotFoundException;
-import invoice.model.Invoice;
-import invoice.service.InvoiceService;
-import payment.dto.PaymentDetails;
-import payment.dto.WalletPaymentDetails;
-import payment.facade.PaymentFacade;
-import payment.factory.PaymentStrategyFactory;
-import payment.model.PaymentMethod;
-import payment.stretegy.PaymentStrategy;
-import penalty.model.Penalty;
-import penalty.model.PenaltyType;
-import penalty.service.PenaltyService;
+import rental.command.RentalCommand;
 import rental.model.Rental;
-import rental.model.RentalStatus;
-import rental.scheduler.ReservationTimeoutManager;
+import rental.model.RentalCommands;
 import rental.service.RentalService;
-import util.IdGeneratorUtil;
-import util.InputUtil;
-import vehicle.models.Status;
 import vehicle.models.Vehicle;
-import vehicle.service.VehicleService;
 import vehicleowner.models.VehicleOwner;
 
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ScheduledFuture;
 
 public class RentalController {
     private final RentalService rentalService;
-    private final VehicleService vehicleService;
-    private final InvoiceService invoiceService;
-    private final CustomerService customerService;
-    private final PenaltyService penaltyService;
-    private final CancellationService cancellationService;
     private final UserPrinter<Rental> rentalPrinter;
+    private final Map<RentalCommands, RentalCommand> commandMap;
     private final UserPrinter<Customer> customerPrinter;
     private final UserPrinter<VehicleOwner> ownerPrinter;
     private final UserPrinter<Vehicle> vehiclePrinter;
-    private final UserPrinter<Penalty> penaltyPrinter;
-    private final PaymentFacade paymentFacade;
-    private final PaymentStrategyFactory paymentFactory;
-    private final ReservationTimeoutManager reservationTimeoutManager;
 
-    public RentalController(RentalService rentalService, VehicleService vehicleService, InvoiceService invoiceService,
-                            CustomerService customerService, PenaltyService penaltyService, UserPrinter<Rental> rentalPrinter,
-                            UserPrinter<Customer> customerPrinter, UserPrinter<VehicleOwner> ownerPrinter,
-                            UserPrinter<Vehicle> vehiclePrinter, UserPrinter<Penalty> penaltyPrinter,
-                            CancellationService cancellationService, PaymentFacade paymentFacade,
-                            PaymentStrategyFactory paymentFactory, ReservationTimeoutManager reservationTimeoutManager) {
+    public RentalController(RentalService rentalService, Map<RentalCommands, RentalCommand> commands,
+                            UserPrinter<Rental> rentalPrinter, UserPrinter<Customer> customerPrinter,
+                            UserPrinter<VehicleOwner> ownerPrinter, UserPrinter<Vehicle> vehiclePrinter) {
         this.rentalService = rentalService;
-        this.vehicleService = vehicleService;
-        this.invoiceService = invoiceService;
-        this.customerService = customerService;
-        this.penaltyService = penaltyService;
+        this.commandMap = commands;
         this.rentalPrinter = rentalPrinter;
         this.customerPrinter = customerPrinter;
         this.ownerPrinter = ownerPrinter;
         this.vehiclePrinter = vehiclePrinter;
-        this.penaltyPrinter = penaltyPrinter;
-        this.cancellationService = cancellationService;
-        this.paymentFacade = paymentFacade;
-        this.paymentFactory = paymentFactory;
-        this.reservationTimeoutManager = reservationTimeoutManager;
     }
 
     public void rentVehicle(Scanner input, String customerId) {
-        List<Rental> rentals = new ArrayList<>();
-        Customer customer = customerService.getCustomerById(customerId);
-        if (customer == null) {
-            System.out.println("Customer not found.");
+        RentalCommand rentCommand = commandMap.get(RentalCommands.RENT_COMMAND);
+        if (rentCommand == null) {
+            System.out.println("Rent command not found.");
             return;
         }
-
-        boolean choice = true;
-        int count = 1;
-        List<ScheduledFuture<?>> timeouts = new ArrayList<>();
-
-        while (choice && count <= 3) {
-            String vehicleId = InputUtil.readString(input, "Enter Vehicle ID");
-            Vehicle vehicle = vehicleService.getVehiclesById(vehicleId);
-
-            if (vehicle == null) {
-                System.out.println("Invalid Vehicle ID. Please try again.");
-                count++;
-                continue;
-            }
-            if (vehicle.getStatus() != Status.AVAILABLE) {
-                System.out.println("Vehicle is not available. Please choose a different vehicle.");
-                continue;
-            }
-
-            int rentalId = IdGeneratorUtil.generateRentalId();
-            LocalDate startDate = InputUtil.readValidDate(input, "Enter Start Date (DD/MM/YYYY)");
-            LocalDate endDate = InputUtil.readValidDate(input, "Enter End Date (DD/MM/YYYY)");
-
-            if (startDate.isAfter(endDate)) {
-                System.out.println("End Date must be after Start Date.");
-                continue;
-            }
-
-            LocalTime startTime = InputUtil.readValidTime(input, "Enter Pickup Time (in 24 Hours) (HH:MM)");
-            LocalTime endTime = InputUtil.readValidTime(input, "Enter Return Time (in 24 Hours) (HH:MM)");
-
-            if (startDate.equals(endDate) && !endTime.isAfter(startTime)) {
-                System.out.println("Return time should be greater than start time. Please try again.");
-                continue;
-            }
-
-            Rental rental = new Rental(rentalId, customerId, vehicleId, startDate, endDate, startTime, endTime, 0, vehicle.getPricePerDay(), 0, 0, 0, 0, RentalStatus.BOOKED);
-            rental.setDays(rentalService.getDays(rental));
-            rentalService.calculateTotalRent(rental);
-            rentalService.calculateSecurityAmount(vehicle.getVehicle_type(), rental);
-            rentals.add(rental);
-
-            System.out.println("Vehicle added to booking list successfully!");
-
-            String response = InputUtil.readString(input, "Add another vehicle? (Y/N)");
-            if (!response.trim().equalsIgnoreCase("Y")) {
-                choice = false;
-            }
-        }
-
-        if (rentals.isEmpty()) {
-            System.out.println("No vehicles selected.");
-            return;
-        }
-
-        Invoice invoice = new Invoice(customer, rentals);
-        invoiceService.printInvoice(invoice);
-
-        String confirm = InputUtil.readString(input, "Confirm Booking? (y/n)").trim();
-        if (confirm.equalsIgnoreCase("n") || confirm.equalsIgnoreCase("No")) {
-            System.out.println("Booking cancelled.");
-            return;
-        }
-
-        try {
-            vehicleService.updateStatus(rentals, Status.RESERVED);
-        } catch (Exception e) {
-            System.out.println("Error: Could not reserve vehicles. Someone else may have booked them. " + e.getMessage());
-            CompletableFuture.runAsync(() -> vehicleService.updateStatus(rentals, Status.AVAILABLE));
-            return;
-        }
-
-        for (Rental r : rentals) {
-            timeouts.add(reservationTimeoutManager.scheduleUnlock(r.getVehicleId(), 2));
-        }
-
-        int payCount = 0;
-        PaymentMethod method = null;
-        while (payCount < 3 && method == null) {
-            System.out.println("Select Payment Method:");
-            System.out.println("1. Wallet");
-            System.out.println("2. UPI (coming  soon)");
-            System.out.println("3. Credit Card (coming soon)");
-            System.out.println("0. Back");
-            int payChoice = InputUtil.readPositiveInt(input, "Enter Payment choice");
-            switch (payChoice) {
-                case 1:
-                    method = PaymentMethod.WALLET;
-                    break;
-                case 2:
-                case 3:
-                    System.out.println("Method coming soon. Please choose Wallet.");
-                    payCount++;
-                    break;
-                case 0:
-                    return;
-                default:
-                    System.out.println("Invalid choice. Please try again.");
-                    payCount++;
-            }
-        }
-
-        if (method == null) {
-            System.out.println("Payment selection failed.");
-            CompletableFuture.runAsync(() -> vehicleService.updateStatus(rentals, Status.AVAILABLE));
-            timeouts.forEach(t -> t.cancel(false));
-            return;
-        }
-
-        String pin = InputUtil.readValidPassword(input, "Enter your Wallet PIN to confirm payment:");
-        PaymentDetails paymentDetails = new WalletPaymentDetails(pin);
-        PaymentStrategy strategy = paymentFactory.getStrategy(method);
-
-        System.out.println("Processing Payment...");
-        try {
-            boolean paymentSuccess = paymentFacade.processBookingPayments(customerId, rentals, strategy, paymentDetails);
-            if (!paymentSuccess) {
-                System.out.println("Booking Failed due to payment error.");
-                CompletableFuture.runAsync(() -> vehicleService.updateStatus(rentals, Status.AVAILABLE));
-                timeouts.forEach(t -> t.cancel(false));
-                return;
-            }
-        } catch (Exception e) {
-            System.out.println("Payment Error: " + e.getMessage());
-            CompletableFuture.runAsync(() -> vehicleService.updateStatus(rentals, Status.AVAILABLE));
-            timeouts.forEach(t -> t.cancel(false));
-            return;
-        }
-
-        rentalService.bookRentalsAsync(rentals)
-                .thenAccept(result -> {
-                    System.out.println("Your vehicles have been successfully booked.");
-                    CompletableFuture.runAsync(() -> vehicleService.updateStatus(rentals, Status.RENTED));
-                    timeouts.forEach(t -> t.cancel(false));
-                })
-                .exceptionally(ex -> {
-                    System.out.println("Booking Failed internally! Rolling back payment...");
-                    paymentFacade.refundFailedBooking(customerId, rentals);
-                    CompletableFuture.runAsync(() -> vehicleService.updateStatus(rentals, Status.AVAILABLE));
-                    timeouts.forEach(t -> t.cancel(false));
-                    return null;
-                });
-
-        System.out.println("Your booking is processing...");
+        rentCommand.execute(input, customerId);
     }
 
     public void returnVehicle(Scanner input, String customerId) {
-        List<Rental> rentalsToReturn = new ArrayList<>();
-        boolean addMore = true;
-
-        while (addMore) {
-            int rentalId = InputUtil.readPositiveInt(input, "Enter Rental ID to return");
-            try {
-                Rental rental = rentalService.processReturnValidation(rentalId, customerId);
-                rentalsToReturn.add(rental);
-                System.out.println("Rental added for return.");
-            } catch (ResourceNotFoundException | IllegalArgumentException | IllegalStateException e) {
-                System.out.println("Validation Failed: " + e.getMessage());
-            } catch (Exception e) {
-                System.out.println("System Error: Could not validate rental.");
-            }
-
-            String choice = InputUtil.readString(input, "Return another vehicle? (Y/N)");
-            addMore = choice.equalsIgnoreCase("Y");
-        }
-
-        if (rentalsToReturn.isEmpty()) {
-            System.out.println("No rentals to return.");
+        RentalCommand returnCommand = commandMap.get(RentalCommands.RETURN_COMMAND);
+        if (returnCommand == null) {
+            System.out.println("Return command not found.");
             return;
         }
-
-        rentalPrinter.print(rentalsToReturn);
-
-        List<Penalty> penalties = penaltyService.calculatePenalties(rentalsToReturn, PenaltyType.LATE_RETURN);
-
-        if (!penalties.isEmpty()) {
-            System.out.println("Penalties applied for return:");
-            penaltyPrinter.print(penalties);
-        }
-
-        String message = !penalties.isEmpty() ? "Penalties apply. Confirm return? (Y/N)" : "No penalties. Confirm return? (Y/N)";
-        String choice = InputUtil.readString(input, message);
-
-        if (!choice.equalsIgnoreCase("Y")) {
-            System.out.println("Return cancelled.");
-            return;
-        }
-
-        try {
-            CompletableFuture.runAsync(() -> {
-                paymentFacade.processReturnPayouts(customerId, rentalsToReturn, penalties);
-            });
-
-            rentalService.completeRentals(rentalsToReturn);
-            CompletableFuture.runAsync(() -> vehicleService.updateStatus(rentalsToReturn, Status.AVAILABLE));
-            System.out.println("Vehicle(s) returned successfully! Refunds/Payouts are processing.");
-        } catch (Exception e) {
-            System.out.println("Failed to complete return: " + e.getMessage());
-        }
+        returnCommand.execute(input, customerId);
     }
 
     public void cancelRental(Scanner input, String customerId) {
-        System.out.println("\n--- Cancel Rental ---");
-        List<Rental> rentalsToCancel = new ArrayList<>();
-        boolean addMore = true;
-
-        while (addMore) {
-            int rentalId = InputUtil.readPositiveInt(input, "Enter Rental ID to cancel");
-            try {
-                Rental rental = rentalService.processCancelValidation(rentalId, customerId);
-                rentalsToCancel.add(rental);
-                System.out.println("Rental added for cancellation.");
-            } catch (ResourceNotFoundException | IllegalArgumentException | IllegalStateException e) {
-                System.out.println("Validation Failed: " + e.getMessage());
-            } catch (Exception e) {
-                System.out.println("System Error: Could not validate cancellation.");
-            }
-
-            String choice = InputUtil.readString(input, "Cancel another rental? (Y/N)");
-            addMore = choice.equalsIgnoreCase("Y");
-        }
-
-        if (rentalsToCancel.isEmpty()) {
-            System.out.println("No rentals to cancel.");
+        RentalCommand cancelCommand = commandMap.get(RentalCommands.CANCEL_COMMAND);
+        if (cancelCommand == null) {
+            System.out.println("Cancel command not found.");
             return;
         }
-
-        rentalPrinter.print(rentalsToCancel);
-        String choice = InputUtil.readString(input, "Confirm cancellation? (Y/N)");
-
-        if (!choice.equalsIgnoreCase("Y")) {
-            System.out.println("Cancellation aborted.");
-            return;
-        }
-
-        for (Rental rental : rentalsToCancel) {
-            try {
-                double refundAmount = cancellationService.cancelRentalByRentalId(rental.getId());
-
-                CompletableFuture.runAsync(() -> {
-                    try {
-                        paymentFacade.processCancellationRefund(customerId, rental, refundAmount);
-                    } catch (Exception ex) {
-                        System.out.println("Error: Refund failed.Funds held in System.");
-                    }
-                });
-                CompletableFuture.runAsync(() -> {
-                    try {
-                        vehicleService.updateStatusById(rental.getVehicleId(), Status.AVAILABLE);
-                    } catch (Exception ignored) {
-                    }
-                });
-
-                System.out.println("Cancelled successfully! Refund of $" + refundAmount + " is processing.");
-
-            } catch (Exception e) {
-                System.out.println("Failed to cancel Rental. Reason: " + e.getMessage());
-            }
-        }
+        cancelCommand.execute(input, customerId);
     }
 
     public void viewActiveRentalsByCustomerId(String customerId) {

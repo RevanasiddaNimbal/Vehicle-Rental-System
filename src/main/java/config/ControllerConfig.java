@@ -18,6 +18,7 @@ public class ControllerConfig {
     private final ServiceConfig serviceConfig;
     private final PrinterConfig printerConfig;
     private final StrategyConfig strategyConfig;
+    private final CommandConfig commandConfig;
     private final Scanner input;
 
     private AdminController adminController;
@@ -31,10 +32,11 @@ public class ControllerConfig {
     private CancellationController cancellationController;
     private TransactionController transactionController;
 
-    public ControllerConfig(ServiceConfig serviceConfig, PrinterConfig printerConfig, StrategyConfig strategyConfig, Scanner input) {
+    public ControllerConfig(ServiceConfig serviceConfig, PrinterConfig printerConfig, StrategyConfig strategyConfig, CommandConfig commandConfig, Scanner input) {
         this.serviceConfig = serviceConfig;
         this.printerConfig = printerConfig;
         this.strategyConfig = strategyConfig;
+        this.commandConfig = commandConfig;
         this.input = input;
     }
 
@@ -97,19 +99,11 @@ public class ControllerConfig {
         if (rentalController == null) {
             rentalController = new RentalController(
                     serviceConfig.getRentalService(),
-                    serviceConfig.getVehicleService(),
-                    serviceConfig.getInvoiceService(),
-                    serviceConfig.getCustomerService(),
-                    serviceConfig.getPenaltyService(),
+                    commandConfig.getCommands(),
                     printerConfig.getRentalPrinter(),
                     printerConfig.getCustomerPrinter(),
                     printerConfig.getOwnerPrinter(),
-                    printerConfig.getVehiclePrinter(),
-                    printerConfig.getPenaltyPrinter(),
-                    serviceConfig.getCancellationService(),
-                    serviceConfig.getPaymentFacade(),
-                    serviceConfig.getPaymentStrategyFactory(),
-                    serviceConfig.getReservationTimeoutManager()
+                    printerConfig.getVehiclePrinter()
             );
         }
         return rentalController;

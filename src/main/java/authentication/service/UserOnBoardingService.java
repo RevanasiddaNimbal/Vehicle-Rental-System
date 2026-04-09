@@ -3,7 +3,7 @@ package authentication.service;
 import authentication.model.AuthUser;
 import exception.UserRegisterationFailedException;
 import user.model.UserRole;
-import wallet.stretegy.PostRegisterationStrategy;
+import wallet.strategy.PostRegisterationStrategy;
 
 public class UserOnBoardingService {
     private AuthService authService;

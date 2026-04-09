@@ -13,6 +13,7 @@ public class AdminMenu implements UsersMenu {
     private final AdminOwnersManu ownerMenu;
     private final AdminsVehicleMenu vehicleMenu;
     private final TransactionMenu transactionMenu;
+    private static final String ADMIN_ID = "ADM-002";
 
     public AdminMenu(Scanner input, AdminOwnersManu ownerMenu, AdminsVehicleMenu vehicleMenu, AdminsCustomerMenu customerMenu, AdminRentalMenu rentalMenu, AdminAccountMenu accountManagementMenu, WalletManagementMenu walletManagementMenu, TransactionMenu transactionMenu) {
         this.input = input;
@@ -47,7 +48,7 @@ public class AdminMenu implements UsersMenu {
                         rentalMenu.show(adminId);
                         break;
                     case 2:
-                        walletManagementMenu.show("ADM-002");
+                        walletManagementMenu.show(ADMIN_ID);
                         break;
                     case 3:
                         ownerMenu.show(adminId);
@@ -59,7 +60,7 @@ public class AdminMenu implements UsersMenu {
                         vehicleMenu.show(adminId);
                         break;
                     case 6:
-                        transactionMenu.show("ADM-002");
+                        transactionMenu.show(ADMIN_ID);
                         break;
                     case 7:
                         accountManagementMenu.show(adminId);

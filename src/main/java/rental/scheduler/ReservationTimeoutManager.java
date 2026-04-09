@@ -23,19 +23,22 @@ public class ReservationTimeoutManager {
     }
 
     public ScheduledFuture<?> scheduleUnlock(String vehicleId, int timeoutMinutes) {
+
         return scheduler.schedule(() -> {
             try {
-                Vehicle checkVehicle = vehicleService.getVehiclesById(vehicleId);
-                if (checkVehicle != null && checkVehicle.getStatus() == Status.RESERVED) {
+                Vehicle vehicle = vehicleService.getVehiclesById(vehicleId);
+
+                if (vehicle != null && vehicle.getStatus() == Status.RESERVED) {
                     vehicleService.updateStatusById(vehicleId, Status.AVAILABLE);
                 }
-            } catch (Exception ignored) {
+
+            } catch (Exception e) {
             }
         }, timeoutMinutes, TimeUnit.MINUTES);
     }
 
     public void shutdown() {
-        if (scheduler != null && !scheduler.isShutdown()) {
+        if (!scheduler.isShutdown()) {
             scheduler.shutdown();
         }
     }

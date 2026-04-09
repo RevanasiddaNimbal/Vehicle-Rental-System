@@ -1,4 +1,4 @@
-package wallet.stretegy;
+package wallet.strategy;
 
 public interface PostRegisterationStrategy {
     void create(String userId);

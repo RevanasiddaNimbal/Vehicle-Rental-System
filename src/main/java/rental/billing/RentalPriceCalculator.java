@@ -1,8 +1,8 @@
 package rental.billing;
 
 import rental.model.Rental;
-import rental.stretegy.PricingStrategy;
-import rental.stretegy.SecurityDepositStrategy;
+import rental.strategy.PricingStrategy;
+import rental.strategy.SecurityDepositStrategy;
 
 import java.util.Map;
 

@@ -5,7 +5,7 @@ import penalty.model.Penalty;
 import penalty.model.PenaltyReason;
 import penalty.model.PenaltyType;
 import penalty.repository.PenaltyRepo;
-import penalty.stretegy.PenaltyStrategy;
+import penalty.strategy.PenaltyStrategy;
 import rental.model.Rental;
 import util.IdGeneratorUtil;
 import util.IdPrefix;

@@ -1,4 +1,4 @@
-package rental.stretegy;
+package rental.strategy;
 
 public interface SecurityDepositStrategy {
 

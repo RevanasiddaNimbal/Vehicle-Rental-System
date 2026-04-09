@@ -1,7 +1,7 @@
 package payment.facade;
 
 import payment.dto.PaymentDetails;
-import payment.stretegy.PaymentStrategy;
+import payment.strategy.PaymentStrategy;
 import penalty.model.Penalty;
 import rental.model.Rental;
 import transaction.model.TransactionStatus;
@@ -13,7 +13,6 @@ import wallet.model.Wallet;
 import wallet.service.WalletService;
 
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 public class PaymentFacade {
     private final WalletService walletService;
@@ -31,130 +30,215 @@ public class PaymentFacade {
     }
 
     public <T extends PaymentDetails> boolean processBookingPayments(String customerId, List<Rental> rentals, PaymentStrategy<T> paymentStrategy, T details) {
-        double grandTotal = 0.0;
-        for (Rental rental : rentals) {
-            grandTotal += rental.getTotalPrice() + rental.getSecurityDeposit();
-        }
 
-        boolean isPaid = paymentStrategy.pay(customerId, grandTotal, details);
-        if (!isPaid) {
+        double grandTotal = rentals.stream()
+                .mapToDouble(r -> r.getTotalPrice() + r.getSecurityDeposit())
+                .sum();
+
+        boolean isPaid;
+        try {
+            isPaid = paymentStrategy.pay(customerId, grandTotal, details);
+        } catch (Exception e) {
             return false;
         }
 
+        if (!isPaid) return false;
+
         Wallet customerWallet = walletService.getWalletByUserId(customerId);
 
-        CompletableFuture.runAsync(() -> {
-            for (Rental rental : rentals) {
-                String rentalId = String.valueOf(rental.getId());
-                transactionService.logTransfer(customerWallet.getWalletId(), ESCROW_WALLET, rental.getTotalPrice(),
-                        TransactionType.RENTAL_FARE, TransactionStatus.SUCCESS, rentalId, "Rental Fare held in Escrow");
-                transactionService.logTransfer(customerWallet.getWalletId(), ESCROW_WALLET, rental.getSecurityDeposit(),
-                        TransactionType.SECURITY_DEPOSIT, TransactionStatus.SUCCESS, rentalId, "Security Deposit held in Escrow");
+        for (Rental rental : rentals) {
+
+            String rentalId = String.valueOf(rental.getId());
+
+            String fareTxId = safeLog(
+                    customerWallet.getWalletId(),
+                    ESCROW_WALLET,
+                    rental.getTotalPrice(),
+                    TransactionType.RENTAL_FARE,
+                    TransactionStatus.PENDING,
+                    rentalId,
+                    "Rental Fare Payment"
+            );
+
+            try {
+                walletService.executeSystemTransfer(customerWallet.getWalletId(), ESCROW_WALLET, rental.getTotalPrice());
+                transactionService.updateTransactionStatus(fareTxId, TransactionStatus.SUCCESS);
+            } catch (Exception e) {
+                transactionService.updateTransactionStatus(fareTxId, TransactionStatus.FAILED);
+                throw new RuntimeException("Rental fare transfer failed");
             }
-        });
+
+            String depositTxId = safeLog(
+                    customerWallet.getWalletId(),
+                    ESCROW_WALLET,
+                    rental.getSecurityDeposit(),
+                    TransactionType.SECURITY_DEPOSIT,
+                    TransactionStatus.PENDING,
+                    rentalId,
+                    "Deposit Payment"
+            );
+
+            try {
+                walletService.executeSystemTransfer(customerWallet.getWalletId(), ESCROW_WALLET, rental.getSecurityDeposit());
+                transactionService.updateTransactionStatus(depositTxId, TransactionStatus.SUCCESS);
+            } catch (Exception e) {
+                transactionService.updateTransactionStatus(depositTxId, TransactionStatus.FAILED);
+                throw new RuntimeException("Deposit transfer failed");
+            }
+        }
 
         return true;
     }
 
-    public <T extends PaymentDetails> boolean processPayment(String customerId, double amount, PaymentStrategy<T> paymentStrategy, T details) {
-        return paymentStrategy.pay(customerId, amount, details);
-    }
+    public void refundWithRetry(String customerId, List<Rental> rentals, int retries) {
 
-    public void processRefund(String customerId, double amount) {
-        Wallet customerWallet = walletService.getWalletByUserId(customerId);
-        executeAndLogAsync(ESCROW_WALLET, customerWallet.getWalletId(), amount,
-                TransactionType.REFUND, "N/A", "System Refund");
-    }
-
-    public void refundFailedBooking(String customerId, List<Rental> rentals) {
-        double grandTotal = rentals.stream().mapToDouble(rental -> rental.getTotalPrice() + rental.getSecurityDeposit()).sum();
+        double total = rentals.stream()
+                .mapToDouble(r -> r.getTotalPrice() + r.getSecurityDeposit())
+                .sum();
 
         Wallet customerWallet = walletService.getWalletByUserId(customerId);
-        walletService.executeSystemTransfer(ESCROW_WALLET, customerWallet.getWalletId(), grandTotal);
 
-        CompletableFuture.runAsync(() -> {
-            transactionService.logTransfer(ESCROW_WALLET, customerWallet.getWalletId(), grandTotal,
-                    TransactionType.REFUND, TransactionStatus.SUCCESS, "N/A", "System Rollback: Booking Failed");
-        });
+        int attempt = 0;
+
+        while (attempt < retries) {
+
+            String txId = safeLog(ESCROW_WALLET,
+                    customerWallet.getWalletId(),
+                    total,
+                    TransactionType.REFUND,
+                    TransactionStatus.PENDING,
+                    "N/A",
+                    "Refund Payment"
+            );
+
+            try {
+                walletService.executeSystemTransfer(ESCROW_WALLET, customerWallet.getWalletId(), total);
+                transactionService.updateTransactionStatus(txId, TransactionStatus.SUCCESS);
+                return;
+
+            } catch (Exception e) {
+                transactionService.updateTransactionStatus(txId, TransactionStatus.FAILED);
+                attempt++;
+
+                if (attempt == retries) {
+                    throw new RuntimeException("Refund failed");
+                }
+            }
+        }
+    }
+
+    private String safeLog(String from, String to, double amount,
+                           TransactionType type, TransactionStatus status,
+                           String rentalId, String desc) {
+
+        int attempt = 0;
+
+        while (attempt < 3) {
+            try {
+                return transactionService.logTransfer(from, to, amount, type, status, rentalId, desc);
+            } catch (Exception e) {
+                attempt++;
+                if (attempt == 3) {
+                    throw new RuntimeException("Transaction logging failed");
+                }
+            }
+        }
+        throw new RuntimeException("Logging failed");
     }
 
     public void processReturnPayouts(String customerId, List<Rental> rentals, List<Penalty> penalties) {
+
         Wallet customerWallet = walletService.getWalletByUserId(customerId);
 
         for (Rental rental : rentals) {
-            String rentalIdStr = String.valueOf(rental.getId());
+
+            String rentalId = String.valueOf(rental.getId());
             Vehicle vehicle = vehicleService.getVehiclesById(rental.getVehicleId());
             Wallet ownerWallet = walletService.getWalletByUserId(vehicle.getOwnerId());
 
-            double commission = rental.getTotalPrice() * SYSTEM_COMMISSION_RATE;
+            double penaltyAmount = penalties == null ? 0 :
+                    penalties.stream()
+                            .filter(p -> String.valueOf(p.getRentalId()).equals(rentalId))
+                            .mapToDouble(Penalty::getPenaltyAmount)
+                            .sum();
+
+            double deducted = Math.min(penaltyAmount, rental.getSecurityDeposit());
+            double refund = rental.getSecurityDeposit() - deducted;
+            double penaltyCommission = deducted * SYSTEM_COMMISSION_RATE;
+            double penaltyRefund = deducted - penaltyCommission;
+            double commission = rental.getTotalPrice() * SYSTEM_COMMISSION_RATE + penaltyCommission;
             double ownerPayout = rental.getTotalPrice() - commission;
 
-            try {
-                executeAndLogAsync(ESCROW_WALLET, ownerWallet.getWalletId(), ownerPayout,
-                        TransactionType.OWNER_PAYOUT, rentalIdStr, "Trip completed payout");
-            } catch (Exception e) {
-                sweepFailedPayoutToSystem(ESCROW_WALLET, REVENUE_WALLET, ownerPayout, rentalIdStr);
+            processSingleTransaction(ESCROW_WALLET, ownerWallet.getWalletId(), ownerPayout,
+                    TransactionType.OWNER_PAYOUT, rentalId, "Owner Payout");
+
+            processSingleTransaction(ESCROW_WALLET, REVENUE_WALLET, commission,
+                    TransactionType.SYSTEM_COMMISSION, rentalId, "Commission");
+
+
+            if (penaltyRefund > 0) {
+                processSingleTransaction(ESCROW_WALLET, customerWallet.getWalletId(), penaltyRefund,
+                        TransactionType.PENALTY_CHARGE, rentalId, "Penalty Amount");
             }
 
-            executeAndLogAsync(ESCROW_WALLET, REVENUE_WALLET, commission,
-                    TransactionType.SYSTEM_COMMISSION, rentalIdStr, "Platform commission");
-
-            double totalPenalty = 0.0;
-            if (penalties != null) {
-                for (Penalty p : penalties) {
-                    if (String.valueOf(p.getRentalId()).equals(rentalIdStr)) {
-                        totalPenalty += p.getPenaltyAmount();
-                    }
-                }
-            }
-
-            double actualPenaltyDeducted = Math.min(totalPenalty, rental.getSecurityDeposit());
-            double refundAmount = rental.getSecurityDeposit() - actualPenaltyDeducted;
-
-            if (actualPenaltyDeducted > 0) {
-                executeAndLogAsync(ESCROW_WALLET, REVENUE_WALLET, actualPenaltyDeducted,
-                        TransactionType.PENALTY_CHARGE, rentalIdStr, "Penalty deducted from deposit");
-            }
-
-            if (refundAmount > 0) {
-                executeAndLogAsync(ESCROW_WALLET, customerWallet.getWalletId(), refundAmount,
-                        TransactionType.REFUND, rentalIdStr, "Remaining Deposit Refunded");
+            if (refund > 0) {
+                processSingleTransaction(ESCROW_WALLET, customerWallet.getWalletId(), refund,
+                        TransactionType.REFUND, rentalId, "Deposit Refund");
             }
         }
     }
 
     public void processCancellationRefund(String customerId, Rental rental, double refundAmount) {
+
         Wallet customerWallet = walletService.getWalletByUserId(customerId);
+
         String rentalId = String.valueOf(rental.getId());
 
-        double totalHeldInEscrow = rental.getTotalPrice() + rental.getSecurityDeposit();
-        double cancellationFee = totalHeldInEscrow - refundAmount;
+        double rentalPrice = rental.getTotalPrice();
+        double deposit = rental.getSecurityDeposit();
 
-        if (refundAmount > 0) {
-            executeAndLogAsync(ESCROW_WALLET, customerWallet.getWalletId(), refundAmount,
-                    TransactionType.REFUND, rentalId, "Cancellation Refund");
+        double rentalRefund = Math.min(refundAmount, rentalPrice);
+        double cancellationFee = rentalPrice - rentalRefund;
+        double cancellationCommission = cancellationFee * SYSTEM_COMMISSION_RATE;
+        cancellationFee -= cancellationCommission;
+
+        double totalCustomerRefund = rentalRefund + deposit;
+
+        if (totalCustomerRefund > 0) {
+            processSingleTransaction(ESCROW_WALLET, customerWallet.getWalletId(),
+                    totalCustomerRefund,
+                    TransactionType.REFUND,
+                    rentalId,
+                    "Cancellation Refund");
         }
 
+        if (cancellationCommission > 0) {
+            processSingleTransaction(ESCROW_WALLET, REVENUE_WALLET,
+                    cancellationCommission,
+                    TransactionType.CANCELLATION_FEE,
+                    rentalId,
+                    "Cancellation commission");
+        }
         if (cancellationFee > 0) {
-            executeAndLogAsync(ESCROW_WALLET, REVENUE_WALLET, cancellationFee,
-                    TransactionType.SYSTEM_COMMISSION, rentalId, "Cancellation Fee retained");
+            processSingleTransaction(ESCROW_WALLET, customerWallet.getWalletId(),
+                    cancellationFee,
+                    TransactionType.CANCELLATION_FEE,
+                    rentalId,
+                    "Cancellation Fee");
         }
     }
 
-    public void sweepFailedPayoutToSystem(String escrowWalletId, String revenueWalletId, double amount, String rentalId) {
-        executeAndLogAsync(escrowWalletId, revenueWalletId, amount,
-                TransactionType.FAILED_PAYOUT_HOLD, rentalId, "SWEPT TO ADMIN: Payout Failed. Holding.");
-    }
+    private void processSingleTransaction(String from, String to, double amount,
+                                          TransactionType type, String rentalId, String desc) {
 
-    public void resolveSweptPayout(String revenueWalletId, String ownerWalletId, double amount, String rentalId) {
-        executeAndLogAsync(revenueWalletId, ownerWalletId, amount,
-                TransactionType.MANUAL_RESOLUTION_PAYOUT, rentalId, "Admin Manually Resolved and Paid Owner");
-    }
+        String txId = safeLog(from, to, amount, type, TransactionStatus.PENDING, rentalId, desc);
 
-    private void executeAndLogAsync(String fromWallet, String toWallet, double amount, TransactionType type, String rentalId, String description) {
-        walletService.executeSystemTransfer(fromWallet, toWallet, amount);
-        CompletableFuture.runAsync(() -> {
-            transactionService.logTransfer(fromWallet, toWallet, amount, type, TransactionStatus.SUCCESS, rentalId, description);
-        });
+        try {
+            walletService.executeSystemTransfer(from, to, amount);
+            transactionService.updateTransactionStatus(txId, TransactionStatus.SUCCESS);
+        } catch (Exception e) {
+            transactionService.updateTransactionStatus(txId, TransactionStatus.FAILED);
+            throw new RuntimeException("Transaction failed");
+        }
     }
 }

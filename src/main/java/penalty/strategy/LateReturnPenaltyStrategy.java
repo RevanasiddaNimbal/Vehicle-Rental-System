@@ -1,4 +1,4 @@
-package penalty.stretegy;
+package penalty.strategy;
 
 import rental.billing.RentalTimeCalculator;
 import rental.model.Rental;

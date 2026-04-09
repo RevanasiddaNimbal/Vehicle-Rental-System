@@ -1,8 +1,8 @@
 package penalty.factory;
 
 import penalty.model.PenaltyType;
-import penalty.stretegy.LateReturnPenaltyStrategy;
-import penalty.stretegy.PenaltyStrategy;
+import penalty.strategy.LateReturnPenaltyStrategy;
+import penalty.strategy.PenaltyStrategy;
 import rental.billing.RentalTimeCalculator;
 
 public class PenaltyStrategyFactory {

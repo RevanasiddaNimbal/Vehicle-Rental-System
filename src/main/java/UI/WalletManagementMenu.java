@@ -10,6 +10,8 @@ public class WalletManagementMenu implements UsersMenu {
     private final WalletController walletController;
     private final WalletCredentialController walletCredentialController;
     private final Scanner input;
+    private static final String ADMIN_ID = "ADM-002";
+    private static final String SYSTEM_ID = "ADM-001";
 
     public WalletManagementMenu(Scanner input, WalletController walletController, WalletCredentialController walletCredentialController) {
         this.input = input;
@@ -20,7 +22,7 @@ public class WalletManagementMenu implements UsersMenu {
     @Override
     public void show(String userId) {
         int choice;
-        boolean isAdmin = userId.equals("ADMIN") || userId.startsWith("SYSTEM");
+        boolean isAdmin = userId.equals(ADMIN_ID) || userId.startsWith(SYSTEM_ID);
         while (true) {
             try {
                 System.out.println("\n========= Wallet Management Menu ==============");
@@ -48,7 +50,7 @@ public class WalletManagementMenu implements UsersMenu {
                         break;
                     case 5:
                         if (isAdmin)
-                            walletController.checkBalanceByUserId(input, "SYSTEM-ESCROW");
+                            walletController.checkBalanceByUserId(input, SYSTEM_ID);
                         else
                             System.out.println("Invalid choice.");
                         break;
