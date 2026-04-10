@@ -40,31 +40,31 @@ public class ServiceConfig {
     private final RepositoryConfig repositoryConfig;
     private final ExecutorService paymentExecutorService;
 
-    private StrategyConfig strategyConfig;
-    private AdminService adminService;
-    private VehicleService vehicleService;
-    private VehicleOwnerService vehicleOwnerService;
-    private CustomerService customerService;
-    private InvoiceService invoiceService;
-    private RentalTimeCalculator rentalTimeCalculator;
-    private RentalPriceCalculator rentalPriceCalculator;
-    private PenaltyStrategyFactory penaltyStrategyFactory;
-    private PenaltyService penaltyService;
-    private WalletCredentialService walletCredentialService;
-    private WalletService walletService;
-    private RentalService rentalService;
-    private CancellationService cancellationService;
-    private TransactionService transactionService;
-    private PaymentStrategyFactory paymentStrategyFactory;
-    private PaymentFacade paymentFacade;
-    private SecurityDepositStrategy depositStrategy;
-    private ReservationTimeoutManager reservationTimeoutManager;
-    private OtpService otpService;
-    private EmailService emailService;
-    private WalletPinRecoveryService pinRecoveryService;
-    private UserResolverFactory resolverFactory;
-    private CancellationStrategyFactory cancelStrategyFactory;
-    private RentalFacade rentalFacade;
+    private volatile StrategyConfig strategyConfig;
+    private volatile AdminService adminService;
+    private volatile VehicleService vehicleService;
+    private volatile VehicleOwnerService vehicleOwnerService;
+    private volatile CustomerService customerService;
+    private volatile InvoiceService invoiceService;
+    private volatile RentalTimeCalculator rentalTimeCalculator;
+    private volatile RentalPriceCalculator rentalPriceCalculator;
+    private volatile PenaltyStrategyFactory penaltyStrategyFactory;
+    private volatile PenaltyService penaltyService;
+    private volatile WalletCredentialService walletCredentialService;
+    private volatile WalletService walletService;
+    private volatile RentalService rentalService;
+    private volatile CancellationService cancellationService;
+    private volatile TransactionService transactionService;
+    private volatile PaymentStrategyFactory paymentStrategyFactory;
+    private volatile PaymentFacade paymentFacade;
+    private volatile SecurityDepositStrategy depositStrategy;
+    private volatile ReservationTimeoutManager reservationTimeoutManager;
+    private volatile OtpService otpService;
+    private volatile EmailService emailService;
+    private volatile WalletPinRecoveryService pinRecoveryService;
+    private volatile UserResolverFactory resolverFactory;
+    private volatile CancellationStrategyFactory cancelStrategyFactory;
+    private volatile RentalFacade rentalFacade;
 
     public ServiceConfig(RepositoryConfig repositoryConfig) {
         this.repositoryConfig = repositoryConfig;
@@ -73,200 +73,338 @@ public class ServiceConfig {
 
     public AdminService getAdminService() {
         if (adminService == null) {
-            adminService = new AdminService(repositoryConfig.getAdminRepo());
+            synchronized (this) {
+                if (adminService == null) {
+                    adminService = new AdminService(repositoryConfig.getAdminRepo());
+                }
+            }
         }
         return adminService;
     }
 
     public VehicleService getVehicleService() {
         if (vehicleService == null) {
-            vehicleService = new VehicleService(repositoryConfig.getVehicleRepo());
+            synchronized (this) {
+                if (vehicleService == null) {
+                    vehicleService = new VehicleService(repositoryConfig.getVehicleRepo());
+                }
+            }
         }
         return vehicleService;
     }
 
     public VehicleOwnerService getVehicleOwnerService() {
         if (vehicleOwnerService == null) {
-            vehicleOwnerService = new VehicleOwnerService(repositoryConfig.getVehicleOwnerRepo());
+            synchronized (this) {
+                if (vehicleOwnerService == null) {
+                    vehicleOwnerService =
+                            new VehicleOwnerService(repositoryConfig.getVehicleOwnerRepo());
+                }
+            }
         }
         return vehicleOwnerService;
     }
 
     public CustomerService getCustomerService() {
         if (customerService == null) {
-            customerService = new CustomerService(repositoryConfig.getCustomerRepo());
+            synchronized (this) {
+                if (customerService == null) {
+                    customerService =
+                            new CustomerService(repositoryConfig.getCustomerRepo());
+                }
+            }
         }
         return customerService;
     }
 
     public InvoiceService getInvoiceService() {
         if (invoiceService == null) {
-            InvoiceRender invoiceRender = new InvoiceConsoleRender();
-            invoiceService = new InvoiceService(invoiceRender);
+            synchronized (this) {
+                if (invoiceService == null) {
+                    InvoiceRender invoiceRender = new InvoiceConsoleRender();
+                    invoiceService = new InvoiceService(invoiceRender);
+                }
+            }
         }
         return invoiceService;
     }
 
     public RentalTimeCalculator getRentalTimeCalculator() {
         if (rentalTimeCalculator == null) {
-            rentalTimeCalculator = new RentalTimeCalculator();
+            synchronized (this) {
+                if (rentalTimeCalculator == null) {
+                    rentalTimeCalculator = new RentalTimeCalculator();
+                }
+            }
         }
         return rentalTimeCalculator;
     }
 
     public SecurityDepositStrategy getSecurityDepositStrategy() {
         if (depositStrategy == null) {
-            depositStrategy = new DynamicDepositStrategy();
+            synchronized (this) {
+                if (depositStrategy == null) {
+                    depositStrategy = new DynamicDepositStrategy();
+                }
+            }
         }
         return depositStrategy;
     }
 
     public RentalPriceCalculator getRentalPriceCalculator() {
         if (rentalPriceCalculator == null) {
-            Map<Integer, PricingStrategy> pricingStrategies = new HashMap<>();
-            pricingStrategies.put(1, new BasePriceStrategy());
-            pricingStrategies.put(2, new WeekendStrategy());
-            pricingStrategies.put(3, new DiscountStrategy());
-            rentalPriceCalculator = new RentalPriceCalculator(pricingStrategies, getSecurityDepositStrategy());
+            synchronized (this) {
+                if (rentalPriceCalculator == null) {
+                    Map<Integer, PricingStrategy> pricingStrategies = new HashMap<>();
+                    pricingStrategies.put(1, new BasePriceStrategy());
+                    pricingStrategies.put(2, new WeekendStrategy());
+                    pricingStrategies.put(3, new DiscountStrategy());
+
+                    rentalPriceCalculator =
+                            new RentalPriceCalculator(pricingStrategies, getSecurityDepositStrategy());
+                }
+            }
         }
         return rentalPriceCalculator;
     }
 
     public PenaltyStrategyFactory getPenaltyStrategyFactory() {
         if (penaltyStrategyFactory == null) {
-            penaltyStrategyFactory = new PenaltyStrategyFactory(getRentalTimeCalculator());
+            synchronized (this) {
+                if (penaltyStrategyFactory == null) {
+                    penaltyStrategyFactory =
+                            new PenaltyStrategyFactory(getRentalTimeCalculator());
+                }
+            }
         }
         return penaltyStrategyFactory;
     }
 
     public PenaltyService getPenaltyService() {
         if (penaltyService == null) {
-            penaltyService = new PenaltyService(repositoryConfig.getPenaltyRepo(), getPenaltyStrategyFactory());
+            synchronized (this) {
+                if (penaltyService == null) {
+                    penaltyService =
+                            new PenaltyService(repositoryConfig.getPenaltyRepo(), getPenaltyStrategyFactory());
+                }
+            }
         }
         return penaltyService;
     }
 
     public WalletCredentialService getWalletCredentialService() {
         if (walletCredentialService == null) {
-            walletCredentialService = new WalletCredentialService(repositoryConfig.getWalletCredentialRepo());
+            synchronized (this) {
+                if (walletCredentialService == null) {
+                    walletCredentialService =
+                            new WalletCredentialService(repositoryConfig.getWalletCredentialRepo());
+                }
+            }
         }
         return walletCredentialService;
     }
 
     public TransactionService getTransactionService() {
         if (transactionService == null) {
-            transactionService = new TransactionService(repositoryConfig.getTransactionRepo());
+            synchronized (this) {
+                if (transactionService == null) {
+                    transactionService =
+                            new TransactionService(repositoryConfig.getTransactionRepo());
+                }
+            }
         }
         return transactionService;
     }
 
     public WalletService getWalletService() {
         if (walletService == null) {
-            walletService = new WalletService(repositoryConfig.getWalletRepo(), getWalletCredentialService(), getTransactionService());
+            synchronized (this) {
+                if (walletService == null) {
+                    walletService = new WalletService(
+                            repositoryConfig.getWalletRepo(),
+                            getWalletCredentialService(),
+                            getTransactionService()
+                    );
+                }
+            }
         }
         return walletService;
     }
 
     public RentalService getRentalService() {
         if (rentalService == null) {
-            rentalService = new RentalService(
-                    repositoryConfig.getRentalRepo(),
-                    getRentalPriceCalculator(),
-                    getVehicleService(),
-                    getVehicleOwnerService(),
-                    getCustomerService(),
-                    getRentalTimeCalculator()
-            );
+            synchronized (this) {
+                if (rentalService == null) {
+                    rentalService = new RentalService(
+                            repositoryConfig.getRentalRepo(),
+                            getRentalPriceCalculator(),
+                            getVehicleService(),
+                            getVehicleOwnerService(),
+                            getCustomerService(),
+                            getRentalTimeCalculator()
+                    );
+                }
+            }
         }
         return rentalService;
     }
 
     public PaymentStrategyFactory getPaymentStrategyFactory() {
         if (paymentStrategyFactory == null) {
-            paymentStrategyFactory = new PaymentStrategyFactory(getWalletService(), getTransactionService(), paymentExecutorService);
+            synchronized (this) {
+                if (paymentStrategyFactory == null) {
+                    paymentStrategyFactory =
+                            new PaymentStrategyFactory(
+                                    getWalletService(),
+                                    getTransactionService(),
+                                    paymentExecutorService
+                            );
+                }
+            }
         }
         return paymentStrategyFactory;
     }
 
     public PaymentFacade getPaymentFacade() {
         if (paymentFacade == null) {
-            paymentFacade = new PaymentFacade(getWalletService(), getTransactionService(), getVehicleService());
+            synchronized (this) {
+                if (paymentFacade == null) {
+                    paymentFacade =
+                            new PaymentFacade(
+                                    getWalletService(),
+                                    getTransactionService(),
+                                    getVehicleService()
+                            );
+                }
+            }
         }
         return paymentFacade;
     }
 
     public CancellationStrategyFactory getCancellationStrategyFactory() {
         if (cancelStrategyFactory == null) {
-            cancelStrategyFactory = new CancellationStrategyFactory(strategyConfig.getCancellationStrategies());
+            synchronized (this) {
+                if (cancelStrategyFactory == null) {
+                    cancelStrategyFactory =
+                            new CancellationStrategyFactory(strategyConfig.getCancellationStrategies());
+                }
+            }
         }
         return cancelStrategyFactory;
     }
 
     public CancellationService getCancellationService() {
         if (cancellationService == null) {
-            cancellationService = new CancellationService(
-                    getRentalService(),
-                    getVehicleService(),
-                    repositoryConfig.getCancellationRepo(),
-                    getPaymentFacade(),
-                    getCancellationStrategyFactory()
-            );
+            synchronized (this) {
+                if (cancellationService == null) {
+                    cancellationService = new CancellationService(
+                            getRentalService(),
+                            getVehicleService(),
+                            repositoryConfig.getCancellationRepo(),
+                            getPaymentFacade(),
+                            getCancellationStrategyFactory()
+                    );
+                }
+            }
         }
         return cancellationService;
     }
 
     public ReservationTimeoutManager getReservationTimeoutManager() {
         if (reservationTimeoutManager == null) {
-            reservationTimeoutManager = new ReservationTimeoutManager(getVehicleService());
+            synchronized (this) {
+                if (reservationTimeoutManager == null) {
+                    reservationTimeoutManager = new ReservationTimeoutManager(getVehicleService());
+                }
+            }
         }
         return reservationTimeoutManager;
     }
 
     public StrategyConfig getStrategyConfig(Scanner input) {
         if (strategyConfig == null) {
-            strategyConfig = new StrategyConfig(input, getWalletService(), getWalletCredentialService(), getCustomerService(), getVehicleOwnerService(), getAdminService(), getOtpService());
+            synchronized (this) {
+                if (strategyConfig == null) {
+                    strategyConfig = new StrategyConfig(
+                            input,
+                            getWalletService(),
+                            getWalletCredentialService(),
+                            getCustomerService(),
+                            getVehicleOwnerService(),
+                            getAdminService(),
+                            getOtpService()
+                    );
+                }
+            }
         }
         return strategyConfig;
     }
 
     public EmailService getEmailService() {
         if (emailService == null) {
-            emailService = new BreveEmailProvider(new EmailPropertiesConfig());
+            synchronized (this) {
+                if (emailService == null) {
+                    emailService = new BreveEmailProvider(new EmailPropertiesConfig());
+                }
+            }
         }
         return emailService;
     }
 
     public OtpService getOtpService() {
         if (otpService == null) {
-            otpService = new OtpService(repositoryConfig.getOtpRepo(), getEmailService());
+            synchronized (this) {
+                if (otpService == null) {
+                    otpService =
+                            new OtpService(repositoryConfig.getOtpRepo(), getEmailService());
+                }
+            }
         }
         return otpService;
     }
 
     public UserResolverFactory getResolverFactory(Scanner input) {
         if (resolverFactory == null) {
-            resolverFactory = new UserResolverFactory(getStrategyConfig(input).getResolverRegistries());
+            synchronized (this) {
+                if (resolverFactory == null) {
+                    resolverFactory =
+                            new UserResolverFactory(getStrategyConfig(input).getResolverRegistries());
+                }
+            }
         }
         return resolverFactory;
     }
 
     public WalletPinRecoveryService getPinRecoveryService(Scanner input) {
         if (pinRecoveryService == null) {
-            pinRecoveryService = new WalletPinRecoveryService(getWalletService(), getWalletCredentialService(), getOtpService(), getResolverFactory(input));
+            synchronized (this) {
+                if (pinRecoveryService == null) {
+                    pinRecoveryService = new WalletPinRecoveryService(
+                            getWalletService(),
+                            getWalletCredentialService(),
+                            getOtpService(),
+                            getResolverFactory(input)
+                    );
+                }
+            }
         }
         return pinRecoveryService;
     }
 
     public RentalFacade getRentalFacade() {
         if (rentalFacade == null) {
-            rentalFacade = new RentalFacade(
-                    getRentalService(),
-                    getVehicleService(),
-                    getPaymentFacade(),
-                    getPenaltyService(),
-                    getCancellationService(),
-                    getReservationTimeoutManager()
-            );
+            synchronized (this) {
+                if (rentalFacade == null) {
+                    rentalFacade = new RentalFacade(
+                            getRentalService(),
+                            getVehicleService(),
+                            getPaymentFacade(),
+                            getPenaltyService(),
+                            getCancellationService(),
+                            getReservationTimeoutManager()
+                    );
+                }
+            }
         }
         return rentalFacade;
     }

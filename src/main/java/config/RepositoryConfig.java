@@ -27,17 +27,17 @@ public class RepositoryConfig {
 
     private final DatabaseConfig databaseConfig;
 
-    private AdminRepo adminRepo;
-    private VehicleRepo vehicleRepo;
-    private VehicleOwnerRepo vehicleOwnerRepo;
-    private CustomerRepo customerRepo;
-    private RentalRepo rentalRepo;
-    private PenaltyRepo penaltyRepo;
-    private CancellationRepo cancellationRepo;
-    private WalletRepo walletRepo;
-    private WalletCredentialRepo walletCredentialRepo;
-    private TransactionRepo transactionRepo;
-    private OtpRepo otpRepo;
+    private volatile AdminRepo adminRepo;
+    private volatile VehicleRepo vehicleRepo;
+    private volatile VehicleOwnerRepo vehicleOwnerRepo;
+    private volatile CustomerRepo customerRepo;
+    private volatile RentalRepo rentalRepo;
+    private volatile PenaltyRepo penaltyRepo;
+    private volatile CancellationRepo cancellationRepo;
+    private volatile WalletRepo walletRepo;
+    private volatile WalletCredentialRepo walletCredentialRepo;
+    private volatile TransactionRepo transactionRepo;
+    private volatile OtpRepo otpRepo;
 
     public RepositoryConfig(DatabaseConfig databaseConfig) {
         this.databaseConfig = databaseConfig;
@@ -45,77 +45,121 @@ public class RepositoryConfig {
 
     public AdminRepo getAdminRepo() {
         if (adminRepo == null) {
-            adminRepo = new AdminPostgresRepo(databaseConfig.getPostgresConnection());
+            synchronized (this) {
+                if (adminRepo == null) {
+                    adminRepo = new AdminPostgresRepo(databaseConfig.getPostgresConnection());
+                }
+            }
         }
         return adminRepo;
     }
 
     public VehicleRepo getVehicleRepo() {
         if (vehicleRepo == null) {
-            vehicleRepo = new VehiclesPostgresRepo(databaseConfig.getPostgresConnection());
+            synchronized (this) {
+                if (vehicleRepo == null) {
+                    vehicleRepo = new VehiclesPostgresRepo(databaseConfig.getPostgresConnection());
+                }
+            }
         }
         return vehicleRepo;
     }
 
     public VehicleOwnerRepo getVehicleOwnerRepo() {
         if (vehicleOwnerRepo == null) {
-            vehicleOwnerRepo = new VehicleOwnersPostgresRepo(databaseConfig.getPostgresConnection());
+            synchronized (this) {
+                if (vehicleOwnerRepo == null) {
+                    vehicleOwnerRepo = new VehicleOwnersPostgresRepo(databaseConfig.getPostgresConnection());
+                }
+            }
         }
         return vehicleOwnerRepo;
     }
 
     public CustomerRepo getCustomerRepo() {
         if (customerRepo == null) {
-            customerRepo = new CustomersPostgresRepo(databaseConfig.getPostgresConnection());
+            synchronized (this) {
+                if (customerRepo == null) {
+                    customerRepo = new CustomersPostgresRepo(databaseConfig.getPostgresConnection());
+                }
+            }
         }
         return customerRepo;
     }
 
     public RentalRepo getRentalRepo() {
         if (rentalRepo == null) {
-            rentalRepo = new RentalsPostgresRepo(databaseConfig.getPostgresConnection());
+            synchronized (this) {
+                if (rentalRepo == null) {
+                    rentalRepo = new RentalsPostgresRepo(databaseConfig.getPostgresConnection());
+                }
+            }
         }
         return rentalRepo;
     }
 
     public PenaltyRepo getPenaltyRepo() {
         if (penaltyRepo == null) {
-            penaltyRepo = new PenaltyPostgresRepo(databaseConfig.getPostgresConnection());
+            synchronized (this) {
+                if (penaltyRepo == null) {
+                    penaltyRepo = new PenaltyPostgresRepo(databaseConfig.getPostgresConnection());
+                }
+            }
         }
         return penaltyRepo;
     }
 
     public CancellationRepo getCancellationRepo() {
         if (cancellationRepo == null) {
-            cancellationRepo = new CancellationPostgresRepo(databaseConfig.getPostgresConnection());
+            synchronized (this) {
+                if (cancellationRepo == null) {
+                    cancellationRepo = new CancellationPostgresRepo(databaseConfig.getPostgresConnection());
+                }
+            }
         }
         return cancellationRepo;
     }
 
     public WalletRepo getWalletRepo() {
         if (walletRepo == null) {
-            walletRepo = new WalletPostgresRepo(databaseConfig.getPostgresConnection());
+            synchronized (this) {
+                if (walletRepo == null) {
+                    walletRepo = new WalletPostgresRepo(databaseConfig.getPostgresConnection());
+                }
+            }
         }
         return walletRepo;
     }
 
     public WalletCredentialRepo getWalletCredentialRepo() {
         if (walletCredentialRepo == null) {
-            walletCredentialRepo = new WalletCredentialPostgresRepo(databaseConfig.getPostgresConnection());
+            synchronized (this) {
+                if (walletCredentialRepo == null) {
+                    walletCredentialRepo = new WalletCredentialPostgresRepo(databaseConfig.getPostgresConnection());
+                }
+            }
         }
         return walletCredentialRepo;
     }
 
     public TransactionRepo getTransactionRepo() {
         if (transactionRepo == null) {
-            transactionRepo = new TransactionPostgresRepo(databaseConfig.getPostgresConnection());
+            synchronized (this) {
+                if (transactionRepo == null) {
+                    transactionRepo = new TransactionPostgresRepo(databaseConfig.getPostgresConnection());
+                }
+            }
         }
         return transactionRepo;
     }
 
     public OtpRepo getOtpRepo() {
         if (otpRepo == null) {
-            otpRepo = new OtpPostgresRepo(databaseConfig.getPostgresConnection());
+            synchronized (this) {
+                if (otpRepo == null) {
+                    otpRepo = new OtpPostgresRepo(databaseConfig.getPostgresConnection());
+                }
+            }
         }
         return otpRepo;
     }

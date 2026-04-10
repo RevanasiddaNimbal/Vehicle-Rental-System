@@ -21,18 +21,24 @@ public class ControllerConfig {
     private final CommandConfig commandConfig;
     private final Scanner input;
 
-    private AdminController adminController;
-    private VehicleController vehicleController;
-    private VehicleOwnerController vehicleOwnerController;
-    private CustomerController customerController;
-    private PenaltyController penaltyController;
-    private WalletController walletController;
-    private WalletCredentialController walletCredentialController;
-    private RentalController rentalController;
-    private CancellationController cancellationController;
-    private TransactionController transactionController;
+    private volatile AdminController adminController;
+    private volatile VehicleController vehicleController;
+    private volatile VehicleOwnerController vehicleOwnerController;
+    private volatile CustomerController customerController;
+    private volatile PenaltyController penaltyController;
+    private volatile WalletController walletController;
+    private volatile WalletCredentialController walletCredentialController;
+    private volatile RentalController rentalController;
+    private volatile CancellationController cancellationController;
+    private volatile TransactionController transactionController;
 
-    public ControllerConfig(ServiceConfig serviceConfig, PrinterConfig printerConfig, StrategyConfig strategyConfig, CommandConfig commandConfig, Scanner input) {
+    public ControllerConfig(
+            ServiceConfig serviceConfig,
+            PrinterConfig printerConfig,
+            StrategyConfig strategyConfig,
+            CommandConfig commandConfig,
+            Scanner input
+    ) {
         this.serviceConfig = serviceConfig;
         this.printerConfig = printerConfig;
         this.strategyConfig = strategyConfig;
@@ -42,83 +48,141 @@ public class ControllerConfig {
 
     public AdminController getAdminController() {
         if (adminController == null) {
-            adminController = new AdminController(serviceConfig.getAdminService());
+            synchronized (this) {
+                if (adminController == null) {
+                    adminController = new AdminController(serviceConfig.getAdminService());
+                }
+            }
         }
         return adminController;
     }
 
     public VehicleController getVehicleController() {
         if (vehicleController == null) {
-            vehicleController = new VehicleController(
-                    serviceConfig.getVehicleService(),
-                    strategyConfig.getVehicleCreators(),
-                    strategyConfig.getVehicleUpdaters(),
-                    printerConfig.getVehiclePrinter()
-            );
+            synchronized (this) {
+                if (vehicleController == null) {
+                    vehicleController = new VehicleController(
+                            serviceConfig.getVehicleService(),
+                            strategyConfig.getVehicleCreators(),
+                            strategyConfig.getVehicleUpdaters(),
+                            printerConfig.getVehiclePrinter()
+                    );
+                }
+            }
         }
         return vehicleController;
     }
 
     public VehicleOwnerController getVehicleOwnerController() {
         if (vehicleOwnerController == null) {
-            vehicleOwnerController = new VehicleOwnerController(serviceConfig.getVehicleOwnerService(), printerConfig.getOwnerPrinter());
+            synchronized (this) {
+                if (vehicleOwnerController == null) {
+                    vehicleOwnerController = new VehicleOwnerController(
+                            serviceConfig.getVehicleOwnerService(),
+                            printerConfig.getOwnerPrinter()
+                    );
+                }
+            }
         }
         return vehicleOwnerController;
     }
 
     public CustomerController getCustomerController() {
         if (customerController == null) {
-            customerController = new CustomerController(serviceConfig.getCustomerService(), printerConfig.getCustomerPrinter());
+            synchronized (this) {
+                if (customerController == null) {
+                    customerController = new CustomerController(
+                            serviceConfig.getCustomerService(),
+                            printerConfig.getCustomerPrinter()
+                    );
+                }
+            }
         }
         return customerController;
     }
 
     public PenaltyController getPenaltyController() {
         if (penaltyController == null) {
-            penaltyController = new PenaltyController(serviceConfig.getPenaltyService(), printerConfig.getPenaltyPrinter());
+            synchronized (this) {
+                if (penaltyController == null) {
+                    penaltyController = new PenaltyController(
+                            serviceConfig.getPenaltyService(),
+                            printerConfig.getPenaltyPrinter()
+                    );
+                }
+            }
         }
         return penaltyController;
     }
 
     public WalletController getWalletController() {
         if (walletController == null) {
-            walletController = new WalletController(serviceConfig.getWalletService());
+            synchronized (this) {
+                if (walletController == null) {
+                    walletController = new WalletController(serviceConfig.getWalletService());
+                }
+            }
         }
         return walletController;
     }
 
-
     public WalletCredentialController getWalletCredentialController() {
         if (walletCredentialController == null) {
-            walletCredentialController = new WalletCredentialController(input, serviceConfig.getPinRecoveryService(input));
+            synchronized (this) {
+                if (walletCredentialController == null) {
+                    walletCredentialController = new WalletCredentialController(
+                            input,
+                            serviceConfig.getPinRecoveryService(input)
+                    );
+                }
+            }
         }
         return walletCredentialController;
     }
 
     public RentalController getRentalController() {
         if (rentalController == null) {
-            rentalController = new RentalController(
-                    serviceConfig.getRentalService(),
-                    commandConfig.getCommands(),
-                    printerConfig.getRentalPrinter(),
-                    printerConfig.getCustomerPrinter(),
-                    printerConfig.getOwnerPrinter(),
-                    printerConfig.getVehiclePrinter()
-            );
+            synchronized (this) {
+                if (rentalController == null) {
+                    rentalController = new RentalController(
+                            serviceConfig.getRentalService(),
+                            commandConfig.getCommands(),
+                            printerConfig.getRentalPrinter(),
+                            printerConfig.getCustomerPrinter(),
+                            printerConfig.getOwnerPrinter(),
+                            printerConfig.getVehiclePrinter()
+                    );
+                }
+            }
         }
         return rentalController;
     }
 
     public CancellationController getCancellationController() {
         if (cancellationController == null) {
-            cancellationController = new CancellationController(serviceConfig.getCancellationService(), printerConfig.getCancellationPrinter());
+            synchronized (this) {
+                if (cancellationController == null) {
+                    cancellationController = new CancellationController(
+                            serviceConfig.getCancellationService(),
+                            printerConfig.getCancellationPrinter()
+                    );
+                }
+            }
         }
         return cancellationController;
     }
 
     public TransactionController getTransactionController() {
         if (transactionController == null) {
-            transactionController = new TransactionController(serviceConfig.getTransactionService(), serviceConfig.getWalletService(), printerConfig.getTransactionPrinter());
+            synchronized (this) {
+                if (transactionController == null) {
+                    transactionController = new TransactionController(
+                            serviceConfig.getTransactionService(),
+                            serviceConfig.getWalletService(),
+                            printerConfig.getTransactionPrinter()
+                    );
+                }
+            }
         }
         return transactionController;
     }

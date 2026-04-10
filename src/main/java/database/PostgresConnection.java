@@ -9,13 +9,14 @@ import java.sql.Connection;
 import java.sql.SQLException;
 
 public class PostgresConnection implements DatabaseConnection {
-    private final HikariDataSource ds;
+    private volatile HikariDataSource ds;
+    private final DbPropertiesConfig config;
 
     public PostgresConnection(DbPropertiesConfig config) {
-        this.ds = createDataSource(config);
+        this.config = config;
     }
 
-    private HikariDataSource createDataSource(DbPropertiesConfig config) {
+    private void initDataSource() {
         try {
             HikariConfig hikariConfig = new HikariConfig();
             hikariConfig.setPoolName("VehicleRentalPool");
@@ -26,7 +27,7 @@ public class PostgresConnection implements DatabaseConnection {
             hikariConfig.setConnectionTimeout(30000);
             hikariConfig.setMaxLifetime(1800000);
 
-            return new HikariDataSource(hikariConfig);
+            this.ds = new HikariDataSource(hikariConfig);
         } catch (Exception e) {
             throw new DataAccessException("Failed to create datasource", e);
         }
@@ -34,6 +35,13 @@ public class PostgresConnection implements DatabaseConnection {
 
     @Override
     public Connection getConnection() {
+        if (ds == null) {
+            synchronized (this) {
+                if (ds == null) {
+                    initDataSource();
+                }
+            }
+        }
         try {
             return ds.getConnection();
         } catch (SQLException e) {

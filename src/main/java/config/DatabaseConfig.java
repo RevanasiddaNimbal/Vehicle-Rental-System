@@ -4,12 +4,15 @@ import database.DatabaseConnection;
 import database.PostgresConnection;
 
 public class DatabaseConfig {
-
-    private DatabaseConnection postgresConnection;
+    private volatile DatabaseConnection postgresConnection;
 
     public DatabaseConnection getPostgresConnection() {
         if (postgresConnection == null) {
-            postgresConnection = new PostgresConnection(new DbPropertiesConfig());
+            synchronized (this) {
+                if (postgresConnection == null) {
+                    postgresConnection = new PostgresConnection(new DbPropertiesConfig());
+                }
+            }
         }
         return postgresConnection;
     }
