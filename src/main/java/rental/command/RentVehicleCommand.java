@@ -145,8 +145,9 @@ public class RentVehicleCommand implements RentalCommand {
             System.out.println("1. Wallet");
             System.out.println("2. UPI (Coming Soon)");
             System.out.println("3. Credit/Debit Card (Coming Soon)");
+            System.out.println("0. Cancel Booking");
 
-            int choice = InputUtil.readPositiveInt(scanner, "Enter choice number:");
+            int choice = InputUtil.readPositiveInt(scanner, "Enter choice number");
             switch (choice) {
                 case 1:
                     return PaymentMethod.WALLET;
@@ -156,6 +157,8 @@ public class RentVehicleCommand implements RentalCommand {
                 case 3:
                     System.out.println("Card payment is not available yet.Please select Wallet.");
                     break;
+                case 0:
+                    return null;
                 default:
                     System.out.println("Invalid choice. Please try again.");
             }
