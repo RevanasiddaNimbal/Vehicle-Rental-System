@@ -31,10 +31,14 @@ import wallet.service.WalletService;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class ServiceConfig {
 
     private final RepositoryConfig repositoryConfig;
+    private final ExecutorService paymentExecutorService;
 
     private StrategyConfig strategyConfig;
     private AdminService adminService;
@@ -64,6 +68,7 @@ public class ServiceConfig {
 
     public ServiceConfig(RepositoryConfig repositoryConfig) {
         this.repositoryConfig = repositoryConfig;
+        this.paymentExecutorService = Executors.newFixedThreadPool(5);
     }
 
     public AdminService getAdminService() {
@@ -178,15 +183,14 @@ public class ServiceConfig {
 
     public PaymentStrategyFactory getPaymentStrategyFactory() {
         if (paymentStrategyFactory == null) {
-            paymentStrategyFactory = new PaymentStrategyFactory(getWalletService(), getTransactionService());
+            paymentStrategyFactory = new PaymentStrategyFactory(getWalletService(), getTransactionService(), paymentExecutorService);
         }
         return paymentStrategyFactory;
     }
 
     public PaymentFacade getPaymentFacade() {
         if (paymentFacade == null) {
-            paymentFacade = new PaymentFacade(getWalletService(), getTransactionService(), getVehicleService()
-            );
+            paymentFacade = new PaymentFacade(getWalletService(), getTransactionService(), getVehicleService());
         }
         return paymentFacade;
     }
@@ -276,6 +280,16 @@ public class ServiceConfig {
         }
         if (otpService != null) {
             otpService.shutdown();
+        }
+
+        paymentExecutorService.shutdown();
+        try {
+            if (!paymentExecutorService.awaitTermination(3, TimeUnit.SECONDS)) {
+                paymentExecutorService.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            paymentExecutorService.shutdownNow();
+            Thread.currentThread().interrupt();
         }
     }
 }

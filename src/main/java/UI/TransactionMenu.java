@@ -45,13 +45,13 @@ public class TransactionMenu implements UsersMenu {
                             transactionController.viewPendingEscrowTransactions();
                             break;
                         case 2:
-                            transactionController.viewUserTransactionsByDays(input, userId);
+                            transactionController.viewAdminTransactionsByDays(input, userId);
                             break;
                         case 3:
                             transactionController.viewRevenueTransactions();
                             break;
                         case 4:
-                            transactionController.viewUserTransactionsByDays(input, SYSTEM_ESCROW_ID);
+                            transactionController.viewAdminTransactionsByDays(input, SYSTEM_ESCROW_ID);
                             break;
                         case 5:
                             transactionController.viewEscrowTransactions();

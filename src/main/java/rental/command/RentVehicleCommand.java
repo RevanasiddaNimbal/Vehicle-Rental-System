@@ -64,7 +64,7 @@ public class RentVehicleCommand implements RentalCommand {
         PaymentMethod method = selectPaymentMethod(scanner);
         if (method == null) return;
 
-        String pin = InputUtil.readValidPassword(scanner, "Enter your Wallet PIN to confirm payment:");
+        String pin = InputUtil.readValidPassword(scanner, "Enter your Wallet PIN to confirm payment");
         PaymentDetails paymentDetails = new WalletPaymentDetails(pin);
 
         System.out.println("Processing Payment...");

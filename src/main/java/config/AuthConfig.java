@@ -7,7 +7,6 @@ import authentication.service.UserOnBoardingService;
 
 public class AuthConfig {
 
-    private final ServiceConfig serviceConfig;
     private final StrategyConfig strategyConfig;
     private final MenuConfig menuConfig;
 
@@ -16,8 +15,7 @@ public class AuthConfig {
     private AuthController authController;
     private UserOnBoardingService userOnBoardingService;
 
-    public AuthConfig(ServiceConfig serviceConfig, StrategyConfig strategyConfig, MenuConfig menuConfig) {
-        this.serviceConfig = serviceConfig;
+    public AuthConfig(StrategyConfig strategyConfig, MenuConfig menuConfig) {
         this.strategyConfig = strategyConfig;
         this.menuConfig = menuConfig;
     }

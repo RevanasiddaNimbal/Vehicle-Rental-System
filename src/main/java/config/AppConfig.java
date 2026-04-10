@@ -51,7 +51,7 @@ public class AppConfig {
 
     public StrategyConfig getStrategyConfig(Scanner input) {
         if (strategyConfig == null) {
-            strategyConfig = serviceConfig.getStrategyConfig(input);
+            strategyConfig = getServiceConfig().getStrategyConfig(input);
         }
         return strategyConfig;
     }
@@ -79,7 +79,7 @@ public class AppConfig {
 
     public AuthConfig getAuthConfig(Scanner input) {
         if (authConfig == null) {
-            authConfig = new AuthConfig(getServiceConfig(), getStrategyConfig(input), getMenuConfig(input));
+            authConfig = new AuthConfig(getStrategyConfig(input), getMenuConfig(input));
         }
         return authConfig;
     }

@@ -81,4 +81,59 @@ public class TransactionService {
                 .filter(t -> t.getTimestamp() != null && t.getTimestamp().isAfter(cutoffDate))
                 .toList();
     }
+
+    public List<Transaction> getUsersTransactionsByWalletIdAndDays(String walletId, int daysToLookBack) {
+
+        List<Transaction> filteredByDays = getTransactionsByWalletIdAndDays(walletId, daysToLookBack);
+
+        return filteredByDays.stream()
+                .filter(this::isUserVisible)
+                .sorted((t1, t2) -> t2.getTimestamp().compareTo(t1.getTimestamp()))
+                .toList();
+    }
+
+    public List<Transaction> getAdminTransactionsByWalletIdAndDays(String walletId, int daysToLookBack) {
+
+        List<Transaction> filteredByDays = getTransactionsByWalletIdAndDays(walletId, daysToLookBack);
+
+        return filteredByDays.stream()
+                .filter(this::isAdminVisible)
+                .sorted((t1, t2) -> t2.getTimestamp().compareTo(t1.getTimestamp()))
+                .toList();
+    }
+
+    public List<Transaction> getUsersTransactionsByWalletId(String walletId) {
+
+        List<Transaction> all = getTransactionsByWalletId(walletId);
+
+        return all.stream()
+                .filter(this::isUserVisible)
+                .sorted((t1, t2) -> t2.getTimestamp().compareTo(t1.getTimestamp()))
+                .toList();
+    }
+
+    public List<Transaction> getAdminTransactionsByWalletId(String walletId) {
+
+        List<Transaction> all = getTransactionsByWalletId(walletId);
+
+        return all.stream()
+                .filter(this::isAdminVisible)
+                .sorted((t1, t2) -> t2.getTimestamp().compareTo(t1.getTimestamp()))
+                .toList();
+    }
+
+    private String getDesc(Transaction t) {
+        return t.getDescription() != null ? t.getDescription().toLowerCase() : "";
+    }
+
+    private boolean isUserVisible(Transaction t) {
+        String desc = getDesc(t);
+        return !(desc.contains("rental fare") || desc.contains("deposit payment"));
+    }
+
+    private boolean isAdminVisible(Transaction t) {
+        String desc = getDesc(t);
+        return !desc.contains("wallet payment")
+                && !desc.contains("rental payment");
+    }
 }

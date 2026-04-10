@@ -14,6 +14,9 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class WalletService {
+    private static final String SYSTEM_USER_ID = "ADM-002";
+    private static final String REVENUE_WALLET_ID = "SYSTEM-REVENUE";
+    private static final String ESCROW_WALLET_ID = "SYSTEM-ESCROW";
     private final WalletRepo walletRepo;
     private final WalletCredentialService walletCredentialService;
     private final TransactionService transactionService;
@@ -54,7 +57,7 @@ public class WalletService {
     public Wallet createSystemRevenueWallet() {
         Wallet revenueWallet = getRevenueWallet();
         if (revenueWallet == null) {
-            Wallet newRevenue = new Wallet("SYSTEM-REVENUE", "ADM-002", 0.0);
+            Wallet newRevenue = new Wallet(REVENUE_WALLET_ID, SYSTEM_USER_ID, 0.0);
             walletRepo.save(newRevenue);
             return newRevenue;
         }
@@ -64,7 +67,7 @@ public class WalletService {
     public Wallet createSystemEscrowWallet() {
         Wallet escrowWallet = getEscrowWallet();
         if (escrowWallet == null) {
-            Wallet newEscrow = new Wallet("SYSTEM-ESCROW", "ADM-002", 0.0);
+            Wallet newEscrow = new Wallet(ESCROW_WALLET_ID, SYSTEM_USER_ID, 0.0);
             walletRepo.save(newEscrow);
             return newEscrow;
         }
@@ -201,11 +204,11 @@ public class WalletService {
     }
 
     public Wallet getEscrowWallet() {
-        return walletRepo.findByUserId("ADM-002");
+        return walletRepo.findByWalletId(ESCROW_WALLET_ID);
     }
 
     public Wallet getRevenueWallet() {
-        return walletRepo.findByUserId("ADM-002");
+        return walletRepo.findByUserId(SYSTEM_USER_ID);
     }
 
     private void validateAmount(double amount) {
